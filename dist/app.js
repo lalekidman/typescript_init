@@ -22,8 +22,7 @@ class App {
         this.app = express();
         this.HttpServer = http_1.createServer(this.app);
         this.Port = process.env['PORT'] || 346;
-        this.DBURI = ``;
-        // this.DBURI = `mongodb://${process.env.DBURI}/${name}`
+        this.DBURI = `mongodb://${process.env.DBURI}/SAMPLEDB`;
         this._init();
     }
     monthRoutes() {
