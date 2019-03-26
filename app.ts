@@ -31,8 +31,9 @@ class App {
   constructor () {
     this.app = express()
     this.HttpServer = createServer(this.app)
-    this.Port = process.env['PORT'] || 345
-    this.DBURI = `mongodb://${process.env.DBURI}/kyoo`
+    this.Port = process.env['PORT'] || 346
+    this.DBURI = ``
+    // this.DBURI = `mongodb://${process.env.DBURI}/${name}`
     this._init()
   }
   private monthRoutes (): void {
