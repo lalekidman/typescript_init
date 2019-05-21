@@ -1,3 +1,4 @@
+import {Request} from 'express'
 export interface uploadFiles {
   fieldName: string
   originalFilename: string
@@ -11,4 +12,8 @@ export interface UploadedImage {
   avatarUrl?: string
   fileName?: string
   imageUrl?: string
+}
+export interface IRequest extends Request {
+  files?: any
+  payload?: any
 }
