@@ -36,7 +36,7 @@ class App {
     console.log('db: ', this.DBURI)
     this._init()
   }
-  private monthRoutes (): void {
+  private mountRoutes (): void {
     // Where the router import
   }
   private initSocket (server: any):void {
@@ -93,7 +93,7 @@ class App {
       }
       next()
     })
-    this.monthRoutes()
+    this.mountRoutes()
     this.initMongodb()
   }
 }
