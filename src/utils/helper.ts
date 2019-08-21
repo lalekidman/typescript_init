@@ -18,7 +18,7 @@ interface IRequest2 extends IRequest{
 export const TrimMobileNo = (contactNo: string|number): string => contactNo.toString().replace(/[^+\d]+/g, "")
 export const ValidateMobileNo = (contactNo: string|number): string|null => {
   const newN = contactNo.toString().replace(/ /g, '').replace(/-/g, '')
-  const patt = /^(\+639|09)\d{9}$/g
+  const patt = /^(\+639|09|9)\d{9}$/g
   const txt = newN.toString().match(patt)
   return txt ? txt[0]: null
 }

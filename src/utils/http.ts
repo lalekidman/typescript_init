@@ -22,10 +22,10 @@ export default (data: AxiosRequestConfig) => {
         throw new AppError(UNAUTHORIZED_REQUEST, err.response.data.error)
       } else {
         const {message = '', response = {}} = err || {}
-        throw new Error('SYSTEM ERROR')
         console.log('message: ', message)
         console.log('status: ', response.status)
         console.log('body: ', response.data)
+        throw new Error('SYSTEM ERROR')
       }
     })
 } 

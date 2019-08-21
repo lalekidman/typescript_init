@@ -33,3 +33,20 @@ export const INALID_VALUE = {
   error: 'INALID_VALUE',
   source: ''
 }
+
+
+export const INVALID_ACCESS_TOKEN_FORMAT = {
+  statusCode: 290,
+  error: 'INVALID_ACCESS_TOKEN_FORMAT',
+  source: 'Access token is required or please check if the token format is correct.'
+}
+export const ACCESS_TOKEN_EXPIRED = {
+  statusCode: 291,
+  error: 'ACCESS_TOKEN_EXPIRED',
+  source: 'token is expired.'
+}
+export const INVALID_EMPLOYEE_LEVEL = {
+  statusCode: 292,
+  error: 'INVALID_EMPLOYEE_LEVEL',
+  source: ''
+}
