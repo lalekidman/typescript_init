@@ -10,12 +10,7 @@ export interface RerservationTimeSlots {
   availableDays: number[]
   timeLists: TimeLists[]
 }
-export interface DisplayedQueue {
-  bookingId: string
-  queueGroupId: string
-  bookingNo: string
-  source?: string
-}
+
 export interface Gallery {
   _id: string
   imageUrl: string
@@ -26,12 +21,13 @@ export interface SocialLinks {
   url: string
   type: string
 }
-export interface OperationHours {
-  _id: string
+export interface IOperationHours {
+  _id?: string
   startValue: number
   endValue: number
   enabled: boolean
   day: number
+  isWholeDay: boolean
   [key: number]: number
 }
 export interface TimeSlotLists {
@@ -71,12 +67,15 @@ export interface IPrintingDetails {
   qrLink: string
 }
 export default interface ISetting extends _init {
+  isWeeklyOpened: boolean
+  counter: number
+  totalQueueGroup: number
   tvDisplayType: string
+  branchId: string
   socialLinks: Array<SocialLinks>
   modules: Array<string>
-  operationHours: Array<OperationHours>
+  operationHours: Array<IOperationHours>
   gallery: Array<Gallery>
-  displayedQueue: DisplayedQueue
   reservationTimeSlots: RerservationTimeSlots
   printingDetails: IPrintingDetails
   smsConfig: ISmsConfig

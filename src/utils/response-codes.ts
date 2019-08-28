@@ -50,3 +50,34 @@ export const INVALID_EMPLOYEE_LEVEL = {
   error: 'INVALID_EMPLOYEE_LEVEL',
   source: ''
 }
+
+export const FETCH_BRANCH_LIST_FAILED = {
+  statusCode: 1501,
+  error: 'FETCH_BRANCH_LIST_FAILED',
+  source: ''
+}
+export const FETCH_BRANCH_DETAILS_FAILED = {
+  statusCode: 1502,
+  error: 'FETCH_BRANCH_DETAILS_FAILED',
+  source: ''
+}
+export const ADD_BRANCH_FAILED = {
+  statusCode: 1503,
+  error: 'ADD_BRANCH_FAILED',
+  source: ''
+}
+export const UPDATE_BRANCH_FAILED = {
+  statusCode: 1504,
+  error: 'UPDATE_BRANCH_FAILED',
+  source: ''
+}
+export const SUSPEND_BRANCH_FAILED = {
+  statusCode: 1505,
+  error: 'SUSPEND_BRANCH_FAILED',
+  source: ''
+}
+export const EMAIL_ALREADY_EXISTS = {
+  statusCode: 1510,
+  error: 'EMAIL_ALREADY_EXISTS',
+  source: ''
+}

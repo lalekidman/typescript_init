@@ -1,7 +1,7 @@
 import {Schema, Document, model} from 'mongoose'
-import {default as BusinessBranches} from '../interfaces/branches'
+import IBranch from '../interfaces/branches'
 //import Logs from '../class/logs';
-export interface IBusinessBranchesModel extends Document, BusinessBranches {}
+export interface IBranchModel extends Document, IBranch {}
 const socialLinksSchema = new Schema({
   id: {
     type: String,
@@ -21,11 +21,11 @@ export const ModelSchema:Schema = new Schema({
     type: String,
     default: ''
   },
-  id: {
-    type: String,
-    default: ''
-  },
   branchName: {
+    type: String,
+    default: null
+  },
+  branchId: {
     type: String,
     default: null
   },
@@ -33,19 +33,9 @@ export const ModelSchema:Schema = new Schema({
     type: String,
     default: null
   },
-  businessNameId: {
+  partnerId: {
     type: String,
-    default: null,
-    ref: 'business_names'
-  },
-  businessPartnerId: {
-    type: String,
-    default: null,
-    ref: 'business_partners'
-  },
-  bannerUrl: {
-    type: String,
-    default: ''
+    default: null
   },
   avatarUrl: {
     type: String,
@@ -62,18 +52,6 @@ export const ModelSchema:Schema = new Schema({
       1, 2, 3
     ]
   },
-  counter: {
-    type: Number,
-    default: 0
-  },
-  autoAssignQueue: {
-    type: Boolean,
-    default: false
-  },
-  subscriptionPlan: {
-    type: String,
-    default: ''
-  },
   noOfDevices: {
     type: Number,
     default: 0
@@ -88,15 +66,7 @@ export const ModelSchema:Schema = new Schema({
   },
   isSuspended: {
     type: Boolean,
-    default: true
-  },
-  isWeeklyOpened: {
-    type: Boolean,
-    default: true
-  },
-  tvDisplayType: {
-    type: String,
-    default: 'queue'
+    default: false
   },
   about: {
     type: String,
@@ -140,116 +110,6 @@ export const ModelSchema:Schema = new Schema({
       default: ''
     }
   },
-  operationHours: [
-    {
-      _id: {
-        type: String,
-        default: ''
-      },
-      startValue: {
-        type: Number,
-        default: 0
-      },
-      endValue: {
-        type: Number,
-        default: 0
-      },
-      enabled: {
-        type: Boolean,
-        default: false
-      },
-      day: {
-        type: Number,
-        default: null
-      },
-      isWholeDay: {
-        type: Boolean,
-        default: false
-      }
-    }
-  ],
-  gallery: [
-    {
-      _id: {
-        type: String,
-        default: ''
-      },
-      imageUrl: {
-        type: String,
-        default: ''
-      },
-      createdAt: {
-        type: Number,
-        default: Date.now()
-      }
-    }
-  ],
-  reservationTimeSlots: {
-    availableDays: [
-      {
-        type: Number,
-        default: 0
-      }
-    ],
-    timeLists: [
-      {
-        capacity: {
-          type: Number,
-          default: 0
-        },
-        value: {
-          type: Number,
-          default: 0
-        },
-        id: {
-          type: String,
-          default: ''
-        },
-        createdAt: {
-          type: Number,
-          default: Date.now()
-        }
-      }
-    ]
-  },
-  reservationSettings: {
-    cutOffHours: {
-      type: Number,
-      default: 3
-    },
-    timeSlots: [
-      {
-        _id: {
-          type: String,
-          default: ''
-        },
-        day: {
-          type: Number,
-          default: 0
-        },
-        lists: [
-          {
-            capacity: {
-              type: Number,
-              default: 0
-            },
-            value: {
-              type: Number,
-              default: 0
-            },
-            _id: {
-              type: String,
-              default: ''
-            },
-            createdAt: {
-              type: Number,
-              default: Date.now()
-            }
-          }
-        ]
-      }
-    ]
-  },
   contacts: [
     {
       _id: {
@@ -270,14 +130,6 @@ export const ModelSchema:Schema = new Schema({
       }
     }
   ],
-  modules: [
-    {
-      type: String
-    }
-  ],
-  socialLinks: [
-    socialLinksSchema
-  ],
   address: {
     street: {
       type: String,
@@ -295,64 +147,6 @@ export const ModelSchema:Schema = new Schema({
       type: String,
       default: ''
     },
-  },
-  printingDetails: {
-    status: {
-      type: Boolean,
-      default: false
-    },
-    qrDesc: {
-      type: String,
-      default: ''
-    },
-    qrLink: {
-      type: String,
-      default: ''
-    }
-  },
-  smsSettings: {
-    status: {
-      type: Boolean,
-      default: true
-    },
-    notifyNo: {
-      type: Number,
-      default: 3
-    },
-    costValue: {
-      type: Number,
-      default: 0.40
-    }
-  },
-  smsConfig: {
-    number: {
-      type: Number,
-      default: 0
-    },
-    status: {
-      type: Boolean,
-      default: true
-    }
-  },
-  smsCredit: {
-    consumed: {
-      type: Number,
-      default: 0
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  seatsCapacity: {
-    min: {
-      type: Number,
-      default: 0
-    },
-    max: {
-      type: Number,
-      default: 0
-    }
   },
   location: {
     type: {
@@ -378,4 +172,4 @@ export const ModelSchema:Schema = new Schema({
   }
 })
 //new Logs(ModelSchema, 'branches')
-export default model<IBusinessBranchesModel>("branches", ModelSchema);
+export default model<IBranchModel>("branches", ModelSchema);

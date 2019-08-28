@@ -15,6 +15,12 @@ export interface ILocation {
   location: string
   coordinates: number[]
 }
+export interface IDisplayedQueue {
+  bookingId: string
+  queueGroupId: string
+  bookingNo: string
+  source?: string
+}
 export default interface BusinessBranches extends _init{
   branchName: string
   email: string
@@ -44,4 +50,5 @@ export default interface BusinessBranches extends _init{
   contacts: Array<IContactList>
   address: IAddress
 
+  displayedQueue: IDisplayedQueue
 }

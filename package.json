@@ -4,6 +4,7 @@
   "description": "Total Philippines SMS Ordering System that client can place a order by texting the gateway.",
   "main": "index.js",
   "scripts": {
+    "start": "nodemon -L dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Darryl Fabian",

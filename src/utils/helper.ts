@@ -1,5 +1,8 @@
 import * as moment from 'moment'
 import { IRequest} from './interfaces';
+import { FORM_DATA_TYPES } from './constants';
+import AppError from './app-error';
+import * as RC from './response-codes'
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -49,5 +52,50 @@ export const getClientInfo = (req: IRequest2) => {
     geoInfo: <IGeoInfo> req.geoInfo || {},
     ip: req.clientIp || '0.0.0.0',
     userId: req.user ? req.user._id : "b7a8823f-41df-4845-ba54-cbb168bfcb28"
+  }
+}
+interface IFormDataValidator {
+  fieldName: string
+  type: number
+  value: any
+}
+const FormDataVariableTypes = [
+  {
+    formType: FORM_DATA_TYPES.STRING,
+    value: 'string',
+  },
+  {
+    formType: FORM_DATA_TYPES.NUMBER,
+    value: 'number',
+  },
+  {
+    formType: FORM_DATA_TYPES.BOOLEAN,
+    value: 'boolean',
+  },
+  {
+    formType: FORM_DATA_TYPES.ARRAY,
+    value: 'array',
+  },
+]
+export const formDataValidator = async (formdata: IFormDataValidator[]) => {
+  for (let x = 0; x < formdata.length; x++) {
+    FormDataVariableTypes.forEach(v => {
+      const dataType = typeof(formdata[x].value)
+      if (Array.isArray(formdata[x].value)) {
+        if (formdata[x].type !== FORM_DATA_TYPES.ARRAY) {
+          throw new AppError(RC.INVALID_VARIABLE_TYPE, `${formdata[x].fieldName} should be a ${v.value}. Detect: array.`)
+        }
+      } else {
+        if (formdata[x].type === FORM_DATA_TYPES.ARRAY) {
+          throw new AppError(RC.INVALID_VARIABLE_TYPE, `${formdata[x].fieldName} should be a array. Detect: ${dataType}.`)
+        } else if (formdata[x].type === FORM_DATA_TYPES.NUMBER) {
+          if (isNaN(formdata[x].value)) {
+            throw new AppError(RC.INVALID_VARIABLE_TYPE, `${formdata[x].fieldName} should be a number. Detect: ${dataType}.`)
+          }
+        } else if (formdata[x].type === v.formType && dataType !== v.value) {
+          throw new AppError(RC.INVALID_VARIABLE_TYPE, `${formdata[x].fieldName} should be a ${v.value}. Detect: ${dataType}.`)
+        }
+      }
+    })
   }
 }
