@@ -69,6 +69,14 @@ class Queries {
       }
     })
   }
+  /**
+   * 
+   * @param id id or document of the collection
+   * check if the id is string or collection, if string will perform a query else, return the document.
+   */
+  public findById <T> (id: string | (T | Document)): Promise<T> {
+    return Promise.resolve(<any> (typeof(id) === 'string' ? this.ModelSchema.findOne({_id: id}) : id))
+  }
   public upload (filepath: string, file: any): Promise<UploadedImage> {
     return Promise.resolve( file ? s3.upload(filepath, file) : {imageUrl: ''})
   }
