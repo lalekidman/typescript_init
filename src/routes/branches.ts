@@ -1,6 +1,7 @@
 import {Request, Response, NextFunction, Router} from 'express'
 import Branches from '../class/branches'
-import BranchSettingModel from '../models/branches'
+import BranchSettingModel from '../models/settings'
+import BranchModel from '../models/branches'
 import BranchSettingsRoute from './settings'
 import * as HttpStatus from 'http-status-codes' 
 import AppError from '../utils/app-error';
@@ -42,6 +43,35 @@ export default class AccountRoute {
     })
   }
   /**
+   * get branch data by branchId
+   */
+  public findByBranchId = async (req: IRequest, res: Response, next: NextFunction) => {
+    const {branchId = ''} = req.query
+    return BranchModel
+      .findOne({
+        branchId: branchId.toString().trim()
+      })
+      .then(async (branch) => {
+        if (!branch) {
+          throw new Error('No branch found.')
+        }
+        const settings = await BranchSettingModel.findOne({
+          branchId: branchId
+        })
+        res.status(HttpStatus.OK).send({
+          ...JSON.parse(JSON.stringify(branch)),
+          settings: settings
+        })
+      })
+      .catch(err => {
+        if (err.statusCode) {
+          res.status(HttpStatus.BAD_REQUEST).send(err)
+        } else {
+          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+        }
+      })
+  }
+  /**
    * get branch data by id
    */
   public findOne = async (req: IRequest, res: Response, next: NextFunction) => {
@@ -66,6 +96,7 @@ export default class AccountRoute {
     }
   }
   public initializeRoutes () {
+    this.app.get('/branchId', )
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.get('/:branchId', this.findOne)
     this.app.patch('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
