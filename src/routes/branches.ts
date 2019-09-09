@@ -97,8 +97,8 @@ export default class AccountRoute {
   }
   public initializeRoutes () {
     this.app.get('/branchId', this.findByBranchId)
-    this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.get('/:branchId', this.findOne)
+    this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.patch('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     return this.app
   }
