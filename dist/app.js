@@ -13,6 +13,8 @@ const cookieParser = require("cookie-parser");
 const flash = require("connect-flash");
 const socketio = require("socket.io");
 const http_1 = require("http");
+const settings_1 = require("./routes/settings");
+const partner_1 = require("./routes/partner");
 const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH';
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'
@@ -21,13 +23,15 @@ class App {
     constructor() {
         this.app = express();
         this.HttpServer = http_1.createServer(this.app);
-        this.Port = process.env['PORT'] || 346;
-        this.DBURI = `mongodb://${process.env.DBURI}/SAMPLE_DB`;
-        console.log('db: ', this.DBURI);
+        this.Port = process.env['PORT'] || 3000;
+        this.DBURI = `mongodb://${process.env.DB_HOST}/kyoodb_partner`;
+        console.log('db urdxi: ', this.DBURI);
         this._init();
     }
-    monthRoutes() {
+    mountRoutes() {
         // Where the router import
+        this.app.use('/settings', new settings_1.default().initializeRoutes());
+        this.app.use('/', new partner_1.default().initializeRoutes());
     }
     initSocket(server) {
         this.io = socketio(server);
@@ -82,7 +86,7 @@ class App {
             }
             next();
         });
-        this.monthRoutes();
+        this.mountRoutes();
         this.initMongodb();
     }
 }

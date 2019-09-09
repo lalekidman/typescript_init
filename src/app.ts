@@ -15,6 +15,9 @@ import flash = require('connect-flash')
 import {Server as SocketServer} from 'socket.io'
 import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
+
+import SettingsRoute from './routes/settings'
+import PartnerRoute from './routes/partner'
 const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH'
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'
@@ -31,13 +34,15 @@ class App {
   constructor () {
     this.app = express()
     this.HttpServer = createServer(this.app)
-    this.Port = process.env['PORT'] || 346
-    this.DBURI = `mongodb://${process.env.DBURI}/SAMPLE_DB`
-    console.log('db: ', this.DBURI)
+    this.Port = process.env['PORT'] || 3000
+    this.DBURI = `mongodb://${process.env.DB_HOST}/kyoodb_partner`
+    console.log('db urdxi: ', this.DBURI)
     this._init()
   }
   private mountRoutes (): void {
     // Where the router import
+    this.app.use('/settings', new SettingsRoute().initializeRoutes())
+    this.app.use('/', new PartnerRoute().initializeRoutes())
   }
   private initSocket (server: any):void {
     this.io = socketio(server)

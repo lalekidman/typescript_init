@@ -50,3 +50,34 @@ export const INVALID_EMPLOYEE_LEVEL = {
   error: 'INVALID_EMPLOYEE_LEVEL',
   source: ''
 }
+
+export const FETCH_PARTNER_LIST_FAILED = {
+  statusCode: 10101,
+  error: 'FETCH_PARTNER_LIST_FAILED',
+  source: ''
+}
+export const FETCH_PARTNER_DETAILS_FAILED = {
+  statusCode: 10102,
+  error: 'FETCH_PARTNER_DETAILS_FAILED',
+  source: ''
+}
+export const ADD_PARTNER_FAILED = {
+  statusCode: 10103,
+  error: 'ADD_PARTNER_FAILED',
+  source: ''
+}
+export const UPDATE_PARTNER_FAILED = {
+  statusCode: 10104,
+  error: 'UPDATE_PARTNER_FAILED',
+  source: ''
+}
+export const REMOVE_PARTNER_FAILED = {
+  statusCode: 10105,
+  error: 'REMOVE_PARTNER_FAILED',
+  source: ''
+}
+export const SUSPEND_PARTNER_FAILED = {
+  statusCode: 10106,
+  error: 'SUSPEND_PARTNER_FAILED',
+  source: ''
+}
