@@ -56,7 +56,7 @@ export default class AccountRoute {
           throw new Error('No branch found.')
         }
         const settings = await BranchSettingModel.findOne({
-          branchId: branchId
+          branchId: branch._id
         })
         res.status(HttpStatus.OK).send({
           ...JSON.parse(JSON.stringify(branch)),
@@ -96,7 +96,7 @@ export default class AccountRoute {
     }
   }
   public initializeRoutes () {
-    this.app.get('/branchId', )
+    this.app.get('/branchId', this.findByBranchId)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.get('/:branchId', this.findOne)
     this.app.patch('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
