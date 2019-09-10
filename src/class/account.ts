@@ -13,14 +13,14 @@ export default class Account {
     this.URL = `http://${process.env.ACCOUNT_SERVICE_URL}:3000`
   }
   public findOne (branchId: string) {
-    const url = `${this.URL}/${branchId}/account`
+    const url = `${this.URL}/${branchId}`
     return Http({
       url: url,
       method: 'GET'
     })
   }
   public addAccount (branchId: string, data: IAccountData) {
-    const url = `${this.URL}/${branchId}/account`
+    const url = `${this.URL}/${branchId}`
     return Http({
       url: url,
       data,
