@@ -6,14 +6,14 @@ class Account {
         this.URL = `http://${process.env.ACCOUNT_SERVICE_URL}:3000`;
     }
     findOne(branchId) {
-        const url = `${this.URL}/${branchId}/account`;
+        const url = `${this.URL}/${branchId}`;
         return http_1.default({
             url: url,
             method: 'GET'
         });
     }
     addAccount(branchId, data) {
-        const url = `${this.URL}/${branchId}/account`;
+        const url = `${this.URL}/${branchId}`;
         return http_1.default({
             url: url,
             data,

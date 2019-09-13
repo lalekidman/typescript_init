@@ -113,6 +113,7 @@ export default class BusinessBranches extends Queries {
           })
           uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : ''
           newBranch.save()
+          console.log('rr: ', newBranch)
           return {
             ...JSON.parse(JSON.stringify(newBranch)),
             settings: branchSettings

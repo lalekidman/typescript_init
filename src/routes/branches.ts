@@ -72,6 +72,34 @@ export default class AccountRoute {
       })
   }
   /**
+   * get branch lists
+   */
+  public branchList = async (req: IRequest, res: Response, next: NextFunction) => {
+    const {branchId = ''} = req.query
+    return BranchModel
+      .find({})
+      .then(async (branches) => {
+        // if (!branch) {
+        //   throw new Error('No branch found.')
+        // }
+        // const settings = await BranchSettingModel.findOne({
+        //   branchId: branch._id
+        // })
+        // res.status(HttpStatus.OK).send({
+        //   ...JSON.parse(JSON.stringify(branch)),
+        //   // settings: settings
+        // })
+        res.status(HttpStatus.OK).send(branches)
+      })
+      .catch(err => {
+        if (err.statusCode) {
+          res.status(HttpStatus.BAD_REQUEST).send(err)
+        } else {
+          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+        }
+      })
+  }
+  /**
    * get branch data by id
    */
   public findOne = async (req: IRequest, res: Response, next: NextFunction) => {
@@ -96,9 +124,10 @@ export default class AccountRoute {
     }
   }
   public initializeRoutes () {
+    this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
-    this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.get('/:branchId', this.findOne)
+    this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.patch('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     return this.app
   }

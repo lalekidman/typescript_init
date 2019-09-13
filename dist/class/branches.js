@@ -114,6 +114,7 @@ class BusinessBranches extends queries_1.default {
                 });
                 uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : '';
                 newBranch.save();
+                console.log('rr: ', newBranch);
                 return Object.assign({}, JSON.parse(JSON.stringify(newBranch)), { settings: branchSettings });
             }));
             // }).then(async () => {

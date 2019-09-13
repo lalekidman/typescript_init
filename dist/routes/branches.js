@@ -70,6 +70,35 @@ class AccountRoute {
             });
         });
         /**
+         * get branch lists
+         */
+        this.branchList = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const { branchId = '' } = req.query;
+            return branches_2.default
+                .find({})
+                .then((branches) => __awaiter(this, void 0, void 0, function* () {
+                // if (!branch) {
+                //   throw new Error('No branch found.')
+                // }
+                // const settings = await BranchSettingModel.findOne({
+                //   branchId: branch._id
+                // })
+                // res.status(HttpStatus.OK).send({
+                //   ...JSON.parse(JSON.stringify(branch)),
+                //   // settings: settings
+                // })
+                res.status(HttpStatus.OK).send(branches);
+            }))
+                .catch(err => {
+                if (err.statusCode) {
+                    res.status(HttpStatus.BAD_REQUEST).send(err);
+                }
+                else {
+                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.ADD_BRANCH_FAILED, err.message));
+                }
+            });
+        });
+        /**
          * get branch data by id
          */
         this.findOne = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
@@ -96,9 +125,10 @@ class AccountRoute {
         this.app = express_1.Router({ mergeParams: true });
     }
     initializeRoutes() {
+        this.app.get('/', this.branchList);
         this.app.get('/branchId', this.findByBranchId);
-        this.app.post('/:partnerId', multiPartMiddleWare, this.add);
         this.app.get('/:branchId', this.findOne);
+        this.app.post('/:partnerId', multiPartMiddleWare, this.add);
         this.app.patch('/:branchId/settings', new settings_2.default().initializeRoutes());
         return this.app;
     }
