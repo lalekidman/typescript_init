@@ -18,7 +18,7 @@ class Queries {
     }
     initilize(data) {
         const id = uuid();
-        return new this.ModelSchema(Object.assign(data, { id, _id: id, createdAt: Date.now(), updatedAt: Date.now() }));
+        return new this.ModelSchema(Object.assign(data, { id, _id: id, branchId: id, createdAt: Date.now(), updatedAt: Date.now() }));
     }
     setErrorMsg(error) {
         return this.errorMsg = error;
@@ -46,6 +46,7 @@ class Queries {
         });
     }
     upload(filepath, file) {
+        // @ts-ignore
         return Promise.resolve(file ? s3.upload(filepath, file) : { imageUrl: '' });
     }
     uploadMany(filepath, files) {

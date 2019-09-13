@@ -101,6 +101,7 @@ class BusinessBranches extends queries_1.default {
                         coordinates: coordinates
                     }
                 }));
+                console.log(newBranch);
                 const branchSettings = JSON.parse(JSON.stringify((yield new settings_1.default(newBranch._id).save(data))));
                 const uploader = yield this.upload(filePath.concat(newBranch._id), avatar);
                 const adminAccount = yield new account_1.default().addAccount(newBranch._id, {

@@ -100,6 +100,7 @@ export default class BusinessBranches extends Queries {
               coordinates: coordinates
             }
           }))
+          console.log(newBranch)
           const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
           const uploader = await this.upload(filePath.concat(newBranch._id), avatar)
           const adminAccount = await new Account().addAccount(newBranch._id, {

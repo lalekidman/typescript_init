@@ -5,7 +5,7 @@ class Partner {
     constructor() {
     }
     findOne(partnerId) {
-        const url = `http://${process.env.PARTNER_SERVICE_URL}:3000/${partnerId}`;
+        const url = `http://${process.env.PARTNER_SERVICE_URL}:5007/${partnerId}`;
         return http_1.default({
             url: url,
             method: 'GET'
