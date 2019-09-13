@@ -67,7 +67,7 @@ export default class AccountRoute {
         if (err.statusCode) {
           res.status(HttpStatus.BAD_REQUEST).send(err)
         } else {
-          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.FETCH_BRANCH_DETAILS_FAILED, err.message))
         }
       })
   }
@@ -95,7 +95,7 @@ export default class AccountRoute {
         if (err.statusCode) {
           res.status(HttpStatus.BAD_REQUEST).send(err)
         } else {
-          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.FETCH_BRANCH_LIST_FAILED, err.message))
         }
       })
   }
@@ -119,7 +119,7 @@ export default class AccountRoute {
       if (err.statusCode) {
         res.status(HttpStatus.BAD_REQUEST).send(err)
       } else {
-        res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+        res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.FETCH_BRANCH_DETAILS_FAILED, err.message))
       }
     }
   }

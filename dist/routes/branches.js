@@ -65,7 +65,7 @@ class AccountRoute {
                     res.status(HttpStatus.BAD_REQUEST).send(err);
                 }
                 else {
-                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.ADD_BRANCH_FAILED, err.message));
+                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.FETCH_BRANCH_DETAILS_FAILED, err.message));
                 }
             });
         });
@@ -94,7 +94,7 @@ class AccountRoute {
                     res.status(HttpStatus.BAD_REQUEST).send(err);
                 }
                 else {
-                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.ADD_BRANCH_FAILED, err.message));
+                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.FETCH_BRANCH_LIST_FAILED, err.message));
                 }
             });
         });
@@ -117,7 +117,7 @@ class AccountRoute {
                     res.status(HttpStatus.BAD_REQUEST).send(err);
                 }
                 else {
-                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.ADD_BRANCH_FAILED, err.message));
+                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.FETCH_BRANCH_DETAILS_FAILED, err.message));
                 }
             }
         });
