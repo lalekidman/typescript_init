@@ -9,6 +9,13 @@ class Partner {
         return http_1.default({
             url: url,
             method: 'GET'
+        })
+            .then((response) => {
+            const { data, status = '', statusText = '' } = response;
+            if (data.success) {
+                return data.data;
+            }
+            return {};
         });
     }
 }

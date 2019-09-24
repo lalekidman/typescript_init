@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const branches_1 = require("../class/branches");
+const partner_1 = require("../class/partner");
 const settings_1 = require("../models/settings");
 const branches_2 = require("../models/branches");
 const settings_2 = require("./settings");
@@ -55,10 +56,11 @@ class AccountRoute {
                 if (!branch) {
                     throw new Error('No branch found.');
                 }
+                const partner = yield new partner_1.default().findOne(branch.partnerId);
                 const settings = yield settings_1.default.findOne({
-                    branchId: branch._id
+                    branchId: branchId
                 });
-                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { settings: settings }));
+                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
             }))
                 .catch(err => {
                 if (err.statusCode) {
@@ -107,10 +109,11 @@ class AccountRoute {
                 const branch = yield new branches_1.default().findOne({
                     _id: branchId
                 });
+                const partner = yield new partner_1.default().findOne(branch.partnerId);
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
-                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { settings: settings }));
+                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
             }
             catch (err) {
                 if (err.statusCode) {
