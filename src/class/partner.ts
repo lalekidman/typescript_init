@@ -8,5 +8,12 @@ export default class Partner {
       url: url,
       method: 'GET'
     })
+    .then((response: any) => {
+      const {data, status = '', statusText = ''} = response
+      if (data.success) {
+        return data.data
+      }
+      return {}
+    })
   }
 }

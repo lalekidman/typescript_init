@@ -1,5 +1,6 @@
 import {Request, Response, NextFunction, Router} from 'express'
 import Branches from '../class/branches'
+import Partner from '../class/partner'
 import BranchSettingModel from '../models/settings'
 import BranchModel from '../models/branches'
 import BranchSettingsRoute from './settings'
@@ -55,11 +56,14 @@ export default class AccountRoute {
         if (!branch) {
           throw new Error('No branch found.')
         }
+        const partner = await new Partner().findOne(branch.partnerId)
         const settings = await BranchSettingModel.findOne({
-          branchId: branch._id
+          branchId: branchId
         })
         res.status(HttpStatus.OK).send({
           ...JSON.parse(JSON.stringify(branch)),
+          partnerName: partner.name,
+          partnerAvatarUrl: partner.avatarUrl,
           settings: settings
         })
       })
@@ -67,7 +71,7 @@ export default class AccountRoute {
         if (err.statusCode) {
           res.status(HttpStatus.BAD_REQUEST).send(err)
         } else {
-          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.FETCH_BRANCH_DETAILS_FAILED, err.message))
         }
       })
   }
@@ -95,7 +99,7 @@ export default class AccountRoute {
         if (err.statusCode) {
           res.status(HttpStatus.BAD_REQUEST).send(err)
         } else {
-          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+          res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.FETCH_BRANCH_LIST_FAILED, err.message))
         }
       })
   }
@@ -108,18 +112,21 @@ export default class AccountRoute {
       const branch = await new Branches().findOne({
         _id: branchId
       })
+      const partner = await new Partner().findOne(branch.partnerId)
       const settings = await BranchSettingModel.findOne({
         branchId: branchId
       })
       res.status(HttpStatus.OK).send({
         ...JSON.parse(JSON.stringify(branch)),
+        partnerName: partner.name,
+        partnerAvatarUrl: partner.avatarUrl,
         settings: settings
       })
     } catch (err) {
       if (err.statusCode) {
         res.status(HttpStatus.BAD_REQUEST).send(err)
       } else {
-        res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.ADD_BRANCH_FAILED, err.message))
+        res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.FETCH_BRANCH_DETAILS_FAILED, err.message))
       }
     }
   }
