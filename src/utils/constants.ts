@@ -13,3 +13,18 @@ export enum ACCOUNT_ROLE_LEVEL {
   SUPER_ADMIN = 1,
   ADMIN = 2
 }
+
+export const FEATURES = [
+  {
+    "key": 1,
+    "value": 'Enable Skip Queue Function'
+  },
+  {
+    "key": 2,
+    "value": 'Enable Return Queue Function'
+  },
+  {
+    "key": 3,
+    "value": 'Send SMS to customer when Notify is tapped/clicked'
+  }
+]

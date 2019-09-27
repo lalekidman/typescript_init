@@ -13,6 +13,7 @@ import Account from './account'
 import Settings from './settings'
 import {default as KyooToken} from '../utils/token'
 import { formDataValidator } from '../utils/helper';
+import QueueSettingsModel, {IQueueSettingsModel} from '../models/queue-settings'
 
 export {IBranchModel}
 const filePath = 'avatars/branches/'
@@ -114,6 +115,13 @@ export default class BusinessBranches extends Queries {
           uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : ''
           newBranch.save()
           console.log('rr: ', newBranch)
+          // create branch queue settings
+          const branchQueueSettings: IQueueSettingsModel = new QueueSettingsModel()
+          const queueSettingsId = uuid()
+          branchQueueSettings.branchId = newBranch._id
+          branchQueueSettings._id = queueSettingsId
+          branchQueueSettings.id = queueSettingsId
+          branchQueueSettings.save()
           return {
             ...JSON.parse(JSON.stringify(newBranch)),
             settings: branchSettings

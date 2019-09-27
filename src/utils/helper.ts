@@ -3,6 +3,7 @@ import { IRequest} from './interfaces';
 import { FORM_DATA_TYPES } from './constants';
 import AppError from './app-error';
 import * as RC from './response-codes'
+const fs = require('fs')
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -98,4 +99,35 @@ export const formDataValidator = async (formdata: IFormDataValidator[]) => {
       }
     })
   }
+}
+
+// check Modules/Settings
+export const validateModules = (modules: Array<number | any>, moduleConstants: Array<any>): boolean => {
+  if (modules.length === 0) {
+    return true
+  }
+  let validOptions = []
+  for (let ii in moduleConstants) {
+    validOptions.push(moduleConstants[ii].key)
+  }
+  // prevents duplication of array elements
+  let checkerArray: Array<number> = []
+  for (let i in modules) {
+    if (checkerArray.indexOf(modules[i]) !== -1) {
+      return false
+    }
+    checkerArray.push(modules[i])
+    if (validOptions.indexOf(modules[i]) === -1) {
+      return false
+    }
+  }
+  return true
+}
+
+export function getFileSize(file: any) {
+  const stats = fs.statSync(file)
+  const fileSizeInBytes = stats.size
+  //Convert the file size to megabytes (optional)
+  const fileSizeInMegaBytes = fileSizeInBytes / 1000000.0
+  return fileSizeInMegaBytes
 }

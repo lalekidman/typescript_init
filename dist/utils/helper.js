@@ -12,6 +12,7 @@ const moment = require("moment");
 const constants_1 = require("./constants");
 const app_error_1 = require("./app-error");
 const RC = require("./response-codes");
+const fs = require('fs');
 exports.TrimMobileNo = (contactNo) => contactNo.toString().replace(/[^+\d]+/g, "");
 exports.ValidateMobileNo = (contactNo) => {
     const newN = contactNo.toString().replace(/ /g, '').replace(/-/g, '');
@@ -90,3 +91,33 @@ exports.formDataValidator = (formdata) => __awaiter(this, void 0, void 0, functi
         });
     }
 });
+// check Modules/Settings
+exports.validateModules = (modules, moduleConstants) => {
+    if (modules.length === 0) {
+        return true;
+    }
+    let validOptions = [];
+    for (let ii in moduleConstants) {
+        validOptions.push(moduleConstants[ii].key);
+    }
+    // prevents duplication of array elements
+    let checkerArray = [];
+    for (let i in modules) {
+        if (checkerArray.indexOf(modules[i]) !== -1) {
+            return false;
+        }
+        checkerArray.push(modules[i]);
+        if (validOptions.indexOf(modules[i]) === -1) {
+            return false;
+        }
+    }
+    return true;
+};
+function getFileSize(file) {
+    const stats = fs.statSync(file);
+    const fileSizeInBytes = stats.size;
+    //Convert the file size to megabytes (optional)
+    const fileSizeInMegaBytes = fileSizeInBytes / 1000000.0;
+    return fileSizeInMegaBytes;
+}
+exports.getFileSize = getFileSize;

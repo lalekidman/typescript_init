@@ -127,10 +127,52 @@ class AccountRoute {
         // initialize redis
         this.app = express_1.Router({ mergeParams: true });
     }
+    /**
+     * ** MIDDLEWARE ** update branch data validation
+     */
+    validateOnUpdateAddress(req, res, next) {
+        let { street, province, city, zipcode } = req.body;
+        const validationError = new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '** @request body: {street:string, province:string, city:string, zipcode:number(length=4)}');
+        // validate request body
+        if (typeof (street) !== 'string' || typeof (province) !== 'string' || typeof (city) !== 'string' || typeof (zipcode) !== 'number') {
+            return res.status(HttpStatus.BAD_REQUEST).json(validationError);
+        }
+        if (!street || !province || !city || zipcode.toString().length !== 4) {
+            return res.status(HttpStatus.BAD_REQUEST).json(validationError);
+        }
+        return next();
+    }
+    /**
+     * update branch address
+     */
+    updateAddress(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { branchId } = req.params;
+            // extract data from request body
+            let { street, province, city, zipcode } = req.body;
+            // update branch address
+            branches_2.default.findOneAndUpdate({ _id: branchId }, {
+                address: {
+                    street,
+                    province,
+                    city,
+                    zipcode
+                }
+            }, { new: true })
+                .then((updatedBranch) => {
+                res.status(HttpStatus.OK).json({ _id: updatedBranch._id, address: updatedBranch.address });
+            })
+                .catch((error) => {
+                console.log(error);
+                res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error);
+            });
+        });
+    }
     initializeRoutes() {
         this.app.get('/', this.branchList);
         this.app.get('/branchId', this.findByBranchId);
         this.app.get('/:branchId', this.findOne);
+        this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress);
         this.app.post('/:partnerId', multiPartMiddleWare, this.add);
         this.app.patch('/:branchId/settings', new settings_2.default().initializeRoutes());
         return this.app;

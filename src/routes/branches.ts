@@ -2,7 +2,7 @@ import {Request, Response, NextFunction, Router} from 'express'
 import Branches from '../class/branches'
 import Partner from '../class/partner'
 import BranchSettingModel from '../models/settings'
-import BranchModel from '../models/branches'
+import BranchModel, { IBranchModel } from '../models/branches'
 import BranchSettingsRoute from './settings'
 import * as HttpStatus from 'http-status-codes' 
 import AppError from '../utils/app-error';
@@ -130,10 +130,57 @@ export default class AccountRoute {
       }
     }
   }
+  /**
+   * ** MIDDLEWARE ** update branch data validation
+   */
+  private validateOnUpdateAddress(req: IRequest, res: Response, next: NextFunction) {
+    let {street, province, city, zipcode} = req.body
+    const validationError = new AppError(
+      RC.UPDATE_BRANCH_FAILED,
+      '** @request body: {street:string, province:string, city:string, zipcode:number(length=4)}'
+    )
+    // validate request body
+    if (typeof(street) !== 'string' || typeof(province) !== 'string' || typeof(city) !== 'string' || typeof(zipcode) !== 'number') {
+      return res.status(HttpStatus.BAD_REQUEST).json(validationError)
+    }
+    if (!street || !province || !city || zipcode.toString().length !== 4) {
+      return res.status(HttpStatus.BAD_REQUEST).json(validationError)
+    }
+    return next()
+  }
+  /**
+   * update branch address
+   */
+  private async updateAddress(req: IRequest, res: Response) {
+    const {branchId} = req.params
+    // extract data from request body
+    let {street, province, city, zipcode} = req.body
+    // update branch address
+    BranchModel.findOneAndUpdate(
+      {_id: branchId},
+      {
+        address: {
+          street,
+          province,
+          city,
+          zipcode
+        }
+      },
+      {new: true}
+    )
+    .then((updatedBranch: any) => {
+      res.status(HttpStatus.OK).json({_id: updatedBranch._id, address: updatedBranch.address})
+    })
+    .catch((error) => {
+      console.log(error)
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
+    })
+  }
   public initializeRoutes () {
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
+    this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     this.app.patch('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     return this.app

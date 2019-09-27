@@ -49,6 +49,5 @@ export default interface BusinessBranches extends _init{
   location: ILocation
   contacts: Array<IContactList>
   address: IAddress
-
   displayedQueue: IDisplayedQueue
 }

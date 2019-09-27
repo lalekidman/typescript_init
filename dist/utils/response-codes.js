@@ -80,3 +80,30 @@ exports.EMAIL_ALREADY_EXISTS = {
     error: 'EMAIL_ALREADY_EXISTS',
     source: ''
 };
+exports.NOT_FOUND_BRANCH_QUEUE_SETTINGS = {
+    statusCode: 160404,
+    error: 'NOT_FOUND_BRANCH_QUEUE_SETTINGS',
+    source: ''
+};
+exports.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS = {
+    statusCode: 160400,
+    error: 'BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS',
+    source: '** requestBody {features:array, hideCustomerNameField:boolean, ' +
+        'hideMobileNumberField:boolean, autoSms:boolean, queuesAway:number, queueTags=array}'
+};
+exports.NOT_FOUND_QUEUE_TAGS = {
+    statusCode: 161404,
+    error: 'NOT_FOUND_QUEUE_TAGS',
+    source: ''
+};
+exports.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS = {
+    statusCode: 163404,
+    error: 'NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS',
+    source: ''
+};
+exports.BAD_REQUEST_BRANCH_ADVERTISEMENT_SETTINGS = {
+    statusCode: 163400,
+    error: 'BAD_REQUEST_BRANCH_ADVERTISEMENT_SETTINGS',
+    source: '** requestBody {enableCustomQr=boolean, customQrLink=string, imagePreviewDuration=number,' +
+        'gallery=array}'
+};

@@ -1,0 +1,149 @@
+import {Request, Response, NextFunction, Router} from 'express'
+import BranchSettings from '../class/settings'
+import * as HttpStatus from 'http-status-codes' 
+import AppError from '../utils/app-error';
+import * as RC from '../utils/response-codes'
+import { IRequest, IUpdateBranchAdvertisementSettings } from '../utils/interfaces';
+const multiPartMiddleWare = require('connect-multiparty')()
+import {validateModules, getFileSize} from '../utils/helper'
+import AdvertisementSettings from '../class/advertisement-settings'
+import * as appConstants from '../utils/constants'
+import {IUpdateBranchQueueSettings} from '../utils/interfaces'
+import uuid = require('uuid');
+const advertisementSettings: AdvertisementSettings = new AdvertisementSettings()
+export default class Route {
+  /**
+   * 
+   * @param client redis client for token auth
+   */
+  private readonly app: Router
+
+  constructor () {
+    // initialize redis
+    this.app = Router({mergeParams: true})
+  }
+
+  /**
+   * ** MIDDLEWARE ** on update advertisement settings 
+   */
+  private onUpdateAdvertisementSettings(req: IRequest, res: Response, next: NextFunction) {
+    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+    // verify request.body
+    if (typeof(enableCustomQr) !== 'boolean' ||
+    typeof(customQrLink) !== 'string' ||
+    typeof(imagePreviewDuration) !== 'number' ||
+    !Array.isArray(advertisements)) {
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS))
+    }
+    for (let i in advertisements) {
+      if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean') {
+        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 
+          'gallery must be like: [{_id: "someIdHere", isActive:boolean}]'))
+      }
+    }
+    if (imagePreviewDuration < 3) {
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 
+        'imagePreviewDuration minimum value is 3'))
+    }
+    for (let i in adsToDelete) {
+      if (typeof(adsToDelete[i]) !== 'string') {
+        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 
+          '** request body: adsToDelete:Array<string>'))
+      }
+    }
+    next()
+  }
+
+  /**
+   * get branch Advertisement Settings
+   */
+  private getBranchAdvertisementSettings(req: IRequest, res: Response) {
+    const {branchId} = req.params
+    advertisementSettings.getBranchAdvertisementSettings(branchId)
+    .then((adSettings) => {
+      res.status(HttpStatus.OK).json(adSettings)
+    })
+    .catch((error) => {
+      res.status(HttpStatus.NOT_FOUND).json(error)
+    })
+  }
+
+  /**
+   * update branch Advertisement Settings
+   */
+  private updateBranchAdvertisementSettings(req: IRequest, res: Response) {
+    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+    const data: IUpdateBranchAdvertisementSettings = {
+      //@ts-ignore
+      enableCustomQr,
+      customQrLink,
+      imagePreviewDuration,
+      advertisements,
+      adsToDelete
+    }
+    const {branchId} = req.params
+    advertisementSettings.updateBranchAdvertisementSettings(branchId, data)
+    .then((updatedSettings) => {
+      res.status(HttpStatus.OK).json(updatedSettings)
+    })
+    .catch((error) => {
+      res.status(HttpStatus.NOT_FOUND).json(error)
+    })
+  }
+
+  /**
+   * upload to gallery
+   */
+  private uploadToGallery(req: IRequest, res: Response) {
+    const {branchId} = req.params
+    const {media} = req.files
+    const fileSize = getFileSize(media.path)
+    advertisementSettings.uploadImage(branchId, media, fileSize, 'gallery')
+    .then((updatedSettings) => {
+      res.status(HttpStatus.OK).json(updatedSettings)
+    })
+    .catch((error) => {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
+    })
+  }
+
+  /**
+   * upload media
+   */
+  private uploadToAds(req: IRequest, res: Response) {
+    const {branchId} = req.params
+    const {media} = req.files
+    const fileSize = getFileSize(media.path)
+    advertisementSettings.uploadImage(branchId, media, fileSize, 'advertisements')
+    .then((updatedSettings) => {
+      res.status(HttpStatus.OK).json(updatedSettings)
+    })
+    .catch((error) => {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
+    })
+  }
+
+  /**
+   * delete media from gallery
+   */
+  private deleteMedia(req: IRequest, res: Response) {
+    const {branchId} = req.params
+    const {mediaId} = req.body
+    advertisementSettings.deleteMedia(branchId, mediaId, 'gallery')
+    .then((updatedSettings) => {
+      res.status(HttpStatus.OK).json(updatedSettings)
+    })
+    .catch((error) => {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
+    })
+  }
+
+  public initializeRoutes() {
+    this.app.get('/', this.getBranchAdvertisementSettings)
+    this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
+    this.app.post('/upload-to-gallery', multiPartMiddleWare, this.uploadToGallery)
+    this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.uploadToAds)
+    this.app.delete('/delete-in-gallery', this.deleteMedia)
+    return this.app
+  }
+}

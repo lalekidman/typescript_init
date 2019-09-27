@@ -18,6 +18,7 @@ const partner_1 = require("./partner");
 const account_1 = require("./account");
 const settings_1 = require("./settings");
 const helper_1 = require("../utils/helper");
+const queue_settings_1 = require("../models/queue-settings");
 const filePath = 'avatars/branches/';
 class BusinessBranches extends queries_1.default {
     constructor() {
@@ -115,6 +116,13 @@ class BusinessBranches extends queries_1.default {
                 uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : '';
                 newBranch.save();
                 console.log('rr: ', newBranch);
+                // create branch queue settings
+                const branchQueueSettings = new queue_settings_1.default();
+                const queueSettingsId = uuid();
+                branchQueueSettings.branchId = newBranch._id;
+                branchQueueSettings._id = queueSettingsId;
+                branchQueueSettings.id = queueSettingsId;
+                branchQueueSettings.save();
                 return Object.assign({}, JSON.parse(JSON.stringify(newBranch)), { settings: branchSettings });
             }));
             // }).then(async () => {

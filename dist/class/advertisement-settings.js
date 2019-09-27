@@ -1,0 +1,168 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const settings_1 = require("../models/settings");
+const RC = require("../utils/response-codes");
+const app_error_1 = require("../utils/app-error");
+const uuid = require("uuid");
+const queries_1 = require("../utils/queries");
+class QueueSettings {
+    constructor() {
+        this.Queries = new queries_1.default(settings_1.default);
+    }
+    /**
+     * get ad settings of a specific branch
+     */
+    getBranchAdvertisementSettings(branchId) {
+        return new Promise((resolve, reject) => {
+            settings_1.default.findOne({ branchId })
+                .then((adSettings) => {
+                if (!adSettings) {
+                    reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                }
+                resolve(adSettings);
+            })
+                .catch((error) => {
+                console.log(error);
+                reject(error);
+            });
+        });
+    }
+    /**
+     * update branch advertisement settings
+     */
+    updateBranchAdvertisementSettings(branchId, data) {
+        return new Promise((resolve, reject) => {
+            settings_1.default.findOne({ branchId })
+                .then((settings) => {
+                settings.updatedAt = Date.now();
+                settings.enableCustomQr = data.enableCustomeQr;
+                settings.customQrLink = data.customQrLink;
+                settings.imagePreviewDuration = data.imagePreviewDuration;
+                if (data.advertisements.length > 0) {
+                    for (let i in settings.advertisements) {
+                        let adsAsset = data.advertisements.find((asset) => asset._id === settings.advertisements[i]._id);
+                        if (adsAsset) {
+                            settings.advertisements[i].isActive = adsAsset.isActive;
+                        }
+                    }
+                }
+                for (let i in data.adsToDelete) {
+                    // @ts-ignore
+                    this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
+                }
+                settings.save()
+                    .then((updatedSettings) => __awaiter(this, void 0, void 0, function* () {
+                    const adSettings = yield this.getBranchAdvertisementSettings(branchId);
+                    resolve(adSettings);
+                }))
+                    .catch((error) => {
+                    console.log(error);
+                    reject(error);
+                });
+            })
+                .catch((error) => {
+                console.log(error);
+                reject(error);
+            });
+        });
+    }
+    /**
+     * upload Image
+    //  */
+    uploadImage(branchId, file, fileSize, field) {
+        return new Promise((resolve, reject) => {
+            settings_1.default.findOne({ branchId })
+                .then((settings) => __awaiter(this, void 0, void 0, function* () {
+                if (!settings) {
+                    return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                }
+                if ((fileSize + settings.storageUsedInMb) > settings.storageLimitInMb) {
+                    return reject({
+                        errorMsg: "exceeds maximum storage Limit",
+                        storageUsed: settings.storageUsedInMb,
+                        storageLimit: settings.storageLimitInMb
+                    });
+                }
+                const fileUpload = yield this.Queries.upload(`${field}/branch/${branchId}`, file);
+                let mediaLink = fileUpload.imageUrl;
+                const newGalleryAsset = {
+                    _id: uuid(),
+                    imageUrl: mediaLink,
+                    isActive: false,
+                    fileName: fileUpload.fileName,
+                    //@ts-ignore
+                    fileType: fileUpload.fileName.split(".")[fileUpload.fileName.split(".").length - 1],
+                    fileSizeInMb: fileSize,
+                    createdAt: Date.now()
+                };
+                settings.storageUsedInMb += fileSize;
+                settings[field].push(newGalleryAsset);
+                settings.save()
+                    .then((updatedSettings) => {
+                    return resolve({
+                        branchId,
+                        data: { fieldName: field, media: updatedSettings[field] }
+                    });
+                })
+                    .catch((error) => {
+                    console.log(error);
+                    reject(error);
+                });
+            }))
+                .catch((error) => {
+                console.log(error);
+                reject(error);
+            });
+        });
+    }
+    /**
+     * delete image from gallery
+     */
+    deleteMedia(branchId, mediaId, field) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                settings_1.default.findOne({ branchId })
+                    .then((settings) => {
+                    if (!settings) {
+                        reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                    }
+                    let filtered = settings[field].filter((asset) => {
+                        if (asset._id !== mediaId) {
+                            return asset;
+                        }
+                    });
+                    let deleted = settings[field].find((element) => element._id === mediaId);
+                    if (!deleted) {
+                        reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                    }
+                    settings.storageUsedInMb -= deleted.fileSizeInMb;
+                    settings[field] = filtered;
+                    settings.save()
+                        .then((updatedSettings) => {
+                        return resolve({
+                            branchId,
+                            data: { field, media: updatedSettings[field] }
+                        });
+                    })
+                        .catch((error) => {
+                        console.log(error);
+                        reject(error);
+                    });
+                })
+                    .catch((error) => {
+                    console.log(error);
+                    reject(error);
+                });
+            });
+        });
+    }
+}
+exports.default = QueueSettings;

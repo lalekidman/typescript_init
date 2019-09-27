@@ -78,12 +78,80 @@ exports.ModelSchema = new mongoose_1.Schema({
                 type: String,
                 default: ''
             },
+            fileName: {
+                type: String,
+                default: ''
+            },
+            fileType: {
+                type: String,
+                default: ''
+            },
+            fileSizeInMb: {
+                type: String,
+                default: 0
+            },
+            isActive: {
+                type: Boolean,
+                default: true
+            },
             createdAt: {
                 type: Number,
                 default: Date.now()
             }
         }
     ],
+    advertisements: [
+        {
+            _id: {
+                type: String,
+                default: ''
+            },
+            imageUrl: {
+                type: String,
+                default: ''
+            },
+            fileName: {
+                type: String,
+                default: ''
+            },
+            fileType: {
+                type: String,
+                default: ''
+            },
+            fileSizeInMb: {
+                type: String,
+                default: 0
+            },
+            isActive: {
+                type: Boolean,
+                default: false
+            },
+            createdAt: {
+                type: Number,
+                default: Date.now()
+            }
+        }
+    ],
+    storageUsedInMb: {
+        type: Number,
+        default: 0
+    },
+    storageLimitInMb: {
+        type: Number,
+        default: 1000
+    },
+    enableCustomQr: {
+        type: Boolean,
+        default: false
+    },
+    customQrLink: {
+        type: String,
+        default: ''
+    },
+    imagePreviewDuration: {
+        type: Number,
+        default: 3
+    },
     reservationTimeSlots: {
         availableDays: [
             {

@@ -18,6 +18,8 @@ import {createServer, Server} from 'http'
 const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH'
 
 import BranchRoute from './routes/branches'
+import QueueSettingsRoute from './routes/queue-settings'
+import AdvertisementSettingsRoute from './routes/advertisement-settings'
 
 class App {
   public app: any
@@ -37,6 +39,8 @@ class App {
   }
   private mountRoutes (): void {
     // Where the router import
+    this.app.use('/:branchId/advertisement-settings', new AdvertisementSettingsRoute().initializeRoutes())
+    this.app.use('/:branchId/queue-settings', new QueueSettingsRoute().initializeRoutes())
     this.app.use('', new BranchRoute().initializeRoutes())
   }
   private initSocket (server: any):void {
@@ -74,11 +78,11 @@ class App {
     this.app.use(cookieParser())
     this.app.use(bodyParser.json())
     this.app.use(bodyParser.urlencoded({ extended: false }))
-    this.app.use(session({
-      secret: SECRET,
-      saveUninitialized: true,
-      resave: true
-    }))
+    // this.app.use(session({
+    //   secret: SECRET,
+    //   saveUninitialized: true,
+    //   resave: true
+    // }))
     this.app.use(flash())
     this.app.use(passport.initialize())
     this.app.use(passport.session())

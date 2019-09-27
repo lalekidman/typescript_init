@@ -13,8 +13,12 @@ export interface RerservationTimeSlots {
 
 export interface Gallery {
   _id: string
-  imageUrl: string
-  createdAt: string
+  mediaUrl?: string
+  fileName?: string
+  fileType: string
+  fileSizeInMb: number
+  isActive: boolean
+  createdAt: number
 }
 export interface SocialLinks {
   id: string
@@ -76,10 +80,16 @@ export default interface ISetting extends _init {
   modules: Array<string>
   operationHours: Array<IOperationHours>
   gallery: Array<Gallery>
+  advertisements: Array<Gallery>
+  imagePreviewDuration: number
   reservationTimeSlots: RerservationTimeSlots
   printingDetails: IPrintingDetails
   smsConfig: ISmsConfig
   smsCredit: SmsCredit
   smsSettings: SmsSettings
   seatsCapacity: SeatsCapacity
+  storageLimitInMb: number
+  enableCustomeQr: number
+  customQrLink: string
+  
 }
