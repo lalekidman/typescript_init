@@ -66,9 +66,22 @@ export default class AccountRoute {
         // res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.))
       })
   }
+  
+  // idustry details
+  private industryDetails = (req: IRequest, res: Response) => {
+    this.industry.findOne({_id: req.params.industryId})
+    .then((industry: any) => {
+      res.status(HttpStatus.OK).json(industry)
+    })
+    .catch((error: Error) => {
+      res.status(HttpStatus.BAD_REQUEST).json(error)
+    })
+  }
+
   public initializeRoutes () {
     this.app.post('/', multiPartMiddleWare, this.add)
     this.app.patch('/:industryId', multiPartMiddleWare, this.update)
+    this.app.get('/:industryId', this.industryDetails)
     this.app.get('/', this.list)
     return this.app
   }

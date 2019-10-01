@@ -54,6 +54,16 @@ class AccountRoute {
                 // res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.))
             });
         };
+        // idustry details
+        this.industryDetails = (req, res) => {
+            this.industry.findOne({ _id: req.params.industryId })
+                .then((industry) => {
+                res.status(HttpStatus.OK).json(industry);
+            })
+                .catch((error) => {
+                res.status(HttpStatus.BAD_REQUEST).json(error);
+            });
+        };
         // initialize redis
         this.app = express_1.Router({ mergeParams: true });
         this.industry = new industry_1.default();
@@ -61,6 +71,7 @@ class AccountRoute {
     initializeRoutes() {
         this.app.post('/', multiPartMiddleWare, this.add);
         this.app.patch('/:industryId', multiPartMiddleWare, this.update);
+        this.app.get('/:industryId', this.industryDetails);
         this.app.get('/', this.list);
         return this.app;
     }

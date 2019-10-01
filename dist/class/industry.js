@@ -54,13 +54,16 @@ class Industries extends queries_1.default {
      * @param data
      */
     save(data) {
-        const _super = name => super[name];
+        const _super = Object.create(null, {
+            initilize: { get: () => super.initilize },
+            upload: { get: () => super.upload }
+        });
         return __awaiter(this, void 0, void 0, function* () {
             const { name = '', shortName = '', icon, category = '', categoryList = [] } = data;
             return this.formDataValidator(data)
                 .then(() => {
-                const newIndustry = _super("initilize").call(this, { name, shortName, category, categoryList: this.generateCategoryList(categoryList) });
-                return _super("upload").call(this, filePath.concat(newIndustry._id), icon)
+                const newIndustry = _super.initilize.call(this, { name, shortName, category, categoryList: this.generateCategoryList(categoryList) });
+                return _super.upload.call(this, filePath.concat(newIndustry._id), icon)
                     .then(({ imageUrl }) => {
                     newIndustry.iconUrl = imageUrl;
                     return newIndustry.save();
