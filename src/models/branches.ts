@@ -37,6 +37,10 @@ export const ModelSchema:Schema = new Schema({
     type: String,
     default: null
   },
+  categoryId: {
+    type: String,
+    default: ''
+  },
   avatarUrl: {
     type: String,
     default: ''

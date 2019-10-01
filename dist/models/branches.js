@@ -36,6 +36,10 @@ exports.ModelSchema = new mongoose_1.Schema({
         type: String,
         default: null
     },
+    categoryId: {
+        type: String,
+        default: ''
+    },
     avatarUrl: {
         type: String,
         default: ''

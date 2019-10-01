@@ -32,6 +32,7 @@ export default interface BusinessBranches extends _init{
 
   businessNameId: string
   partnerId: string
+  categoryId: string
   
   autoAssignQueue: boolean
   isSuspended: boolean

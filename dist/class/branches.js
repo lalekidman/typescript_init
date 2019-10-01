@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const branches_1 = require("../models/branches");
+const settings_1 = require("../models/settings");
 const app_error_1 = require("../utils/app-error");
 const queries_1 = require("../utils/queries");
 const uuid = require("uuid/v4");
@@ -16,7 +17,7 @@ const constants_1 = require("../utils/constants");
 const RC = require("../utils/response-codes");
 const partner_1 = require("./partner");
 const account_1 = require("./account");
-const settings_1 = require("./settings");
+const settings_2 = require("./settings");
 const helper_1 = require("../utils/helper");
 const queue_settings_1 = require("../models/queue-settings");
 const filePath = 'avatars/branches/';
@@ -103,7 +104,7 @@ class BusinessBranches extends queries_1.default {
                     }
                 }));
                 console.log(newBranch);
-                const branchSettings = JSON.parse(JSON.stringify((yield new settings_1.default(newBranch._id).save(data))));
+                const branchSettings = JSON.parse(JSON.stringify((yield new settings_2.default(newBranch._id).save(data))));
                 const uploader = yield this.upload(filePath.concat(newBranch._id), avatar);
                 const adminAccount = yield new account_1.default().addAccount(newBranch._id, {
                     firstName: 'Super Admin',
@@ -129,6 +130,50 @@ class BusinessBranches extends queries_1.default {
             // return Promise.resolve(DefaultQueueGroups.map((qg: any) => this.QG.save(Object.assign(Object.assign(qg, {businessBranchId: newBranch._id, businessUserId: newBranch._id})))))
             // }).then((queueGroups) => {
             //   return Object.assign(newBranch, {queueGroups})
+        });
+    }
+    /**
+     * edit branch
+     */
+    updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks) {
+        return new Promise((resolve, reject) => {
+            branches_1.default.findOne({ _id: branchId })
+                .then((branch) => __awaiter(this, void 0, void 0, function* () {
+                branch.email = branchEmail;
+                branch.categoryId = categoryId;
+                branch.about = about;
+                for (let i in contactNumbers) {
+                    if (!contactNumbers[i]._id) {
+                        contactNumbers[i]["_id"] = uuid();
+                    }
+                }
+                branch.contacts = contactNumbers;
+                try {
+                    let settings = yield settings_1.default.findOne({ branchId });
+                    for (let i in socialLinks) {
+                        if (!socialLinks[i].id) {
+                            socialLinks[i]["id"] = uuid();
+                        }
+                        if (socialLinks[i].type === "facebook" || socialLinks[i].type === "instagram") {
+                            let disected = socialLinks[i].url.split(/\//g);
+                            socialLinks[i]["url"] = disected[disected.length - 1];
+                        }
+                    }
+                    settings.socialLinks = socialLinks;
+                    settings.save();
+                }
+                catch (error) {
+                    return reject(error);
+                }
+                branch.save()
+                    .then((updatedBranch) => {
+                    resolve(Object.assign({}, updatedBranch.toObject(), { socialLinks }));
+                });
+            }))
+                .catch((error) => {
+                console.log(error);
+                reject(error);
+            });
         });
     }
 }

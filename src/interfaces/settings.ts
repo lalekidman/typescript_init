@@ -91,5 +91,4 @@ export default interface ISetting extends _init {
   storageLimitInMb: number
   enableCustomeQr: number
   customQrLink: string
-  
 }

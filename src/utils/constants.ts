@@ -28,3 +28,7 @@ export const FEATURES = [
     "value": 'Send SMS to customer when Notify is tapped/clicked'
   }
 ]
+
+export const LINK_TYPES = ["facebook", "instagram", "company"]
+
+export const CONTACT_NUMBER_TYPES = ["landline", "mobile"]

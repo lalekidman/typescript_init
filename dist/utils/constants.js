@@ -32,3 +32,5 @@ exports.FEATURES = [
         "value": 'Send SMS to customer when Notify is tapped/clicked'
     }
 ];
+exports.LINK_TYPES = ["facebook", "instagram", "company"];
+exports.CONTACT_NUMBER_TYPES = ["landline", "mobile"];

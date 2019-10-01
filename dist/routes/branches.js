@@ -15,9 +15,11 @@ const settings_1 = require("../models/settings");
 const branches_2 = require("../models/branches");
 const settings_2 = require("./settings");
 const HttpStatus = require("http-status-codes");
+const appConstants = require("../utils/constants");
 const app_error_1 = require("../utils/app-error");
 const RC = require("../utils/response-codes");
 const multiPartMiddleWare = require('connect-multiparty')();
+const regExp = require("../utils/regularExpressions");
 class AccountRoute {
     constructor() {
         /**
@@ -168,10 +170,84 @@ class AccountRoute {
             });
         });
     }
+    /**
+     * validate update branch details
+     */
+    validateOnUpdateBranch(req, res, next) {
+        let { categoryId, about, branchEmail, contactNumbers = [], socialLinks = [] } = req.body;
+        // validate req body
+        if (typeof (categoryId) !== 'string' || categoryId === '' ||
+            typeof (about) !== 'string' || about === '' ||
+            typeof (branchEmail) !== 'string' || !Array.isArray(contactNumbers) || !Array.isArray(socialLinks)) {
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '**@request body: {categoryId:string, about:string, branchEmail:string, contactNumbers:array, socialLinks:array}'));
+        }
+        // validate if email is valid
+        let validateEmail = regExp.validEmail.test(branchEmail);
+        if (!validateEmail) {
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'invalid branchEmail format'));
+        }
+        // validate contactNumbers
+        for (let i in contactNumbers) {
+            if (typeof contactNumbers[i].isPrimary !== 'boolean' || typeof contactNumbers[i].number !== 'string'
+                || appConstants.CONTACT_NUMBER_TYPES.indexOf(contactNumbers[i].type) === -1) {
+                return res.status(HttpStatus.BAD_REQUEST)
+                    .json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '@request body: contactNumbers: [{id?:string, isPrimary:boolean, number:validNumber, type:landline|mobile}]'));
+            }
+            // validate mobile number
+            if (contactNumbers[i].type === 'mobile') {
+                if (!regExp.validNumber.test(contactNumbers[i].number)) {
+                    return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'invalid mobile number'));
+                }
+            }
+            if (contactNumbers[i].type === 'landline') {
+                if (!regExp.validLandline.test(contactNumbers[i].number)) {
+                    return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'invalid landline'));
+                }
+            }
+        }
+        // validate Links
+        for (let i in socialLinks) {
+            if (typeof socialLinks[i].url !== 'string' || appConstants.LINK_TYPES.indexOf(socialLinks[i].type) === -1) {
+                return res.status(HttpStatus.BAD_REQUEST)
+                    .json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '@request body: socialLinks: [{id?:string, url:string, type:facebook|instagram|company}]'));
+            }
+            if (socialLinks[i].type === 'facebook') {
+                if (!regExp.validFbLink.test(socialLinks[i].url)) {
+                    return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'Invalid Fb Link'));
+                }
+            }
+            if (socialLinks[i].type === 'instagram') {
+                if (!regExp.validInstagramLink.test(socialLinks[i].url)) {
+                    return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'Invalid Instagram Link'));
+                }
+            }
+            if (socialLinks[i].type === 'company') {
+                if (!regExp.validUrl.test(socialLinks[i].url)) {
+                    return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'Invalid Company Website'));
+                }
+            }
+        }
+        next();
+    }
+    /**
+     * update branch details
+     */
+    updateBranch(req, res) {
+        const { branchId } = req.params;
+        let { categoryId, about, branchEmail, contactNumbers = [], socialLinks = [] } = req.body;
+        new branches_1.default().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks)
+            .then((updatedBranch) => {
+            res.status(HttpStatus.OK).json(updatedBranch);
+        })
+            .catch((error) => {
+            res.status(HttpStatus.BAD_REQUEST).json(error);
+        });
+    }
     initializeRoutes() {
         this.app.get('/', this.branchList);
         this.app.get('/branchId', this.findByBranchId);
         this.app.get('/:branchId', this.findOne);
+        this.app.patch('/:branchId', this.validateOnUpdateBranch, this.updateBranch);
         this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress);
         this.app.post('/:partnerId', multiPartMiddleWare, this.add);
         this.app.patch('/:branchId/settings', new settings_2.default().initializeRoutes());
