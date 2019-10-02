@@ -5,14 +5,17 @@ import AppError from '../utils/app-error'
 import * as uuid from 'uuid'
 import { IUpdateBranchAdvertisementSettings } from '../utils/interfaces'
 import Queries from '../utils/queries'
+import Aws from '../utils/aws'
 
 
 
 export default class QueueSettings {
   private Queries: Queries
+  private Aws: Aws
 
   constructor() {
     this.Queries = new Queries(SettingsModel)
+    this.Aws = new Aws()
   }
   /**
    * get ad settings of a specific branch
@@ -140,6 +143,8 @@ export default class QueueSettings {
         if (!deleted) {
           reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
         }
+        // @ts-ignore
+        this.Aws.deleteFile(deleted.imageUrl)
         settings.storageUsedInMb -= deleted.fileSizeInMb
         settings[field] = filtered
         settings.save()

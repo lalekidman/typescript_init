@@ -1,10 +1,12 @@
 import * as S3 from 'aws-sdk/clients/s3'
+import * as AWS from 'aws-sdk'
 import * as fs from 'fs'
 import {uploadFiles} from './interfaces'
 class Uploader {
   private BucketName: string
   private s3Uploader: any
-  constructor (bucketName:string = 'kyoo-test2') {
+  private s3Sdk: any
+  constructor (bucketName:string = 'kyoo-v2-dev') {
     this.BucketName = bucketName
     this._init()
   }
@@ -14,6 +16,7 @@ class Uploader {
       secretAccessKey: process.env.AWS_SECRET_KEY_ID || '',
       Bucket: this.BucketName
     }
+    this.s3Sdk = new AWS.S3(awsConfig)
     this.s3Uploader = new S3(awsConfig)
   }
   setBucketName (bucketName: string) {
@@ -52,6 +55,20 @@ class Uploader {
   multiUpload (filepath: string, files: uploadFiles[], ACL: string = 'public-read') {
     const obj = files.map(image => this.upload(filepath, image, ACL))
     return Promise.all(obj)
+  }
+  public deleteFile(file: string) {
+    console.log(file)
+    return new Promise((resolve,  reject) => {
+      const path = file.split('amazonaws.com/')[1]
+      const params = {Bucket: this.BucketName, Key: path}
+      this.s3Sdk.deleteObject(params, (error: any, data: any) => {
+        if (error) {
+          console.log(error)
+          reject(error)
+        }
+        resolve(data)
+      })
+    })
   }
 }
 

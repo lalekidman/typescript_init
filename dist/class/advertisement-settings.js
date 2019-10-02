@@ -13,9 +13,11 @@ const RC = require("../utils/response-codes");
 const app_error_1 = require("../utils/app-error");
 const uuid = require("uuid");
 const queries_1 = require("../utils/queries");
+const aws_1 = require("../utils/aws");
 class QueueSettings {
     constructor() {
         this.Queries = new queries_1.default(settings_1.default);
+        this.Aws = new aws_1.default();
     }
     /**
      * get ad settings of a specific branch
@@ -143,6 +145,8 @@ class QueueSettings {
                     if (!deleted) {
                         reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
                     }
+                    // @ts-ignore
+                    this.Aws.deleteFile(deleted.imageUrl);
                     settings.storageUsedInMb -= deleted.fileSizeInMb;
                     settings[field] = filtered;
                     settings.save()
