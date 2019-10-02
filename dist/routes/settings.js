@@ -6,7 +6,7 @@ const HttpStatus = require("http-status-codes");
 const app_error_1 = require("../utils/app-error");
 const RC = require("../utils/response-codes");
 const multiPartMiddleWare = require('connect-multiparty')();
-class AccountRoute {
+class Settings {
     constructor() {
         /**
          * route for updateding or incrementing the total queuegroup created.
@@ -35,4 +35,4 @@ class AccountRoute {
         return this.app;
     }
 }
-exports.default = AccountRoute;
+exports.default = Settings;

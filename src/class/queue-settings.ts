@@ -46,6 +46,9 @@ export default class QueueSettings {
         {new: true}
       )
       .then((updatedSettings) =>{
+        if (!updatedSettings) {
+          return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'))
+        }
         resolve(updatedSettings)
       }) 
       .catch((error) => {
@@ -60,17 +63,19 @@ export default class QueueSettings {
    */
   public async searchQueueTags(branchId: string, searchText: string, order: number) {
     return new Promise((resolve, reject) => {
-      QueueSettingsModel.findOne({branchId})
+      QueueSettingsModel.findOne({branchId}).sort({createdAt: order})
       .then((queueSettings: any) => {
         if (!queueSettings) {
           return reject(new AppError(RC.NOT_FOUND_BRANCH_QUEUE_SETTINGS, 'empty list'))
         }
         let tags = []
+        let settings = queueSettings.toObject()
         let match = new RegExp(searchText, 'i')
-        for (let i in queueSettings.queueTags) {
-          let check = match.test(queueSettings.queueTags[i].tagName)
+        console.log('QQTTTT', settings.queueTags.length)
+        for (let i in settings.queueTags) {
+          let check = match.test(settings.queueTags[i].tagName)
           if (check) {
-            tags.push(queueSettings.queueTags[i])
+            tags.push(settings.queueTags[i])
           }
         }
         resolve({

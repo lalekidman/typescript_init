@@ -6,9 +6,8 @@ import * as RC from '../utils/response-codes'
 import { IRequest } from '../utils/interfaces';
 const multiPartMiddleWare = require('connect-multiparty')()
 
-export default class AccountRoute {
+export default class Settings {
   /**
-   * 
    * @param client redis client for token auth
    */
   private readonly app: Router

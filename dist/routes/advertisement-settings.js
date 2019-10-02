@@ -7,6 +7,7 @@ const RC = require("../utils/response-codes");
 const multiPartMiddleWare = require('connect-multiparty')();
 const helper_1 = require("../utils/helper");
 const advertisement_settings_1 = require("../class/advertisement-settings");
+const regExp = require("../utils/regularExpressions");
 const advertisementSettings = new advertisement_settings_1.default();
 class Route {
     constructor() {
@@ -23,20 +24,33 @@ class Route {
             typeof (customQrLink) !== 'string' ||
             typeof (imagePreviewDuration) !== 'number' ||
             !Array.isArray(advertisements)) {
-            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS));
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS));
         }
         for (let i in advertisements) {
             if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean') {
-                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'gallery must be like: [{_id: "someIdHere", isActive:boolean}]'));
+                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 'gallery must be like: [{_id: "someIdHere", isActive:boolean}]'));
             }
         }
         if (imagePreviewDuration < 3) {
-            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'imagePreviewDuration minimum value is 3'));
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 'imagePreviewDuration minimum value is 3'));
+        }
+        if (!regExp.validUrl.test(customQrLink)) {
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 'invalid Link'));
         }
         for (let i in adsToDelete) {
             if (typeof (adsToDelete[i]) !== 'string') {
-                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, '** request body: adsToDelete:Array<string>'));
+                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, '** request body: adsToDelete:Array<string>'));
             }
+        }
+        next();
+    }
+    /**
+     * validate if file exists
+     */
+    fileExists(req, res, next) {
+        if (typeof (req.files) === 'undefined') {
+            return res.status(HttpStatus.BAD_REQUEST)
+                .json(new app_error_1.default(RC.INALID_VALUE, '@requestBody(required): {media:file}'));
         }
         next();
     }
@@ -122,8 +136,8 @@ class Route {
     initializeRoutes() {
         this.app.get('/', this.getBranchAdvertisementSettings);
         this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings);
-        this.app.post('/upload-to-gallery', multiPartMiddleWare, this.uploadToGallery);
-        this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.uploadToAds);
+        this.app.post('/upload-to-gallery', multiPartMiddleWare, this.fileExists, this.uploadToGallery);
+        this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.fileExists, this.uploadToAds);
         this.app.delete('/delete-in-gallery', this.deleteMedia);
         return this.app;
     }

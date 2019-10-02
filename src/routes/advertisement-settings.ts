@@ -10,6 +10,7 @@ import AdvertisementSettings from '../class/advertisement-settings'
 import * as appConstants from '../utils/constants'
 import {IUpdateBranchQueueSettings} from '../utils/interfaces'
 import uuid = require('uuid');
+import * as regExp from '../utils/regularExpressions'
 const advertisementSettings: AdvertisementSettings = new AdvertisementSettings()
 export default class Route {
   /**
@@ -33,25 +34,40 @@ export default class Route {
     typeof(customQrLink) !== 'string' ||
     typeof(imagePreviewDuration) !== 'number' ||
     !Array.isArray(advertisements)) {
-      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS))
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS))
     }
     for (let i in advertisements) {
       if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean') {
-        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 
+        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
           'gallery must be like: [{_id: "someIdHere", isActive:boolean}]'))
       }
     }
     if (imagePreviewDuration < 3) {
-      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
         'imagePreviewDuration minimum value is 3'))
+    }
+    if (!regExp.validUrl.test(customQrLink)) {
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
+        'invalid Link'))
     }
     for (let i in adsToDelete) {
       if (typeof(adsToDelete[i]) !== 'string') {
-        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 
+        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
           '** request body: adsToDelete:Array<string>'))
       }
     }
     next()
+  }
+
+  /**
+   * validate if file exists
+   */
+  private fileExists(req: IRequest, res: Response, next: NextFunction) {
+    if (typeof(req.files) === 'undefined') {
+      return res.status(HttpStatus.BAD_REQUEST)
+      .json(new AppError(RC.INALID_VALUE, '@requestBody(required): {media:file}'))
+    }
+   next()
   }
 
   /**
@@ -141,8 +157,8 @@ export default class Route {
   public initializeRoutes() {
     this.app.get('/', this.getBranchAdvertisementSettings)
     this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
-    this.app.post('/upload-to-gallery', multiPartMiddleWare, this.uploadToGallery)
-    this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.uploadToAds)
+    this.app.post('/upload-to-gallery', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
+    this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.fileExists, this.uploadToAds)
     this.app.delete('/delete-in-gallery', this.deleteMedia)
     return this.app
   }

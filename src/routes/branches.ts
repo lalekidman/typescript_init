@@ -1,4 +1,5 @@
 import {Request, Response, NextFunction, Router} from 'express'
+import BranchSettings from '../class/settings'
 import Branches from '../class/branches'
 import Partner from '../class/partner'
 import BranchSettingModel from '../models/settings'
@@ -255,13 +256,13 @@ export default class AccountRoute {
     })
   }
   public initializeRoutes () {
+    this.app.use('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
     this.app.patch('/:branchId', this.validateOnUpdateBranch, this.updateBranch)
     this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
-    this.app.patch('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     return this.app
   }
 }

@@ -244,13 +244,13 @@ class AccountRoute {
         });
     }
     initializeRoutes() {
+        this.app.use('/:branchId/settings', new settings_2.default().initializeRoutes());
         this.app.get('/', this.branchList);
         this.app.get('/branchId', this.findByBranchId);
         this.app.get('/:branchId', this.findOne);
         this.app.patch('/:branchId', this.validateOnUpdateBranch, this.updateBranch);
         this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress);
         this.app.post('/:partnerId', multiPartMiddleWare, this.add);
-        this.app.patch('/:branchId/settings', new settings_2.default().initializeRoutes());
         return this.app;
     }
 }

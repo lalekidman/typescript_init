@@ -44,6 +44,9 @@ class QueueSettings {
             return new Promise((resolve, reject) => {
                 queue_settings_1.default.findOneAndUpdate({ branchId }, Object.assign({}, data, { updatedAt: Date.now() }), { new: true })
                     .then((updatedSettings) => {
+                    if (!updatedSettings) {
+                        return reject(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'));
+                    }
                     resolve(updatedSettings);
                 })
                     .catch((error) => {
@@ -59,17 +62,19 @@ class QueueSettings {
     searchQueueTags(branchId, searchText, order) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                queue_settings_1.default.findOne({ branchId })
+                queue_settings_1.default.findOne({ branchId }).sort({ createdAt: order })
                     .then((queueSettings) => {
                     if (!queueSettings) {
                         return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_QUEUE_SETTINGS, 'empty list'));
                     }
                     let tags = [];
+                    let settings = queueSettings.toObject();
                     let match = new RegExp(searchText, 'i');
-                    for (let i in queueSettings.queueTags) {
-                        let check = match.test(queueSettings.queueTags[i].tagName);
+                    console.log('QQTTTT', settings.queueTags.length);
+                    for (let i in settings.queueTags) {
+                        let check = match.test(settings.queueTags[i].tagName);
                         if (check) {
-                            tags.push(queueSettings.queueTags[i]);
+                            tags.push(settings.queueTags[i]);
                         }
                     }
                     resolve({

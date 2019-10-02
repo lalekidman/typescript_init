@@ -91,6 +91,12 @@ exports.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS = {
     source: '** requestBody {features:array, hideCustomerNameField:boolean, ' +
         'hideMobileNumberField:boolean, autoSms:boolean, queuesAway:number, queueTags=array}'
 };
+exports.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS = {
+    statusCode: 161400,
+    error: 'BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS',
+    source: '** requestBody {enableCustomQr:boolean, imagePreviewDuration:number, ' +
+        'customQrLink:string, adsToDelete:array<string>'
+};
 exports.NOT_FOUND_QUEUE_TAGS = {
     statusCode: 161404,
     error: 'NOT_FOUND_QUEUE_TAGS',

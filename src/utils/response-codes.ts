@@ -95,6 +95,13 @@ export const BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS = {
      'hideMobileNumberField:boolean, autoSms:boolean, queuesAway:number, queueTags=array}'
 }
 
+export const BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS = {
+  statusCode: 161400,
+  error: 'BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS',
+  source: '** requestBody {enableCustomQr:boolean, imagePreviewDuration:number, ' +
+     'customQrLink:string, adsToDelete:array<string>'
+}
+
 export const NOT_FOUND_QUEUE_TAGS = {
   statusCode: 161404,
   error: 'NOT_FOUND_QUEUE_TAGS',
