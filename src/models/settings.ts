@@ -16,6 +16,40 @@ const socialLinksSchema = new Schema({
     default: ''
   }
 }, {_id: false})
+export const mediaObject = {
+  _id: {
+    type: String,
+    default: ''
+  },
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  fileName: {
+    type: String,
+    default: ''
+  },
+  fileType: {
+    type: String,
+    default: ''
+  },
+  s3Path: {
+    type: String,
+    default: ''
+  },
+  fileSizeInMb: {
+    type: Number,
+    default: 0
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Number,
+    default: Date.now()
+  }
+}
 export const ModelSchema:Schema = new Schema({
   _id: {
     type: String,
@@ -69,70 +103,8 @@ export const ModelSchema:Schema = new Schema({
       }
     }
   ],
-  gallery: [
-    {
-      _id: {
-        type: String,
-        default: ''
-      },
-      imageUrl: {
-        type: String,
-        default: ''
-      },
-      fileName: {
-        type: String,
-        default: ''
-      },
-      fileType: {
-        type: String,
-        default: ''
-      },
-      fileSizeInMb: {
-        type: String,
-        default: 0
-      },
-      isActive: {
-        type: Boolean,
-        default: true
-      },
-      createdAt: {
-        type: Number,
-        default: Date.now()
-      }
-    }
-  ],
-  advertisements: [
-    {
-      _id: {
-        type: String,
-        default: ''
-      },
-      imageUrl: {
-        type: String,
-        default: ''
-      },
-      fileName: {
-        type: String,
-        default: ''
-      },
-      fileType: {
-        type: String,
-        default: ''
-      },
-      fileSizeInMb: {
-        type: String,
-        default: 0
-      },
-      isActive: {
-        type: Boolean,
-        default: false
-      },
-      createdAt: {
-        type: Number,
-        default: Date.now()
-      }
-    }
-  ],
+  gallery: [mediaObject],
+  advertisements: [mediaObject],
   storageUsedInMb: {
     type: Number,
     default: 0

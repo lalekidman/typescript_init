@@ -41,7 +41,7 @@ export default class QueueSettings {
   public updateBranchAdvertisementSettings(branchId: string, data: IUpdateBranchAdvertisementSettings) {
     return new Promise((resolve, reject) => {
       SettingsModel.findOne({branchId})
-      .then((settings: any) => {
+      .then(async (settings: any) => {
         settings.updatedAt = Date.now()
         settings.enableCustomQr = data.enableCustomeQr
         settings.customQrLink = data.customQrLink
@@ -56,7 +56,7 @@ export default class QueueSettings {
         }
         for (let i in data.adsToDelete) {
           // @ts-ignore
-          this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements')
+          await this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements')
         }
         settings.save()
         .then(async (updatedSettings: any) => {
@@ -79,10 +79,18 @@ export default class QueueSettings {
   //  */
   public uploadImage(branchId: string, file: any, fileSize: number, field: string) {
     return new Promise((resolve, reject) => {
-      SettingsModel.findOne({branchId})
+      const s3FolderPath = `branch/${branchId}/${field}`
+      const s3Path = `${s3FolderPath}/${file.name}`
+      SettingsModel.findOne(
+        {
+          branchId,
+          "advertisements.s3Path": {$ne: s3Path}
+        }
+      )
       .then(async (settings: any) => {
         if (!settings) {
-          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
+          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS,
+            'settings not found or you are trying to upload a file that already exists in same directory'))
         }
         if ((fileSize + settings.storageUsedInMb) > settings.storageLimitInMb) {
           return reject({
@@ -91,7 +99,7 @@ export default class QueueSettings {
             storageLimit: settings.storageLimitInMb
           })
         }
-        const fileUpload = await this.Queries.upload(`${field}/branch/${branchId}`, file)
+        const fileUpload = await this.Queries.upload(s3FolderPath, file)
         let mediaLink = fileUpload.imageUrl
         const newGalleryAsset = {
           _id: uuid(),
@@ -100,6 +108,7 @@ export default class QueueSettings {
           fileName: fileUpload.fileName,
           //@ts-ignore
           fileType: fileUpload.fileName.split(".")[fileUpload.fileName.split(".").length - 1],
+          s3Path,
           fileSizeInMb: fileSize,
           createdAt: Date.now()
         }
@@ -143,8 +152,7 @@ export default class QueueSettings {
         if (!deleted) {
           reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
         }
-        // @ts-ignore
-        this.Aws.deleteFile(deleted.imageUrl)
+        this.Aws.deleteFile(deleted.s3Path)
         settings.storageUsedInMb -= deleted.fileSizeInMb
         settings[field] = filtered
         settings.save()

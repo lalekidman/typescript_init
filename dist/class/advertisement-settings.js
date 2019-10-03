@@ -43,7 +43,7 @@ class QueueSettings {
     updateBranchAdvertisementSettings(branchId, data) {
         return new Promise((resolve, reject) => {
             settings_1.default.findOne({ branchId })
-                .then((settings) => {
+                .then((settings) => __awaiter(this, void 0, void 0, function* () {
                 settings.updatedAt = Date.now();
                 settings.enableCustomQr = data.enableCustomeQr;
                 settings.customQrLink = data.customQrLink;
@@ -58,7 +58,7 @@ class QueueSettings {
                 }
                 for (let i in data.adsToDelete) {
                     // @ts-ignore
-                    this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
+                    yield this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
                 }
                 settings.save()
                     .then((updatedSettings) => __awaiter(this, void 0, void 0, function* () {
@@ -69,7 +69,7 @@ class QueueSettings {
                     console.log(error);
                     reject(error);
                 });
-            })
+            }))
                 .catch((error) => {
                 console.log(error);
                 reject(error);
@@ -81,10 +81,15 @@ class QueueSettings {
     //  */
     uploadImage(branchId, file, fileSize, field) {
         return new Promise((resolve, reject) => {
-            settings_1.default.findOne({ branchId })
+            const s3FolderPath = `branch/${branchId}/${field}`;
+            const s3Path = `${s3FolderPath}/${file.name}`;
+            settings_1.default.findOne({
+                branchId,
+                "advertisements.s3Path": { $ne: s3Path }
+            })
                 .then((settings) => __awaiter(this, void 0, void 0, function* () {
                 if (!settings) {
-                    return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                    return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'settings not found or you are trying to upload a file that already exists in same directory'));
                 }
                 if ((fileSize + settings.storageUsedInMb) > settings.storageLimitInMb) {
                     return reject({
@@ -93,7 +98,7 @@ class QueueSettings {
                         storageLimit: settings.storageLimitInMb
                     });
                 }
-                const fileUpload = yield this.Queries.upload(`${field}/branch/${branchId}`, file);
+                const fileUpload = yield this.Queries.upload(s3FolderPath, file);
                 let mediaLink = fileUpload.imageUrl;
                 const newGalleryAsset = {
                     _id: uuid(),
@@ -102,6 +107,7 @@ class QueueSettings {
                     fileName: fileUpload.fileName,
                     //@ts-ignore
                     fileType: fileUpload.fileName.split(".")[fileUpload.fileName.split(".").length - 1],
+                    s3Path,
                     fileSizeInMb: fileSize,
                     createdAt: Date.now()
                 };
@@ -145,8 +151,7 @@ class QueueSettings {
                     if (!deleted) {
                         reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
                     }
-                    // @ts-ignore
-                    this.Aws.deleteFile(deleted.imageUrl);
+                    this.Aws.deleteFile(deleted.s3Path);
                     settings.storageUsedInMb -= deleted.fileSizeInMb;
                     settings[field] = filtered;
                     settings.save()

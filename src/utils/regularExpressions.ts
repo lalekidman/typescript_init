@@ -8,4 +8,4 @@ export const validFbLink = /^(https\:\/\/www\.facebook\.com\/)[a-zA-Z0-9.?=&]+$/
 
 export const validInstagramLink = /^(https\:\/\/www\.instagram\.com\/)[a-zA-Z0-9.?=&]+$/
 
-export const validUrl = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/gm
+export const validUrl = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/

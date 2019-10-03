@@ -6,7 +6,8 @@ class Uploader {
   private BucketName: string
   private s3Uploader: any
   private s3Sdk: any
-  constructor (bucketName:string = 'kyoo-v2-dev') {
+  // @ts-ignore
+  constructor (bucketName:string = process.env.S3_BUCKET_NAME) {
     this.BucketName = bucketName
     this._init()
   }
@@ -57,10 +58,8 @@ class Uploader {
     return Promise.all(obj)
   }
   public deleteFile(file: string) {
-    console.log(file)
     return new Promise((resolve,  reject) => {
-      const path = file.split('amazonaws.com/')[1]
-      const params = {Bucket: this.BucketName, Key: path}
+      const params = {Bucket: this.BucketName, Key: file}
       this.s3Sdk.deleteObject(params, (error: any, data: any) => {
         if (error) {
           console.log(error)

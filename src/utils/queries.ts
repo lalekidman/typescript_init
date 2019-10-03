@@ -3,7 +3,7 @@ import {Document, Schema, Model, model, ModelPopulateOptions} from 'mongoose'
 import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
-const s3 = new Aws('kyoo-v2-dev')
+const s3 = new Aws(process.env.S3_BUCKET_NAME)
 interface PaginationData {
   limitTo: number
   startAt: number

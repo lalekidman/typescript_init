@@ -15,6 +15,40 @@ const socialLinksSchema = new mongoose_1.Schema({
         default: ''
     }
 }, { _id: false });
+exports.mediaObject = {
+    _id: {
+        type: String,
+        default: ''
+    },
+    imageUrl: {
+        type: String,
+        default: ''
+    },
+    fileName: {
+        type: String,
+        default: ''
+    },
+    fileType: {
+        type: String,
+        default: ''
+    },
+    s3Path: {
+        type: String,
+        default: ''
+    },
+    fileSizeInMb: {
+        type: Number,
+        default: 0
+    },
+    isActive: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Number,
+        default: Date.now()
+    }
+};
 exports.ModelSchema = new mongoose_1.Schema({
     _id: {
         type: String,
@@ -68,70 +102,8 @@ exports.ModelSchema = new mongoose_1.Schema({
             }
         }
     ],
-    gallery: [
-        {
-            _id: {
-                type: String,
-                default: ''
-            },
-            imageUrl: {
-                type: String,
-                default: ''
-            },
-            fileName: {
-                type: String,
-                default: ''
-            },
-            fileType: {
-                type: String,
-                default: ''
-            },
-            fileSizeInMb: {
-                type: String,
-                default: 0
-            },
-            isActive: {
-                type: Boolean,
-                default: true
-            },
-            createdAt: {
-                type: Number,
-                default: Date.now()
-            }
-        }
-    ],
-    advertisements: [
-        {
-            _id: {
-                type: String,
-                default: ''
-            },
-            imageUrl: {
-                type: String,
-                default: ''
-            },
-            fileName: {
-                type: String,
-                default: ''
-            },
-            fileType: {
-                type: String,
-                default: ''
-            },
-            fileSizeInMb: {
-                type: String,
-                default: 0
-            },
-            isActive: {
-                type: Boolean,
-                default: false
-            },
-            createdAt: {
-                type: Number,
-                default: Date.now()
-            }
-        }
-    ],
+    gallery: [exports.mediaObject],
+    advertisements: [exports.mediaObject],
     storageUsedInMb: {
         type: Number,
         default: 0

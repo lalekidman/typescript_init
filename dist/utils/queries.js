@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const uuid = require("uuid/v4");
 const aws_1 = require("./aws");
 const app_error_1 = require("./app-error");
-const s3 = new aws_1.default('kyoo-v2-dev');
+const s3 = new aws_1.default(process.env.S3_BUCKET_NAME);
 class Queries {
     constructor(mod, Model) {
         this.errorMsg = '';

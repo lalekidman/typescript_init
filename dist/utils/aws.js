@@ -4,7 +4,8 @@ const S3 = require("aws-sdk/clients/s3");
 const AWS = require("aws-sdk");
 const fs = require("fs");
 class Uploader {
-    constructor(bucketName = 'kyoo-v2-dev') {
+    // @ts-ignore
+    constructor(bucketName = process.env.S3_BUCKET_NAME) {
         this.BucketName = bucketName;
         this._init();
     }
@@ -57,10 +58,8 @@ class Uploader {
         return Promise.all(obj);
     }
     deleteFile(file) {
-        console.log(file);
         return new Promise((resolve, reject) => {
-            const path = file.split('amazonaws.com/')[1];
-            const params = { Bucket: this.BucketName, Key: path };
+            const params = { Bucket: this.BucketName, Key: file };
             this.s3Sdk.deleteObject(params, (error, data) => {
                 if (error) {
                     console.log(error);

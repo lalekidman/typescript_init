@@ -16,6 +16,7 @@ export interface Gallery {
   mediaUrl?: string
   fileName?: string
   fileType: string
+  s3Path: string
   fileSizeInMb: number
   isActive: boolean
   createdAt: number

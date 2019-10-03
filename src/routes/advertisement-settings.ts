@@ -28,10 +28,9 @@ export default class Route {
    * ** MIDDLEWARE ** on update advertisement settings 
    */
   private onUpdateAdvertisementSettings(req: IRequest, res: Response, next: NextFunction) {
-    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+    const {enableCustomQr=false, customQrLink, imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
     // verify request.body
     if (typeof(enableCustomQr) !== 'boolean' ||
-    typeof(customQrLink) !== 'string' ||
     typeof(imagePreviewDuration) !== 'number' ||
     !Array.isArray(advertisements)) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS))
@@ -46,7 +45,7 @@ export default class Route {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
         'imagePreviewDuration minimum value is 3'))
     }
-    if (!regExp.validUrl.test(customQrLink)) {
+    if (!regExp.validUrl.test(customQrLink) && customQrLink) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
         'invalid Link'))
     }
