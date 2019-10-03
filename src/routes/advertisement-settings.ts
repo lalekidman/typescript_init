@@ -36,9 +36,9 @@ export default class Route {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS))
     }
     for (let i in advertisements) {
-      if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean') {
+      if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean' || typeof advertisements[i].sortIndex !== 'number') {
         return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 
-          'gallery must be like: [{_id: "someIdHere", isActive:boolean}]'))
+          'gallery must be like: [{_id: "someIdHere", isActive:boolean, sortIndex:number}]'))
       }
     }
     if (imagePreviewDuration < 3) {
@@ -107,35 +107,54 @@ export default class Route {
   }
 
   /**
-   * upload to gallery
+   * image uploader function
    */
-  private uploadToGallery(req: IRequest, res: Response) {
+  private async uploader(req: IRequest, res: Response, location: string) {
     const {branchId} = req.params
-    const {media} = req.files
-    const fileSize = getFileSize(media.path)
-    advertisementSettings.uploadImage(branchId, media, fileSize, 'gallery')
-    .then((updatedSettings) => {
-      res.status(HttpStatus.OK).json(updatedSettings)
-    })
-    .catch((error) => {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
-    })
+    let {media} = req.files
+    // ensure that media will be an array
+    if (!Array.isArray(media)) {
+      media = [media]
+    }
+    for (let i in media) {
+      const fileSize = getFileSize(media[i].path)
+      try {
+        let upload = await advertisementSettings.uploadImage(branchId, media[i], fileSize, location)
+        if (parseInt(i) === media.length - 1) {
+          return upload
+        }
+      }
+      catch (error) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
+      }
+    }
+    return
   }
 
   /**
-   * upload media
+   * upload to gallery
    */
-  private uploadToAds(req: IRequest, res: Response) {
-    const {branchId} = req.params
-    const {media} = req.files
-    const fileSize = getFileSize(media.path)
-    advertisementSettings.uploadImage(branchId, media, fileSize, 'advertisements')
-    .then((updatedSettings) => {
-      res.status(HttpStatus.OK).json(updatedSettings)
-    })
-    .catch((error) => {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
-    })
+  private uploadToGallery = async (req: IRequest, res: Response) => {
+    try {
+      let upload = await this.uploader(req, res, 'gallery')
+      return res.status(HttpStatus.OK).json(upload)
+    }
+    catch(error) {
+      return error
+    }
+  }
+
+  /**
+   * upload to ads
+   */
+  private uploadToAds = async (req: IRequest, res: Response) => {
+    try {
+      let upload = await this.uploader(req, res, 'advertisements')
+      return res.status(HttpStatus.OK).json(upload)
+    }
+    catch(error) {
+      return error
+    }
   }
 
   /**

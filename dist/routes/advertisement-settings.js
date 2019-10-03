@@ -1,4 +1,12 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const HttpStatus = require("http-status-codes");
@@ -11,6 +19,30 @@ const regExp = require("../utils/regularExpressions");
 const advertisementSettings = new advertisement_settings_1.default();
 class Route {
     constructor() {
+        /**
+         * upload to gallery
+         */
+        this.uploadToGallery = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let upload = yield this.uploader(req, res, 'gallery');
+                return res.status(HttpStatus.OK).json(upload);
+            }
+            catch (error) {
+                return error;
+            }
+        });
+        /**
+         * upload to ads
+         */
+        this.uploadToAds = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let upload = yield this.uploader(req, res, 'advertisements');
+                return res.status(HttpStatus.OK).json(upload);
+            }
+            catch (error) {
+                return error;
+            }
+        });
         // initialize redis
         this.app = express_1.Router({ mergeParams: true });
     }
@@ -26,8 +58,8 @@ class Route {
             return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS));
         }
         for (let i in advertisements) {
-            if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean') {
-                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 'gallery must be like: [{_id: "someIdHere", isActive:boolean}]'));
+            if (typeof advertisements[i]._id === 'undefined' || typeof advertisements[i].isActive !== 'boolean' || typeof advertisements[i].sortIndex !== 'number') {
+                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS, 'gallery must be like: [{_id: "someIdHere", isActive:boolean, sortIndex:number}]'));
             }
         }
         if (imagePreviewDuration < 3) {
@@ -89,33 +121,29 @@ class Route {
         });
     }
     /**
-     * upload to gallery
+     * image uploader function
      */
-    uploadToGallery(req, res) {
-        const { branchId } = req.params;
-        const { media } = req.files;
-        const fileSize = helper_1.getFileSize(media.path);
-        advertisementSettings.uploadImage(branchId, media, fileSize, 'gallery')
-            .then((updatedSettings) => {
-            res.status(HttpStatus.OK).json(updatedSettings);
-        })
-            .catch((error) => {
-            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error);
-        });
-    }
-    /**
-     * upload media
-     */
-    uploadToAds(req, res) {
-        const { branchId } = req.params;
-        const { media } = req.files;
-        const fileSize = helper_1.getFileSize(media.path);
-        advertisementSettings.uploadImage(branchId, media, fileSize, 'advertisements')
-            .then((updatedSettings) => {
-            res.status(HttpStatus.OK).json(updatedSettings);
-        })
-            .catch((error) => {
-            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error);
+    uploader(req, res, location) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { branchId } = req.params;
+            let { media } = req.files;
+            // ensure that media will be an array
+            if (!Array.isArray(media)) {
+                media = [media];
+            }
+            for (let i in media) {
+                const fileSize = helper_1.getFileSize(media[i].path);
+                try {
+                    let upload = yield advertisementSettings.uploadImage(branchId, media[i], fileSize, location);
+                    if (parseInt(i) === media.length - 1) {
+                        return upload;
+                    }
+                }
+                catch (error) {
+                    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error);
+                }
+            }
+            return;
         });
     }
     /**

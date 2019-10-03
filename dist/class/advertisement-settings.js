@@ -14,6 +14,7 @@ const app_error_1 = require("../utils/app-error");
 const uuid = require("uuid");
 const queries_1 = require("../utils/queries");
 const aws_1 = require("../utils/aws");
+const _ = require('lodash');
 class QueueSettings {
     constructor() {
         this.Queries = new queries_1.default(settings_1.default);
@@ -29,7 +30,11 @@ class QueueSettings {
                 if (!adSettings) {
                     reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
                 }
-                resolve(adSettings);
+                // @ts-ignore
+                let settings = adSettings.toObject();
+                settings.gallery = _.orderBy(settings.gallery, ["sortIndex", "createdAt"], ["asc", "desc"]);
+                settings.advertisements = _.orderBy(settings.advertisements, ["sortIndex", "createdAt"], ["asc", "desc"]);
+                resolve(settings);
             })
                 .catch((error) => {
                 console.log(error);
@@ -45,7 +50,7 @@ class QueueSettings {
             settings_1.default.findOne({ branchId })
                 .then((settings) => __awaiter(this, void 0, void 0, function* () {
                 settings.updatedAt = Date.now();
-                settings.enableCustomQr = data.enableCustomeQr;
+                settings.enableCustomQr = data.enableCustomQr;
                 settings.customQrLink = data.customQrLink;
                 settings.imagePreviewDuration = data.imagePreviewDuration;
                 if (data.advertisements.length > 0) {
@@ -53,6 +58,7 @@ class QueueSettings {
                         let adsAsset = data.advertisements.find((asset) => asset._id === settings.advertisements[i]._id);
                         if (adsAsset) {
                             settings.advertisements[i].isActive = adsAsset.isActive;
+                            settings.advertisements[i].sortIndex = adsAsset.sortIndex;
                         }
                     }
                 }
@@ -83,10 +89,7 @@ class QueueSettings {
         return new Promise((resolve, reject) => {
             const s3FolderPath = `branch/${branchId}/${field}`;
             const s3Path = `${s3FolderPath}/${file.name}`;
-            settings_1.default.findOne({
-                branchId,
-                "advertisements.s3Path": { $ne: s3Path }
-            })
+            settings_1.default.findOne(Object.assign({ branchId }, field === 'advertisement' ? { "advertisements.s3Path": { $ne: s3Path } } : {}, field === 'gallery' ? { "gallery.s3Path": { $ne: s3Path } } : {}))
                 .then((settings) => __awaiter(this, void 0, void 0, function* () {
                 if (!settings) {
                     return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'settings not found or you are trying to upload a file that already exists in same directory'));
@@ -115,9 +118,10 @@ class QueueSettings {
                 settings[field].push(newGalleryAsset);
                 settings.save()
                     .then((updatedSettings) => {
+                    let media = _.orderBy(updatedSettings[field], ["createdAt", "sortIndex"], ["desc", "asc"]);
                     return resolve({
                         branchId,
-                        data: { fieldName: field, media: updatedSettings[field] }
+                        data: { fieldName: field, media }
                     });
                 })
                     .catch((error) => {

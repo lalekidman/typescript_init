@@ -47,6 +47,10 @@ exports.mediaObject = {
     createdAt: {
         type: Number,
         default: Date.now()
+    },
+    sortIndex: {
+        type: Number,
+        default: 0
     }
 };
 exports.ModelSchema = new mongoose_1.Schema({

@@ -47,7 +47,7 @@ export interface IUpdateBranchQueueSettings {
 }
 
 export interface IUpdateBranchAdvertisementSettings {
-  enableCustomeQr: boolean
+  enableCustomQr: boolean
   customQrLink: string
   imagePreviewDuration: number
   gallery?: any

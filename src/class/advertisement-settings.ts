@@ -6,6 +6,7 @@ import * as uuid from 'uuid'
 import { IUpdateBranchAdvertisementSettings } from '../utils/interfaces'
 import Queries from '../utils/queries'
 import Aws from '../utils/aws'
+const _ = require('lodash')
 
 
 
@@ -27,7 +28,11 @@ export default class QueueSettings {
           if (!adSettings) {
             reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
           }
-          resolve(adSettings)
+          // @ts-ignore
+          let settings = adSettings.toObject()
+          settings.gallery = _.orderBy(settings.gallery, ["sortIndex", "createdAt"], ["asc", "desc"])
+          settings.advertisements = _.orderBy(settings.advertisements, ["sortIndex", "createdAt"], ["asc", "desc"])
+          resolve(settings)
         })
         .catch((error) => {
           console.log(error)
@@ -43,7 +48,7 @@ export default class QueueSettings {
       SettingsModel.findOne({branchId})
       .then(async (settings: any) => {
         settings.updatedAt = Date.now()
-        settings.enableCustomQr = data.enableCustomeQr
+        settings.enableCustomQr = data.enableCustomQr
         settings.customQrLink = data.customQrLink
         settings.imagePreviewDuration = data.imagePreviewDuration
         if (data.advertisements.length > 0) {
@@ -51,6 +56,7 @@ export default class QueueSettings {
             let adsAsset = data.advertisements.find((asset: any) => asset._id === settings.advertisements[i]._id)
             if (adsAsset) {
               settings.advertisements[i].isActive = adsAsset.isActive
+              settings.advertisements[i].sortIndex = adsAsset.sortIndex
             }
           }
         }
@@ -82,10 +88,11 @@ export default class QueueSettings {
       const s3FolderPath = `branch/${branchId}/${field}`
       const s3Path = `${s3FolderPath}/${file.name}`
       SettingsModel.findOne(
-        {
-          branchId,
-          "advertisements.s3Path": {$ne: s3Path}
-        }
+        Object.assign(
+          {branchId},
+          field === 'advertisement' ? {"advertisements.s3Path": {$ne: s3Path}} : {},
+          field === 'gallery' ? {"gallery.s3Path": {$ne: s3Path}} : {},
+        )
       )
       .then(async (settings: any) => {
         if (!settings) {
@@ -116,9 +123,10 @@ export default class QueueSettings {
         settings[field].push(newGalleryAsset)
         settings.save()
         .then((updatedSettings: any) => {
+          let media = _.orderBy(updatedSettings[field], ["createdAt", "sortIndex"], ["desc", "asc"])
           return resolve({
             branchId,
-            data: {fieldName: field, media: updatedSettings[field]}
+            data: {fieldName: field, media}
           })
         })
         .catch((error: Error) => {

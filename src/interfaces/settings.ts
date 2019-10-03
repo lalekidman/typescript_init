@@ -20,6 +20,7 @@ export interface Gallery {
   fileSizeInMb: number
   isActive: boolean
   createdAt: number
+  sortIndex: number
 }
 export interface SocialLinks {
   id: string

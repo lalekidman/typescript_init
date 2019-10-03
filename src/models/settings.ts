@@ -1,5 +1,5 @@
 import {Schema, Document, model} from 'mongoose'
-import IBranchSettings from '../interfaces/settings'
+import IBranchSettings, { Gallery } from '../interfaces/settings'
 //import Logs from '../class/logs';
 export interface IBranchSettingsModel extends Document, IBranchSettings {}
 const socialLinksSchema = new Schema({
@@ -48,6 +48,10 @@ export const mediaObject = {
   createdAt: {
     type: Number,
     default: Date.now()
+  },
+  sortIndex: {
+    type: Number,
+    default: 0
   }
 }
 export const ModelSchema:Schema = new Schema({
