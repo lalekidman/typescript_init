@@ -42,11 +42,21 @@ class QueueSettings {
     updateBranchQueueSettings(branchId, data) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                queue_settings_1.default.findOneAndUpdate({ branchId }, Object.assign({}, data, { updatedAt: Date.now() }), { new: true })
-                    .then((updatedSettings) => {
-                    if (!updatedSettings) {
-                        return reject(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'));
+                queue_settings_1.default
+                    .findOne({
+                    branchId
+                })
+                    .then((queueSettings) => {
+                    if (!queueSettings) {
+                        const newQueueSettings = this.Queries.initilize(Object.assign({}, data, { branchId }));
+                        return newQueueSettings.save();
                     }
+                    return queueSettings.set(Object.assign({}, queueSettings, { updatedAt: Date.now() }));
+                })
+                    .then((updatedSettings) => {
+                    // if (!updatedSettings) {
+                    //   return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'))
+                    // }
                     resolve(updatedSettings);
                 })
                     .catch((error) => {
