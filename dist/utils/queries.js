@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const uuid = require("uuid/v4");
 const aws_1 = require("./aws");
 const app_error_1 = require("./app-error");
-const s3 = new aws_1.default('kyoo-bucket');
+const s3 = new aws_1.default(process.env.S3_BUCKET_NAME);
 class Queries {
     constructor(mod, Model) {
         this.errorMsg = '';
@@ -18,7 +18,7 @@ class Queries {
     }
     initilize(data) {
         const id = uuid();
-        return new this.ModelSchema(Object.assign(data, { id, _id: id, createdAt: Date.now(), updatedAt: Date.now() }));
+        return new this.ModelSchema(Object.assign(data, { id, _id: id, branchId: id, createdAt: Date.now(), updatedAt: Date.now() }));
     }
     setErrorMsg(error) {
         return this.errorMsg = error;
@@ -46,6 +46,7 @@ class Queries {
         });
     }
     upload(filepath, file) {
+        // @ts-ignore
         return Promise.resolve(file ? s3.upload(filepath, file) : { imageUrl: '' });
     }
     uploadMany(filepath, files) {

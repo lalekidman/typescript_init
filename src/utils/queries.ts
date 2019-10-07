@@ -3,7 +3,7 @@ import {Document, Schema, Model, model, ModelPopulateOptions} from 'mongoose'
 import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
-const s3 = new Aws('kyoo-bucket')
+const s3 = new Aws(process.env.S3_BUCKET_NAME)
 interface PaginationData {
   limitTo: number
   startAt: number
@@ -44,7 +44,7 @@ class Queries {
   }
   public initilize (data: any) {
     const id = uuid()
-    return new this.ModelSchema(Object.assign(data, {id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}))
+    return new this.ModelSchema(Object.assign(data, {id, _id: id, branchId: id ,createdAt: Date.now(), updatedAt: Date.now()}))
   }
   public setErrorMsg (error: string | IAppError) {
     return this.errorMsg = error
@@ -70,6 +70,7 @@ class Queries {
     })
   }
   public upload (filepath: string, file: any): Promise<UploadedImage> {
+    // @ts-ignore
     return Promise.resolve( file ? s3.upload(filepath, file) : {imageUrl: ''})
   }
   public uploadMany (filepath: string, files: Array<any>) {

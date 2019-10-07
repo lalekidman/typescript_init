@@ -18,3 +18,19 @@ var ACCOUNT_ROLE_LEVEL;
     ACCOUNT_ROLE_LEVEL[ACCOUNT_ROLE_LEVEL["SUPER_ADMIN"] = 1] = "SUPER_ADMIN";
     ACCOUNT_ROLE_LEVEL[ACCOUNT_ROLE_LEVEL["ADMIN"] = 2] = "ADMIN";
 })(ACCOUNT_ROLE_LEVEL = exports.ACCOUNT_ROLE_LEVEL || (exports.ACCOUNT_ROLE_LEVEL = {}));
+exports.FEATURES = [
+    {
+        "key": 1,
+        "value": 'Enable Skip Queue Function'
+    },
+    {
+        "key": 2,
+        "value": 'Enable Return Queue Function'
+    },
+    {
+        "key": 3,
+        "value": 'Send SMS to customer when Notify is tapped/clicked'
+    }
+];
+exports.LINK_TYPES = ["facebook", "instagram", "company"];
+exports.CONTACT_NUMBER_TYPES = ["landline", "mobile"];

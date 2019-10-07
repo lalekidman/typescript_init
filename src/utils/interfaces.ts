@@ -1,4 +1,5 @@
 import {Request} from 'express'
+import {IQueueTags} from '../interfaces/queue-settings'
 export interface uploadFiles {
   fieldName: string
   originalFilename: string
@@ -34,4 +35,22 @@ export interface RequestToken extends Request {
   payload?: any
   photo?: (uploadFiles | Array<uploadFiles>)
   images?: (uploadFiles | Array<uploadFiles>)
+}
+
+export interface IUpdateBranchQueueSettings {
+  features: Array<number>
+  hideCustomerNameField: boolean
+  hideMobileNumberField: boolean
+  autoSms: boolean
+  queuesAway: number
+  queueTags: Array<IQueueTags>
+}
+
+export interface IUpdateBranchAdvertisementSettings {
+  enableCustomQr: boolean
+  customQrLink: string
+  imagePreviewDuration: number
+  gallery?: any
+  advertisements?: any
+  adsToDelete?: Array<string>
 }

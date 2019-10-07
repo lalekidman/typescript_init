@@ -1,5 +1,5 @@
 import {Schema, Document, model} from 'mongoose'
-import IBranchSettings from '../interfaces/settings'
+import IBranchSettings, { Gallery } from '../interfaces/settings'
 //import Logs from '../class/logs';
 export interface IBranchSettingsModel extends Document, IBranchSettings {}
 const socialLinksSchema = new Schema({
@@ -16,6 +16,44 @@ const socialLinksSchema = new Schema({
     default: ''
   }
 }, {_id: false})
+export const mediaObject = {
+  _id: {
+    type: String,
+    default: ''
+  },
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  fileName: {
+    type: String,
+    default: ''
+  },
+  fileType: {
+    type: String,
+    default: ''
+  },
+  s3Path: {
+    type: String,
+    default: ''
+  },
+  fileSizeInMb: {
+    type: Number,
+    default: 0
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Number,
+    default: Date.now()
+  },
+  sortIndex: {
+    type: Number,
+    default: 0
+  }
+}
 export const ModelSchema:Schema = new Schema({
   _id: {
     type: String,
@@ -69,22 +107,28 @@ export const ModelSchema:Schema = new Schema({
       }
     }
   ],
-  gallery: [
-    {
-      _id: {
-        type: String,
-        default: ''
-      },
-      imageUrl: {
-        type: String,
-        default: ''
-      },
-      createdAt: {
-        type: Number,
-        default: Date.now()
-      }
-    }
-  ],
+  gallery: [mediaObject],
+  advertisements: [mediaObject],
+  storageUsedInMb: {
+    type: Number,
+    default: 0
+  },
+  storageLimitInMb: {
+    type: Number,
+    default: 1000
+  },
+  enableCustomQr: {
+    type: Boolean,
+    default: false
+  },
+  customQrLink: {
+    type: String,
+    default: ''
+  },
+  imagePreviewDuration: {
+    type: Number,
+    default: 3
+  },
   reservationTimeSlots: {
     availableDays: [
       {

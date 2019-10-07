@@ -15,6 +15,44 @@ const socialLinksSchema = new mongoose_1.Schema({
         default: ''
     }
 }, { _id: false });
+exports.mediaObject = {
+    _id: {
+        type: String,
+        default: ''
+    },
+    imageUrl: {
+        type: String,
+        default: ''
+    },
+    fileName: {
+        type: String,
+        default: ''
+    },
+    fileType: {
+        type: String,
+        default: ''
+    },
+    s3Path: {
+        type: String,
+        default: ''
+    },
+    fileSizeInMb: {
+        type: Number,
+        default: 0
+    },
+    isActive: {
+        type: Boolean,
+        default: false
+    },
+    createdAt: {
+        type: Number,
+        default: Date.now()
+    },
+    sortIndex: {
+        type: Number,
+        default: 0
+    }
+};
 exports.ModelSchema = new mongoose_1.Schema({
     _id: {
         type: String,
@@ -68,22 +106,28 @@ exports.ModelSchema = new mongoose_1.Schema({
             }
         }
     ],
-    gallery: [
-        {
-            _id: {
-                type: String,
-                default: ''
-            },
-            imageUrl: {
-                type: String,
-                default: ''
-            },
-            createdAt: {
-                type: Number,
-                default: Date.now()
-            }
-        }
-    ],
+    gallery: [exports.mediaObject],
+    advertisements: [exports.mediaObject],
+    storageUsedInMb: {
+        type: Number,
+        default: 0
+    },
+    storageLimitInMb: {
+        type: Number,
+        default: 1000
+    },
+    enableCustomQr: {
+        type: Boolean,
+        default: false
+    },
+    customQrLink: {
+        type: String,
+        default: ''
+    },
+    imagePreviewDuration: {
+        type: Number,
+        default: 3
+    },
     reservationTimeSlots: {
         availableDays: [
             {

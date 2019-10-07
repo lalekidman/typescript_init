@@ -32,6 +32,7 @@ export default interface BusinessBranches extends _init{
 
   businessNameId: string
   partnerId: string
+  categoryId: string
   
   autoAssignQueue: boolean
   isSuspended: boolean
@@ -49,6 +50,5 @@ export default interface BusinessBranches extends _init{
   location: ILocation
   contacts: Array<IContactList>
   address: IAddress
-
   displayedQueue: IDisplayedQueue
 }

@@ -1,4 +1,6 @@
 import {default as BranchModel, IBranchModel} from '../models/branches'
+import {default as BranchSettings, IBranchSettingsModel} from '../models/settings'
+
 import AppError from '../utils/app-error'
 
 import Queries from '../utils/queries'
@@ -13,6 +15,9 @@ import Account from './account'
 import Settings from './settings'
 import {default as KyooToken} from '../utils/token'
 import { formDataValidator } from '../utils/helper';
+import QueueSettingsModel, {IQueueSettingsModel} from '../models/queue-settings'
+import { IContactList } from '../interfaces/branches';
+import { SocialLinks } from '../interfaces/settings';
 
 export {IBranchModel}
 const filePath = 'avatars/branches/'
@@ -100,6 +105,7 @@ export default class BusinessBranches extends Queries {
               coordinates: coordinates
             }
           }))
+          console.log(newBranch)
           const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
           const uploader = await this.upload(filePath.concat(newBranch._id), avatar)
           const adminAccount = await new Account().addAccount(newBranch._id, {
@@ -113,6 +119,13 @@ export default class BusinessBranches extends Queries {
           uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : ''
           newBranch.save()
           console.log('rr: ', newBranch)
+          // create branch queue settings
+          const branchQueueSettings: IQueueSettingsModel = new QueueSettingsModel()
+          const queueSettingsId = uuid()
+          branchQueueSettings.branchId = newBranch._id
+          branchQueueSettings._id = queueSettingsId
+          branchQueueSettings.id = queueSettingsId
+          branchQueueSettings.save()
           return {
             ...JSON.parse(JSON.stringify(newBranch)),
             settings: branchSettings
@@ -124,4 +137,51 @@ export default class BusinessBranches extends Queries {
       //   return Object.assign(newBranch, {queueGroups})
     })
   }
+
+  /**
+   * edit branch
+   */
+  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>) {
+    return new Promise((resolve, reject) => {
+      BranchModel.findOne({_id: branchId})
+      .then(async (branch: any) => {
+        branch.email = branchEmail
+        branch.categoryId = categoryId
+        branch.about = about
+        for (let i in contactNumbers) {
+          if (!contactNumbers[i]._id) {
+            contactNumbers[i]["_id"] = uuid()
+          }
+        }
+        branch.contacts = contactNumbers
+        try {
+          let settings: any = await BranchSettings.findOne({branchId})
+          for (let i in socialLinks) {
+            if (!socialLinks[i].id) {
+              socialLinks[i]["id"] = uuid()
+            }
+            if (socialLinks[i].type === "facebook" || socialLinks[i].type === "instagram") {
+              let disected = socialLinks[i].url.split(/\//g)
+              socialLinks[i]["url"] = disected[disected.length - 1]
+            }
+          }
+          settings.socialLinks = socialLinks
+          settings.save()
+        }
+        catch (error) {
+          return reject(error)
+        }
+        branch.save()
+        .then((updatedBranch: any) => {
+          resolve({...updatedBranch.toObject(), ...{socialLinks}})
+        })
+      })
+      .catch((error) => {
+        console.log(error)
+        reject(error)
+      })
+      
+    })
+  }
+
 }

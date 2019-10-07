@@ -8,13 +8,14 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const HttpStatus = require("http-status-codes");
 const morgan = require("morgan");
-const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const flash = require("connect-flash");
 const socketio = require("socket.io");
 const http_1 = require("http");
 const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH';
 const branches_1 = require("./routes/branches");
+const queue_settings_1 = require("./routes/queue-settings");
+const advertisement_settings_1 = require("./routes/advertisement-settings");
 class App {
     constructor() {
         this.app = express();
@@ -26,6 +27,8 @@ class App {
     }
     mountRoutes() {
         // Where the router import
+        this.app.use('/:branchId/advertisement-settings', new advertisement_settings_1.default().initializeRoutes());
+        this.app.use('/:branchId/queue-settings', new queue_settings_1.default().initializeRoutes());
         this.app.use('', new branches_1.default().initializeRoutes());
     }
     initSocket(server) {
@@ -62,11 +65,11 @@ class App {
         this.app.use(cookieParser());
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({ extended: false }));
-        this.app.use(session({
-            secret: SECRET,
-            saveUninitialized: true,
-            resave: true
-        }));
+        // this.app.use(session({
+        //   secret: SECRET,
+        //   saveUninitialized: true,
+        //   resave: true
+        // }))
         this.app.use(flash());
         this.app.use(passport.initialize());
         this.app.use(passport.session());
