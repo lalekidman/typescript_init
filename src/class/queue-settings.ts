@@ -5,7 +5,6 @@ import * as uuid from 'uuid'
 import Queries from '../utils/queries'
 import {IUpdateBranchQueueSettings} from '../utils/interfaces'
 
-
 export default class QueueSettings {
   Queries: Queries
 
@@ -37,18 +36,21 @@ export default class QueueSettings {
    */
   public async updateBranchQueueSettings(branchId: string, data: IUpdateBranchQueueSettings) {
     return new Promise((resolve, reject) => {
-      QueueSettingsModel.findOneAndUpdate(
-        {branchId},
-        {
-          ...data,
-          ...{updatedAt: Date.now()}
-        },
-        {new: true}
-      )
+      QueueSettingsModel
+        .findOne({
+          branchId
+        })
+        .then((queueSettings) => {
+          if (!queueSettings) {
+            const newQueueSettings = <IQueueSettingsModel> this.Queries.initilize({...data, branchId})
+            return newQueueSettings.save()
+          }
+          return queueSettings.set({...queueSettings, updatedAt: Date.now()})
+        })
       .then((updatedSettings) =>{
-        if (!updatedSettings) {
-          return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'))
-        }
+        // if (!updatedSettings) {
+        //   return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'))
+        // }
         resolve(updatedSettings)
       }) 
       .catch((error) => {

@@ -44,7 +44,7 @@ class Queries {
   }
   public initilize (data: any) {
     const id = uuid()
-    return new this.ModelSchema(Object.assign(data, {id, _id: id, branchId: id ,createdAt: Date.now(), updatedAt: Date.now()}))
+    return new this.ModelSchema(Object.assign(data, {id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}))
   }
   public setErrorMsg (error: string | IAppError) {
     return this.errorMsg = error
