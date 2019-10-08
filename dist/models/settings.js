@@ -84,11 +84,11 @@ exports.ModelSchema = new mongoose_1.Schema({
                 type: String,
                 default: ''
             },
-            startValue: {
+            openingTime: {
                 type: Number,
                 default: 0
             },
-            endValue: {
+            closingTime: {
                 type: Number,
                 default: 0
             },

@@ -62,9 +62,11 @@ class QueueSettings {
                         }
                     }
                 }
-                for (let i in data.adsToDelete) {
-                    // @ts-ignore
-                    yield this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
+                if (data.adsToDelete && data.adsToDelete.length >= 1) {
+                    for (let i in data.adsToDelete) {
+                        // @ts-ignore
+                        yield this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
+                    }
                 }
                 settings.save()
                     .then((updatedSettings) => __awaiter(this, void 0, void 0, function* () {

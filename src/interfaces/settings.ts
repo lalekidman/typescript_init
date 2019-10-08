@@ -29,8 +29,8 @@ export interface SocialLinks {
 }
 export interface IOperationHours {
   _id?: string
-  startValue: number
-  endValue: number
+  openingTime: number
+  closingTime: number
   enabled: boolean
   day: number
   isWholeDay: boolean
