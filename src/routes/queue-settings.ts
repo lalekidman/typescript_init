@@ -117,11 +117,11 @@ export default class Route {
    */
   private searchQueueTags(request: IRequest, response: Response) {
     const {branchId} = request.params
-    let {searchString='', offset="0", limit="20", order="1"} = request.query
+    let {searchText='', offset="0", limit="20", order="1"} = request.query
     offset = parseInt(offset) ? Math.floor(parseInt(offset)) : 0
     limit = parseInt(limit) ? Math.floor(parseInt(limit)) : 10
     order = parseInt(order)
-    queueSettings.searchQueueTags(branchId, searchString, order)
+    queueSettings.searchQueueTags(branchId, searchText, order)
     .then((queueTags) => {
       response.status(HttpStatus.OK).json(queueTags)
     })
