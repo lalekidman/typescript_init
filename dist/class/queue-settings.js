@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const queue_settings_1 = require("../models/queue-settings");
+const branches_1 = require("../models/branches");
 const RC = require("../utils/response-codes");
 const app_error_1 = require("../utils/app-error");
 const queries_1 = require("../utils/queries");
@@ -42,23 +43,20 @@ class QueueSettings {
     updateBranchQueueSettings(branchId, data) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                queue_settings_1.default
-                    .findOne({
-                    branchId
-                })
-                    .then((queueSettings) => {
-                    if (!queueSettings) {
-                        const newQueueSettings = this.Queries.initilize(Object.assign({}, data, { branchId }));
-                        return newQueueSettings.save();
+                queue_settings_1.default.findOneAndUpdate({ branchId }, data, { new: true })
+                    .then((updatedQueueSettings) => __awaiter(this, void 0, void 0, function* () {
+                    if (!updatedQueueSettings) {
+                        // check if branch exists
+                        let checkBranch = yield branches_1.default.findOne({ _id: branchId });
+                        if (checkBranch) {
+                            const newQueueSettings = yield this.Queries.initilize(Object.assign({}, data, { branchId }));
+                            newQueueSettings.save();
+                            return resolve(newQueueSettings);
+                        }
+                        return reject(new app_error_1.default(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'branch not found'));
                     }
-                    return queueSettings.set(Object.assign({}, queueSettings, { updatedAt: Date.now() }));
-                })
-                    .then((updatedSettings) => {
-                    // if (!updatedSettings) {
-                    //   return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'))
-                    // }
-                    resolve(updatedSettings);
-                })
+                    resolve(updatedQueueSettings);
+                }))
                     .catch((error) => {
                     console.log(error);
                     reject(error);
