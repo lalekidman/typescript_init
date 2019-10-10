@@ -1,4 +1,5 @@
 import QueueSettingsModel, {IQueueSettingsModel} from '../models/queue-settings'
+import BranchModel from '../models/branches'
 import * as RC from '../utils/response-codes'
 import AppError from '../utils/app-error'
 import * as uuid from 'uuid'
@@ -36,23 +37,24 @@ export default class QueueSettings {
    */
   public async updateBranchQueueSettings(branchId: string, data: IUpdateBranchQueueSettings) {
     return new Promise((resolve, reject) => {
-      QueueSettingsModel
-        .findOne({
-          branchId
-        })
-        .then((queueSettings) => {
-          if (!queueSettings) {
-            const newQueueSettings = <IQueueSettingsModel> this.Queries.initilize({...data, branchId})
-            return newQueueSettings.save()
+      QueueSettingsModel.findOneAndUpdate(
+        {branchId},
+        data,
+        {new: true}
+      )
+      .then(async (updatedQueueSettings) => {
+        if (!updatedQueueSettings) {
+          // check if branch exists
+          let checkBranch = await BranchModel.findOne({_id: branchId})
+          if (checkBranch) {
+            const newQueueSettings = <IQueueSettingsModel> await this.Queries.initilize({...data, branchId})
+            newQueueSettings.save()
+            return resolve(newQueueSettings)
           }
-          return queueSettings.set({...queueSettings, updatedAt: Date.now()})
-        })
-      .then((updatedSettings) =>{
-        // if (!updatedSettings) {
-        //   return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'not found'))
-        // }
-        resolve(updatedSettings)
-      }) 
+          return reject(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_QUEUE_SETTINGS, 'branch not found'))
+        }
+        resolve(updatedQueueSettings)
+      })
       .catch((error) => {
         console.log(error)
         reject(error)
