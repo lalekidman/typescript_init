@@ -10,7 +10,7 @@ interface IAccountData {
 export default class Account {
   private URL: string
   constructor () {
-    this.URL = `http://${process.env.ACCOUNT_SERVICE_URL}:3000`
+    this.URL = `http://${process.env.ACCOUNT_SERVICE_HOST}`
   }
   public findOne (branchId: string) {
     const url = `${this.URL}/${branchId}`
