@@ -11,6 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const branches_1 = require("../class/branches");
 const partner_1 = require("../class/partner");
+const industry_1 = require("../class/industry");
 const settings_1 = require("../models/settings");
 const branches_2 = require("../models/branches");
 const settings_2 = require("./settings");
@@ -112,10 +113,13 @@ class AccountRoute {
                     _id: branchId
                 });
                 const partner = yield new partner_1.default().findOne(branch.partnerId);
+                const industry = yield new industry_1.default().findById(partner.industryId);
+                console.log('industry: ', industry);
+                const ind = industry.categoryList.findIndex((category) => category._id === partner.categoryId);
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
-                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
+                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, industry: industry.name, categoryType: ind >= 0 ? industry.categoryList[ind].name : '', settings: settings }));
             }
             catch (err) {
                 if (err.statusCode) {
