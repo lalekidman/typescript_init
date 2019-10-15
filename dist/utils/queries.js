@@ -46,6 +46,7 @@ class Queries {
         });
     }
     upload(filepath, file) {
+        // @ts-ignore
         return Promise.resolve(file ? s3.upload(filepath, file) : { imageUrl: '' });
     }
     uploadMany(filepath, files) {

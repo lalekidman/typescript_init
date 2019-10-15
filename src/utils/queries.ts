@@ -70,6 +70,7 @@ class Queries {
     })
   }
   public upload (filepath: string, file: any): Promise<UploadedImage> {
+    // @ts-ignore
     return Promise.resolve( file ? s3.upload(filepath, file) : {imageUrl: ''})
   }
   public uploadMany (filepath: string, files: Array<any>) {
