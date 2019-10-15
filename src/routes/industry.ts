@@ -66,7 +66,23 @@ export default class AccountRoute {
         // res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.))
       })
   }
+  private findOne = (req: IRequest, res: Response, next: NextFunction) => {
+    const {industryId = ''} =  req.params
+    this.industry
+      .viewById(industryId)
+      .then((industryList) => {
+        res.status(HttpStatus.OK).send({
+          success: true,
+          data: industryList
+        })
+      })
+      .catch(err => {
+        res.status(HttpStatus.BAD_REQUEST).send({error: err.message})
+        // res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.))
+      })
+  }
   public initializeRoutes () {
+    this.app.get('/:industryId', this.findOne)
     this.app.post('/', multiPartMiddleWare, this.add)
     this.app.patch('/:industryId', multiPartMiddleWare, this.update)
     this.app.get('/', this.list)
