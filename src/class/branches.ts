@@ -151,9 +151,8 @@ export default class BusinessBranches extends Queries {
         let settings: any
         if (avatar) {
           const s3FolderPathAvatar = `branch/${branchId}/avatar`
-          const s3PathAvatar = `${s3FolderPathAvatar}/${avatar.name}`
           try {
-            let avatarUpload = await this.upload(s3PathAvatar, avatar)
+            let avatarUpload = await this.upload(s3FolderPathAvatar, avatar)
             branch.avatarUrl = avatarUpload.imageUrl
           }
           catch (error) {
@@ -162,9 +161,8 @@ export default class BusinessBranches extends Queries {
         }
         if (banner) {
           const s3FolderPathBanner = `branch/${branchId}/banner`
-          const s3PathBanner = `${s3FolderPathBanner}/${banner.name}`
           try {
-            let bannerUpload = await this.upload(s3PathBanner, banner)
+            let bannerUpload = await this.upload(s3FolderPathBanner, banner)
             bannerUrl = bannerUpload.imageUrl
           }
           catch (error) {

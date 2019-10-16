@@ -145,9 +145,8 @@ class BusinessBranches extends queries_1.default {
                 let settings;
                 if (avatar) {
                     const s3FolderPathAvatar = `branch/${branchId}/avatar`;
-                    const s3PathAvatar = `${s3FolderPathAvatar}/${avatar.name}`;
                     try {
-                        let avatarUpload = yield this.upload(s3PathAvatar, avatar);
+                        let avatarUpload = yield this.upload(s3FolderPathAvatar, avatar);
                         branch.avatarUrl = avatarUpload.imageUrl;
                     }
                     catch (error) {
@@ -156,9 +155,8 @@ class BusinessBranches extends queries_1.default {
                 }
                 if (banner) {
                     const s3FolderPathBanner = `branch/${branchId}/banner`;
-                    const s3PathBanner = `${s3FolderPathBanner}/${banner.name}`;
                     try {
-                        let bannerUpload = yield this.upload(s3PathBanner, banner);
+                        let bannerUpload = yield this.upload(s3FolderPathBanner, banner);
                         bannerUrl = bannerUpload.imageUrl;
                     }
                     catch (error) {
