@@ -10,8 +10,8 @@ export enum BRANCH_MODULES {
   RESERVATION = 6
 }
 export enum ACCOUNT_ROLE_LEVEL {
-  SUPER_ADMIN = 1,
-  ADMIN = 2
+  SUPER_ADMIN = 0,
+  ADMIN = 1
 }
 
 export const FEATURES = [

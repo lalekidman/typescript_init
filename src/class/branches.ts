@@ -141,10 +141,47 @@ export default class BusinessBranches extends Queries {
   /**
    * edit branch
    */
-  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>) {
+  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>, avatar: any, banner: any) {
     return new Promise((resolve, reject) => {
       BranchModel.findOne({_id: branchId})
       .then(async (branch: any) => {
+        let errors: Array<any> = []
+        // upload images (avatar and banner)
+        let avatarUrl, bannerUrl
+        let settings: any
+        if (avatar) {
+          const s3FolderPathAvatar = `branch/${branchId}/avatar`
+          const s3PathAvatar = `${s3FolderPathAvatar}/${avatar.name}`
+          try {
+            let avatarUpload = await this.upload(s3PathAvatar, avatar)
+            branch.avatarUrl = avatarUpload.imageUrl
+          }
+          catch (error) {
+            errors.push('avatar upload failed')
+          }
+        }
+        if (banner) {
+          const s3FolderPathBanner = `branch/${branchId}/banner`
+          const s3PathBanner = `${s3FolderPathBanner}/${banner.name}`
+          try {
+            let bannerUpload = await this.upload(s3PathBanner, banner)
+            bannerUrl = bannerUpload.imageUrl
+          }
+          catch (error) {
+            errors.push('banner upload failed')
+          }
+        }
+        // update banner (model location : Settings model)
+        try {
+          settings = await BranchSettings.findOneAndUpdate(
+            {branchId},
+            Object.assign({}, bannerUrl? {bannerUrl} : {}),
+            {new: true}
+          )
+        }
+        catch (error) {
+          errors.push(error)
+        }
         branch.email = branchEmail
         branch.categoryId = categoryId
         branch.about = about
@@ -173,7 +210,7 @@ export default class BusinessBranches extends Queries {
         }
         branch.save()
         .then((updatedBranch: any) => {
-          resolve({...updatedBranch.toObject(), ...{socialLinks}})
+          resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}})
         })
       })
       .catch((error) => {

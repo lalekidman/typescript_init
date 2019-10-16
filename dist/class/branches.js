@@ -135,10 +135,43 @@ class BusinessBranches extends queries_1.default {
     /**
      * edit branch
      */
-    updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks) {
+    updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner) {
         return new Promise((resolve, reject) => {
             branches_1.default.findOne({ _id: branchId })
                 .then((branch) => __awaiter(this, void 0, void 0, function* () {
+                let errors = [];
+                // upload images (avatar and banner)
+                let avatarUrl, bannerUrl;
+                let settings;
+                if (avatar) {
+                    const s3FolderPathAvatar = `branch/${branchId}/avatar`;
+                    const s3PathAvatar = `${s3FolderPathAvatar}/${avatar.name}`;
+                    try {
+                        let avatarUpload = yield this.upload(s3PathAvatar, avatar);
+                        branch.avatarUrl = avatarUpload.imageUrl;
+                    }
+                    catch (error) {
+                        errors.push('avatar upload failed');
+                    }
+                }
+                if (banner) {
+                    const s3FolderPathBanner = `branch/${branchId}/banner`;
+                    const s3PathBanner = `${s3FolderPathBanner}/${banner.name}`;
+                    try {
+                        let bannerUpload = yield this.upload(s3PathBanner, banner);
+                        bannerUrl = bannerUpload.imageUrl;
+                    }
+                    catch (error) {
+                        errors.push('banner upload failed');
+                    }
+                }
+                // update banner (model location : Settings model)
+                try {
+                    settings = yield settings_1.default.findOneAndUpdate({ branchId }, Object.assign({}, bannerUrl ? { bannerUrl } : {}), { new: true });
+                }
+                catch (error) {
+                    errors.push(error);
+                }
                 branch.email = branchEmail;
                 branch.categoryId = categoryId;
                 branch.about = about;
@@ -167,7 +200,7 @@ class BusinessBranches extends queries_1.default {
                 }
                 branch.save()
                     .then((updatedBranch) => {
-                    resolve(Object.assign({}, updatedBranch.toObject(), { socialLinks }));
+                    resolve(Object.assign({}, updatedBranch.toObject(), { socialLinks }, { settings }, { errors }));
                 });
             }))
                 .catch((error) => {
