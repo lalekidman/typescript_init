@@ -299,7 +299,7 @@ export default class AccountRoute {
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
-    this.app.patch('/:branchId', this.validateOnUpdateBranch, this.updateBranch)
+    this.app.patch('/:branchId', multiPartMiddleWare,this.validateOnUpdateBranch, this.updateBranch)
     this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     return this.app
