@@ -145,7 +145,7 @@ export default class BranchSettings extends Queries {
       })
   }
   /**
-   * update total queue group created
+   * update operationHours
    * @param branchId 
    */
   public updateOperationHours ({isWeeklyOpened = false, operationHours = []}: IOphData) {
@@ -178,6 +178,28 @@ export default class BranchSettings extends Queries {
       return branchSettings.set({
         isWeeklyOpened: false,
         operationHours: opHours
+      })
+      .save()
+    })
+  }
+  /**
+   * 
+   * @param location array of number/float
+   *  first element should be the long and the second one is for lat
+   */ 
+  public updateGeoLocation (location: Number[]) {
+    return this.findOne({
+      branchId: this.branchId
+    })
+    .then((branchSettings) => {
+      if (!branchSettings) {
+        throw new Error('No branch settings found.')
+      }
+      if (location.length <= 1) {
+        throw new Error('Location must be array with a 2 element, 0 is for long and 1 is for lng.')
+      }
+      return branchSettings.set({
+        'location.coordinates': location.splice(0, 2)
       })
       .save()
     })

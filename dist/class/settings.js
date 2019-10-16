@@ -131,7 +131,7 @@ class BranchSettings extends queries_1.default {
         });
     }
     /**
-     * update total queue group created
+     * update operationHours
      * @param branchId
      */
     updateOperationHours({ isWeeklyOpened = false, operationHours = [] }) {
@@ -164,6 +164,28 @@ class BranchSettings extends queries_1.default {
             return branchSettings.set({
                 isWeeklyOpened: false,
                 operationHours: opHours
+            })
+                .save();
+        });
+    }
+    /**
+     *
+     * @param location array of number/float
+     *  first element should be the long and the second one is for lat
+     */
+    updateGeoLocation(location) {
+        return this.findOne({
+            branchId: this.branchId
+        })
+            .then((branchSettings) => {
+            if (!branchSettings) {
+                throw new Error('No branch settings found.');
+            }
+            if (location.length <= 1) {
+                throw new Error('Location must be array with a 2 element, 0 is for long and 1 is for lng.');
+            }
+            return branchSettings.set({
+                'location.coordinates': location.splice(0, 2)
             })
                 .save();
         });

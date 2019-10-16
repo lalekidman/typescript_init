@@ -50,12 +50,33 @@ class Settings {
                 }
             });
         };
+        /**
+         * route for updating location
+         */
+        this.updateLocation = (req, res, next) => {
+            const { branchId = '' } = req.params;
+            const { location = [] } = req.body;
+            const Branch = new settings_1.default(branchId);
+            Branch.updateGeoLocation(location)
+                .then((response) => {
+                res.status(HttpStatus.OK).send(response);
+            })
+                .catch((err) => {
+                if (err.statusCode) {
+                    res.status(HttpStatus.BAD_REQUEST).send(err);
+                }
+                else {
+                    res.status(HttpStatus.BAD_REQUEST).send(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, err.message));
+                }
+            });
+        };
         // initialize redis
         this.app = express_1.Router({ mergeParams: true });
     }
     initializeRoutes() {
         this.app.patch('/queue-group-counter', this.updateTotalQueueGroupCreated);
         this.app.patch('/operation-hours', this.updateOperationHours);
+        this.app.patch('/location', this.updateLocation);
         return this.app;
     }
 }

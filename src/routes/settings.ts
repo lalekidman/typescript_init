@@ -55,9 +55,29 @@ export default class Settings {
       }
     })
   }
+  /**
+   * route for updating location
+   */
+  public updateLocation = (req: IRequest, res: Response, next: NextFunction) => {
+    const {branchId = ''} = req.params
+    const {location = []} = req.body
+    const Branch = new BranchSettings(branchId)
+    Branch.updateGeoLocation(location)
+    .then((response: any) => {
+      res.status(HttpStatus.OK).send(response)
+    })
+    .catch((err) => {
+      if (err.statusCode) {
+        res.status(HttpStatus.BAD_REQUEST).send(err)
+      } else {
+        res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.UPDATE_BRANCH_FAILED, err.message))
+      }
+    })
+  }
   public initializeRoutes () {
     this.app.patch('/queue-group-counter', this.updateTotalQueueGroupCreated)
     this.app.patch('/operation-hours', this.updateOperationHours)
+    this.app.patch('/location', this.updateLocation)
     return this.app
   }
 }
