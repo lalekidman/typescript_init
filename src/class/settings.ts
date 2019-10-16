@@ -6,55 +6,59 @@ import { formDataValidator } from '../utils/helper';
 import * as uuid from 'uuid/v4'
 const DefaultOperationHours = [
   {
-    startValue: 3600000,
-    endValue: 36000000,
+    openingTime: 3600000,
+    closingTime: 36000000,
     enabled: true,
     day: 0,
     isWholeDay: false,
   },
   {
-    startValue: 3600000,
-    endValue: 36000000,
+    openingTime: 3600000,
+    closingTime: 36000000,
     enabled: true,
     day: 1,
     isWholeDay: false,
   },
   {
-    startValue: 3600000,
-    endValue: 36000000,
+    openingTime: 3600000,
+    closingTime: 36000000,
     enabled: true,
     day: 2,
     isWholeDay: false,
   },
   {
-    startValue: 3600000,
-    endValue: 36000000,
+    openingTime: 3600000,
+    closingTime: 36000000,
     enabled: true,
     day: 3,
     isWholeDay: false,
   },
   {
-    startValue: 3600000,
-    endValue: 36000000,
+    openingTime: 3600000,
+    closingTime: 36000000,
     enabled: true,
     day: 4,
     isWholeDay: false,
   },
   {
-    startValue: 3600000,
-    endValue: 36000000,
-    enabled: false,
+    openingTime: 3600000,
+    closingTime: 36000000,
+    enabled: true,
     day: 5,
-    isWholeDay: true,
+    isWholeDay: false,
   },
   {
-    startValue: 3600000,
-    endValue: 36000000,
+    openingTime: 3600000,
+    closingTime: 36000000,
     enabled: true,
     day: 6,
     isWholeDay: false,
   }
 ]
+interface IOphData {
+  operationHours: IOperationHours[]
+  isWeeklyOpened: boolean
+}
 export default class BranchSettings extends Queries {
   private branchId: string
   constructor (branchId: string) {
@@ -110,6 +114,10 @@ export default class BranchSettings extends Queries {
         return newBranchSetting.save()
       })
   }
+  public findOne (query: any, project: any = {}) {
+    return BranchSettingModel
+      .findOne(query, project)
+  }
   /**
    * update total queue group created
    * @param branchId 
@@ -135,5 +143,65 @@ export default class BranchSettings extends Queries {
         }
         return setting
       })
+  }
+  /**
+   * update operationHours
+   * @param branchId 
+   */
+  public updateOperationHours ({isWeeklyOpened = false, operationHours = []}: IOphData) {
+    return this.findOne({
+      branchId: this.branchId
+    })
+    .then((branchSettings) => {
+      if (!branchSettings) {
+        throw new Error('No branch settings found.')
+      }
+      if (isWeeklyOpened) {
+        return branchSettings
+          .set({isWeeklyOpened: true})
+          .save()
+      }
+      const opHours = ((operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours)
+        .map((oph: any, index) => {
+          if (!oph._id) {
+            oph._id = uuid()
+          }
+          return {
+            _id: oph._id,
+            openingTime: parseInt(oph.openingTime),
+            closingTime: parseInt(oph.closingTime),
+            day: parseInt(oph.day) <= 6 && parseInt(oph.day) >= 0 ? parseInt(oph.day) : index,
+            isWholeDay: typeof(oph.isWholeDay) === 'boolean' ? oph.isWholeDay : false,
+            enabled: typeof(oph.enabled) === 'boolean' ? oph.enabled : false,
+          }
+        })
+      return branchSettings.set({
+        isWeeklyOpened: false,
+        operationHours: opHours
+      })
+      .save()
+    })
+  }
+  /**
+   * 
+   * @param location array of number/float
+   *  first element should be the long and the second one is for lat
+   */ 
+  public updateGeoLocation (location: Number[]) {
+    return this.findOne({
+      branchId: this.branchId
+    })
+    .then((branchSettings) => {
+      if (!branchSettings) {
+        throw new Error('No branch settings found.')
+      }
+      if (location.length <= 1) {
+        throw new Error('Location must be array with a 2 element, 0 is for long and 1 is for lng.')
+      }
+      return branchSettings.set({
+        'location.coordinates': location.splice(0, 2)
+      })
+      .save()
+    })
   }
 }

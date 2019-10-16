@@ -85,11 +85,11 @@ export const ModelSchema:Schema = new Schema({
         type: String,
         default: ''
       },
-      startValue: {
+      openingTime: {
         type: Number,
         default: 0
       },
-      endValue: {
+      closingTime: {
         type: Number,
         default: 0
       },

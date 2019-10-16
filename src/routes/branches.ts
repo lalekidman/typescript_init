@@ -2,6 +2,7 @@ import {Request, Response, NextFunction, Router} from 'express'
 import BranchSettings from '../class/settings'
 import Branches from '../class/branches'
 import Partner from '../class/partner'
+import Industry from '../class/industry'
 import BranchSettingModel from '../models/settings'
 import BranchModel, { IBranchModel } from '../models/branches'
 import BranchSettingsRoute from './settings'
@@ -116,6 +117,9 @@ export default class AccountRoute {
         _id: branchId
       })
       const partner = await new Partner().findOne(branch.partnerId)
+      const industry = await new Industry().findById(partner.industryId)
+      console.log('industry: ', industry)
+      const ind = industry.categoryList.findIndex((category: any) => category._id === partner.categoryId)
       const settings = await BranchSettingModel.findOne({
         branchId: branchId
       })
@@ -123,6 +127,8 @@ export default class AccountRoute {
         ...JSON.parse(JSON.stringify(branch)),
         partnerName: partner.name,
         partnerAvatarUrl: partner.avatarUrl,
+        industry: industry.name,
+        categoryType: ind >= 0 ? industry.categoryList[ind].name : '',
         settings: settings
       })
     } catch (err) {
@@ -293,9 +299,9 @@ export default class AccountRoute {
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
-    this.app.patch('/:branchId', multiPartMiddleWare, this.validateOnUpdateBranch, this.updateBranch)
-    this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress)
+    this.app.patch('/:branchId', this.validateOnUpdateBranch, this.updateBranch)
+    this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     return this.app
   }
-}
+} 
