@@ -118,7 +118,6 @@ export default class AccountRoute {
       })
       const partner = await new Partner().findOne(branch.partnerId)
       const industry = await new Industry().findById(partner.industryId)
-      console.log('industry: ', industry)
       const ind = industry.categoryList.findIndex((category: any) => category._id === partner.categoryId)
       const settings = await BranchSettingModel.findOne({
         branchId: branchId
