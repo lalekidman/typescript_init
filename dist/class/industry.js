@@ -116,89 +116,11 @@ class Industries extends queries_1.default {
         });
     }
     viewById(industryId) {
-        return industry_1.default.aggregate([
-            {
-                $match: {
-                    _id: industryId
-                }
-            },
-            {
-                $sort: {
-                    _id: 1
-                }
-            },
-            {
-                $unwind: {
-                    preserveNullAndEmptyArrays: true,
-                    path: '$categoryList'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'business_partners',
-                    let: {
-                        industryId: '$_id',
-                        categoryListId: '$categoryList._id'
-                    },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $eq: ['$industryId', '$$industryId'],
-                                }
-                            }
-                        },
-                        {
-                            $match: {
-                                $expr: {
-                                    $eq: ['$categoryListId', '$$categoryListId']
-                                }
-                            }
-                        },
-                        {
-                            $group: {
-                                _id: null,
-                                totalBusiness: {
-                                    $sum: 1
-                                }
-                            }
-                        }
-                    ],
-                    as: 'bp'
-                }
-            },
-            {
-                $unwind: {
-                    preserveNullAndEmptyArrays: true,
-                    path: '$bp'
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        id: '$_id',
-                        name: '$name',
-                        shortName: '$shortName',
-                        iconUrl: '$iconUrl',
-                        category: '$category'
-                    },
-                    categoryList: {
-                        $push: {
-                            $mergeObjects: ['$categoryList', { totalBusiness: '$bp.totalBusiness' }]
-                        }
-                    }
-                }
-            },
-            {
-                $replaceRoot: {
-                    newRoot: {
-                        $mergeObjects: ['$_id', { categoryList: '$categoryList' }]
-                    }
-                }
-            }
-        ])
-            .then((data) => {
-            return data.length >= 1 ? data[0] : {};
+        return industry_1.default.findOne({
+            _id: industryId
+        })
+            .sort({
+            name: 1
         });
     }
     lists() {

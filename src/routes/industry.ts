@@ -66,22 +66,25 @@ export default class AccountRoute {
         // res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.))
       })
   }
-  
-  // idustry details
-  private industryDetails = (req: IRequest, res: Response) => {
-    this.industry.findOne({_id: req.params.industryId})
-    .then((industry: any) => {
-      res.status(HttpStatus.OK).json(industry)
-    })
-    .catch((error: Error) => {
-      res.status(HttpStatus.BAD_REQUEST).json(error)
-    })
+  private findOne = (req: IRequest, res: Response, next: NextFunction) => {
+    const {industryId = ''} =  req.params
+    this.industry
+      .viewById(industryId)
+      .then((industryList) => {
+        res.status(HttpStatus.OK).send({
+          success: true,
+          data: industryList
+        })
+      })
+      .catch(err => {
+        res.status(HttpStatus.BAD_REQUEST).send({error: err.message})
+        // res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.))
+      })
   }
-
   public initializeRoutes () {
+    this.app.get('/:industryId', this.findOne)
     this.app.post('/', multiPartMiddleWare, this.add)
     this.app.patch('/:industryId', multiPartMiddleWare, this.update)
-    this.app.get('/:industryId', this.industryDetails)
     this.app.get('/', this.list)
     return this.app
   }
