@@ -114,8 +114,7 @@ class AccountRoute {
                 });
                 const partner = yield new partner_1.default().findOne(branch.partnerId);
                 const industry = yield new industry_1.default().findById(partner.industryId);
-                console.log('industry: ', industry);
-                const ind = industry.categoryList.findIndex((category) => category._id === partner.categoryId);
+                const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category) => category._id === partner.categoryId) : -1;
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
