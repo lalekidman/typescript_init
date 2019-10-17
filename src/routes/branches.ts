@@ -122,12 +122,11 @@ export default class AccountRoute {
       const settings = await BranchSettingModel.findOne({
         branchId: branchId
       })
-      console.log('INDUSTRYYYYY: ', industry)
       res.status(HttpStatus.OK).send({
         ...JSON.parse(JSON.stringify(branch)),
         partnerName: partner.name,
         partnerAvatarUrl: partner.avatarUrl,
-        industry: industry.name,
+        industry: industry.data.name,
         categoryType: ind >= 0 ? industry.categoryList[ind].name : '',
         settings: settings
       })

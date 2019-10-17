@@ -118,8 +118,7 @@ class AccountRoute {
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
-                console.log('INDUSTRYYYYY: ', industry);
-                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, industry: industry.name, categoryType: ind >= 0 ? industry.categoryList[ind].name : '', settings: settings }));
+                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, industry: industry.data.name, categoryType: ind >= 0 ? industry.categoryList[ind].name : '', settings: settings }));
             }
             catch (err) {
                 if (err.statusCode) {
