@@ -126,7 +126,7 @@ export default class AccountRoute {
         ...JSON.parse(JSON.stringify(branch)),
         partnerName: partner.name,
         partnerAvatarUrl: partner.avatarUrl,
-        industry: industry.data.name,
+        industry: industry.data,
         categoryType: ind >= 0 ? industry.categoryList[ind].name : '',
         settings: settings
       })
