@@ -293,7 +293,7 @@ export const ModelSchema:Schema = new Schema({
   },
   totalQueueGroup: {
     type: Number,
-    default: Date.now()
+    default: 0
   },
   createdAt: {
     type: Number,
