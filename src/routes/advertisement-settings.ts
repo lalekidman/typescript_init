@@ -174,7 +174,7 @@ export default class Route {
   public initializeRoutes() {
     this.app.get('/', this.getBranchAdvertisementSettings)
     this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
-    this.app.post('/gallery/:mediaId', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
+    this.app.post('/gallery/upload', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
     this.app.post('/ads/upload', multiPartMiddleWare, this.fileExists, this.uploadToAds)
     this.app.delete('/gallery/:mediaId', this.deleteMedia)
     return this.app
