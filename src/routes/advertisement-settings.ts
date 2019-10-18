@@ -161,8 +161,7 @@ export default class Route {
    * delete media from gallery
    */
   private deleteMedia(req: IRequest, res: Response) {
-    const {branchId} = req.params
-    const {mediaId} = req.body
+    const {branchId, mediaId} = req.params
     advertisementSettings.deleteMedia(branchId, mediaId, 'gallery')
     .then((updatedSettings) => {
       res.status(HttpStatus.OK).json(updatedSettings)
@@ -175,9 +174,9 @@ export default class Route {
   public initializeRoutes() {
     this.app.get('/', this.getBranchAdvertisementSettings)
     this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
-    this.app.post('/upload-to-gallery', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
-    this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.fileExists, this.uploadToAds)
-    this.app.delete('/delete-in-gallery', this.deleteMedia)
+    this.app.post('/gallery/:mediaId', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
+    this.app.post('/ads/upload', multiPartMiddleWare, this.fileExists, this.uploadToAds)
+    this.app.delete('/gallery/:mediaId', this.deleteMedia)
     return this.app
   }
 }
