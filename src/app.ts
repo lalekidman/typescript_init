@@ -9,6 +9,7 @@ import * as HttpStatus from 'http-status-codes'
 import * as morgan from 'morgan'
 import * as session from 'express-session';
 import * as cookieParser from 'cookie-parser'
+import {createClient} from 'redis'
 
 import flash = require('connect-flash')
 
@@ -29,6 +30,7 @@ class App {
   public server: SocketServer
   private DBURI: string
   private Port:(number | string)
+  private redisPublisher: any
   constructor () {
     this.app = express()
     this.HttpServer = createServer(this.app)
@@ -69,6 +71,17 @@ class App {
     })
     this.initSocket(this.server)
   }
+  // Redis Init and Config
+  private loadRedisConfig() {
+    this.redisPublisher = createClient(`redis://${process.env.REDIS_HOST}`)
+    this.app.set("redisPublisher", this.redisPublisher)
+    this.redisPublisher.on('error', (error: Error) => {
+      console.log(`Server connection to redis failed. Connection String redis://${process.env.REDIS_HOST}. Error ${error}`)
+    })
+    this.redisPublisher.on('connect', () => {
+      console.log(`*** Server is connected to redis. Connection String: redis://${process.env.REDIS_HOST}`)
+    })
+  }
   private _init () { 
     
     this.app.use(morgan('dev'))
@@ -98,6 +111,7 @@ class App {
       next()
     })
     this.mountRoutes()
+    this.loadRedisConfig()
     this.initMongodb()
   }
 }

@@ -120,3 +120,9 @@ export const BAD_REQUEST_BRANCH_ADVERTISEMENT_SETTINGS = {
   source: '** requestBody {enableCustomQr=boolean, customQrLink=string, imagePreviewDuration=number,' +
   'gallery=array}'
 }
+
+export const FILE_UPLOAD_ERROR = {
+  statusCode: 190404,
+  error: 'FILE_UPLOAD_ERROR',
+  source: ''
+}

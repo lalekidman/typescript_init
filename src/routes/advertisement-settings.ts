@@ -116,6 +116,12 @@ export default class Route {
     if (!Array.isArray(media)) {
       media = [media]
     }
+    // @ts-ignore
+    if (media.length > process.env.MAX_UPLOAD_LIMIT) {
+      return res.status(HttpStatus.BAD_REQUEST)
+      .json(new AppError(RC.FILE_UPLOAD_ERROR, 
+      `maximum upload limit is ${process.env.MAX_UPLOAD_LIMIT}`))
+    }
     for (let i in media) {
       const fileSize = getFileSize(media[i].path)
       try {

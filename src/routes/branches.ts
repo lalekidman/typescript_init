@@ -13,6 +13,7 @@ import * as RC from '../utils/response-codes'
 import { IRequest } from '../utils/interfaces';
 const multiPartMiddleWare = require('connect-multiparty')()
 import * as regExp from '../utils/regularExpressions'
+import { request } from 'http';
 
 export default class AccountRoute {
 
@@ -287,6 +288,8 @@ export default class AccountRoute {
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
     new Branches().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner)
     .then((updatedBranch) => {
+      // publish to redis subscribers
+      req.app.get('redisPublisher').publish('UPDATE_BRANCH', JSON.stringify({data: updatedBranch, branchId}))
       res.status(HttpStatus.OK).json(updatedBranch)
     })
     .catch((error) => {
