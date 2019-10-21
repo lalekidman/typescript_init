@@ -54,7 +54,7 @@ export default class AccountRoute {
   }
   private list = (req: IRequest, res: Response, next: NextFunction) => {
     this.industry
-      .lists()
+      .lists(req.query)
       .then((industryList) => {
         res.status(HttpStatus.OK).send({
           success: true,

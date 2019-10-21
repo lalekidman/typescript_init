@@ -129,14 +129,14 @@ export default class Industries extends Queries {
       name: 1
     })
   }
-  public lists () {
+  public lists (data: any) {
     return this.aggregateWithPagination([
       {
         $sort: {
           createdAt: 1
         }
       }
-    ])
+    ], data, ['name'])
   }
   /**
    * 
