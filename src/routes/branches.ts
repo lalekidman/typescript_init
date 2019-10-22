@@ -4,6 +4,7 @@ import Branches from '../class/branches'
 import Partner from '../class/partner'
 import Industry from '../class/industry'
 import BranchSettingModel from '../models/settings'
+import QueueSettingModel from '../models/queue-settings'
 import BranchModel, { IBranchModel } from '../models/branches'
 import BranchSettingsRoute from './settings'
 import * as HttpStatus from 'http-status-codes' 
@@ -122,13 +123,17 @@ export default class AccountRoute {
       const settings = await BranchSettingModel.findOne({
         branchId: branchId
       })
+      const queueSettings = await QueueSettingModel.findOne({
+        branchId: branchId
+      })
       res.status(HttpStatus.OK).send({
         ...JSON.parse(JSON.stringify(branch)),
         partnerName: partner.name,
         partnerAvatarUrl: partner.avatarUrl,
         industry: industry.name,
         categoryType: ind >= 0 ? industry.categoryList[ind].name : '',
-        settings: settings
+        settings: settings,
+        queueSettings: queueSettings
       })
     } catch (err) {
       if (err.statusCode) {

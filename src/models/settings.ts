@@ -293,15 +293,15 @@ export const ModelSchema:Schema = new Schema({
   },
   totalQueueGroup: {
     type: Number,
-    default: Date.now()
+    default: 0
   },
   createdAt: {
     type: Number,
-    default: Date.now()
+    default: 0
   },
   updatedAt: {
     type: Number,
-    default: Date.now()
+    default: 0
   }
 })
 //new Logs(ModelSchema, 'branches')
