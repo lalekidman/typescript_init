@@ -28,7 +28,16 @@ export default class Route {
    * ** MIDDLEWARE ** on update advertisement settings 
    */
   private onUpdateAdvertisementSettings(req: IRequest, res: Response, next: NextFunction) {
-    const {enableCustomQr=false, customQrLink, imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+    let {data} = req.body
+    try {
+      data = JSON.parse(data)
+    }
+    catch (error) {
+      console.log(error)
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
+        '**@request body.data is JSON unparsable'))
+    }
+    const {enableCustomQr=false, customQrLink, imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = data
     // verify request.body
     if (typeof(enableCustomQr) !== 'boolean' ||
     typeof(imagePreviewDuration) !== 'number' ||
@@ -86,8 +95,18 @@ export default class Route {
   /**
    * update branch Advertisement Settings
    */
-  private updateBranchAdvertisementSettings(req: IRequest, res: Response) {
-    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+  private updateBranchAdvertisementSettings = async (req: IRequest, res: Response) => {
+    let payload = JSON.parse(req.body.data)
+    // upload image first
+    if (req.files && req.files.media) {
+      try {
+        await this.uploader(req, res, 'advertisements')
+      }
+      catch(error) {
+        return error
+      }
+    }
+    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = payload
     const data: IUpdateBranchAdvertisementSettings = {
       //@ts-ignore
       enableCustomQr,
@@ -96,6 +115,7 @@ export default class Route {
       advertisements,
       adsToDelete
     }
+    // update other form data
     const {branchId} = req.params
     advertisementSettings.updateBranchAdvertisementSettings(branchId, data)
     .then((updatedSettings) => {
@@ -179,7 +199,7 @@ export default class Route {
 
   public initializeRoutes() {
     this.app.get('/', this.getBranchAdvertisementSettings)
-    this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
+    this.app.patch('/', multiPartMiddleWare, this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
     this.app.post('/gallery/upload', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
     this.app.post('/ads/upload', multiPartMiddleWare, this.fileExists, this.uploadToAds)
     this.app.delete('/gallery/:mediaId', this.deleteMedia)

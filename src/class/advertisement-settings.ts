@@ -160,7 +160,7 @@ export default class QueueSettings {
         })
         let deleted: Gallery = settings[field].find((element: Gallery) => element._id === mediaId)
         if (!deleted) {
-          reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
+          reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
         }
         this.Aws.deleteFile(deleted.s3Path)
         settings.storageUsedInMb -= deleted.fileSizeInMb
