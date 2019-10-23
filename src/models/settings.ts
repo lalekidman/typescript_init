@@ -297,11 +297,11 @@ export const ModelSchema:Schema = new Schema({
   },
   createdAt: {
     type: Number,
-    default: Date.now()
+    default: 0
   },
   updatedAt: {
     type: Number,
-    default: Date.now()
+    default: 0
   }
 })
 //new Logs(ModelSchema, 'branches')

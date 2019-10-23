@@ -1,9 +1,10 @@
-import {Request, Response, NextFunction, Router} from 'express'
+import {Request, Response, NextFunction, Router, response} from 'express'
 import BranchSettings from '../class/settings'
 import Branches from '../class/branches'
 import Partner from '../class/partner'
 import Industry from '../class/industry'
 import BranchSettingModel from '../models/settings'
+import QueueSettingModel from '../models/queue-settings'
 import BranchModel, { IBranchModel } from '../models/branches'
 import BranchSettingsRoute from './settings'
 import * as HttpStatus from 'http-status-codes' 
@@ -113,24 +114,34 @@ export default class AccountRoute {
    */
   public findOne = async (req: IRequest, res: Response, next: NextFunction) => {
     const {branchId = ''} = req.params
+    const {fullData, displayAll, withSettings = 0} = req.query
     try {
       const branch = await new Branches().findOne({
         _id: branchId
       })
       const partner = await new Partner().findOne(branch.partnerId)
-      const industry = await new Industry().findById(partner.industryId)
-      const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category: any) => category._id === partner.categoryId) : -1
-      const settings = await BranchSettingModel.findOne({
-        branchId: branchId
-      })
-      res.status(HttpStatus.OK).send({
+      const responseData = {
         ...JSON.parse(JSON.stringify(branch)),
         partnerName: partner.name,
-        partnerAvatarUrl: partner.avatarUrl,
-        industry: industry.data,
-        categoryType: ind >= 0 ? industry.categoryList[ind].name : '',
-        settings: settings
-      })
+        partnerAvatarUrl: partner.avatarUrl
+      }
+      const industry = await new Industry().findById(partner.industryId)
+      if (industry) {
+        responseData.industry = industry.name 
+        const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category: any) => category._id === partner.categoryId) : -1
+        responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : ''
+      }
+      // if (withSettings) {
+        const settings = await BranchSettingModel.findOne({
+          branchId: branchId
+        })
+        // const queueSettings = await QueueSettingModel.findOne({
+        //   branchId: branchId
+        // })
+        responseData.settings = settings
+        // responseData.queueSettings = queueSettings
+      // }
+      res.status(HttpStatus.OK).send(responseData)
     } catch (err) {
       if (err.statusCode) {
         res.status(HttpStatus.BAD_REQUEST).send(err)
