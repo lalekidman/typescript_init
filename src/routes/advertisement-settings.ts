@@ -28,6 +28,16 @@ export default class Route {
    * ** MIDDLEWARE ** on update advertisement settings 
    */
   private onUpdateAdvertisementSettings(req: IRequest, res: Response, next: NextFunction) {
+    // check file formats
+    if (req.files) {
+      for (let i in req.files.media) {
+        const fileType = req.files.media[i].type
+        if (!regExp.validImages.test(fileType) && !regExp.validVideos.test(fileType)) {
+          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
+            'Valid File Types: image(jpeg, jpg, png, gif, bmp, tiff) , video(mp4, webm, ogg)')) 
+        }
+      }
+    }
     let {data} = req.body
     try {
       data = JSON.parse(data)

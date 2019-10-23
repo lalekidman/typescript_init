@@ -11,3 +11,5 @@ export const validInstagramLink = /^((https:\/\/+(www\.)?)?)+(instagram\.com\/)[
 export const validUrl = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/
 
 export const validImages = /((JPEG)|(JPG)|(PNG)|(GIF)|(BMP)|(TIFF))/i
+
+export const validVideos = /((MP4)|(WEBM)|(OGG))/i
