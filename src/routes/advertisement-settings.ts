@@ -32,15 +32,17 @@ export default class Route {
     if (req.files) {
       let {media} = req.files
       // ensure that media will be an array
-      if (!Array.isArray(media)) {
-        media = [media]
-      }
-      for (let i in media) {
-        const fileType = media[i].type
-        console.log(fileType)
-        if (!regExp.validImages.test(fileType) && !regExp.validVideos.test(fileType)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
-            'Valid File Types: image(jpeg, jpg, png, gif, bmp, tiff) , video(mp4, webm, ogg)')) 
+      if (typeof(media) !== 'undefined') {
+        if (!Array.isArray(media)) {
+          media = [media]
+        }
+        for (let i in media) {
+          const fileType = media[i].type
+          console.log(fileType)
+          if (!regExp.validImages.test(fileType) && !regExp.validVideos.test(fileType)) {
+            return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
+              'Valid File Types: image(jpeg, jpg, png, gif, bmp, tiff) , video(mp4, webm, ogg)')) 
+          }
         }
       }
     }
