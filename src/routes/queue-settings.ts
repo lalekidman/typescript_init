@@ -105,6 +105,8 @@ export default class Route {
     }
     queueSettings.updateBranchQueueSettings(branchId, settings)
     .then((updatedSettings) => {
+      // publish to redis subscribers
+      request.app.get('redisPublisher').publish('UPDATE_QUEUE_SETTINGS', JSON.stringify({data: updatedSettings, branchId}))
       response.status(HttpStatus.OK).json(updatedSettings)
     })
     .catch((error) => {
