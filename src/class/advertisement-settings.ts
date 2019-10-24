@@ -162,19 +162,21 @@ export default class QueueSettings {
         // if (!deleted) {
         //   return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
         // }
-        let deleted = settings[field].filter((element: Gallery) => {
+        let deleted: Gallery = settings[field].find((element: Gallery) => {
           if (element._id === mediaId) {
             console.log(mediaId)
             console.log('element', element)
             return element
           }
         })
-        console.log(deleted)
-        if (deleted.length === 0) {
-          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
+        console.log('DELETED', deleted)
+        if (deleted) {
+          // return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
+          this.Aws.deleteFile(deleted.s3Path)
+          settings.storageUsedInMb -= deleted.fileSizeInMb
         }
-        this.Aws.deleteFile(deleted[0].s3Path)
-        settings.storageUsedInMb -= deleted[0].fileSizeInMb
+        // this.Aws.deleteFile(deleted.s3Path)
+        // settings.storageUsedInMb -= deleted.fileSizeInMb
         settings[field] = filtered
         settings.save()
         .then((updatedSettings: any) => {
