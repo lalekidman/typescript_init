@@ -38,7 +38,6 @@ export default class Route {
         }
         for (let i in media) {
           const fileType = media[i].type
-          console.log(fileType)
           if (!regExp.validImages.test(fileType) && !regExp.validVideos.test(fileType)) {
             return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
               'Valid File Types: image(jpeg, jpg, png, gif, bmp, tiff) , video(mp4, webm, ogg)')) 
@@ -124,6 +123,7 @@ export default class Route {
         return error
       }
     }
+    console.log('PAYLOAD >>>>>>>>>>>>', payload)
     const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = payload
     const data: IUpdateBranchAdvertisementSettings = {
       //@ts-ignore

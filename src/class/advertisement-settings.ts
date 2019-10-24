@@ -151,7 +151,7 @@ export default class QueueSettings {
       SettingsModel.findOne({branchId})
       .then((settings: any) => {
         if (!settings) {
-          reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
+          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
         }
         let filtered = settings[field].filter((asset: Gallery) => {
           if (asset._id !== mediaId) {
@@ -160,7 +160,7 @@ export default class QueueSettings {
         })
         let deleted: Gallery = settings[field].find((element: Gallery) => element._id === mediaId)
         if (!deleted) {
-          reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
+          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
         }
         this.Aws.deleteFile(deleted.s3Path)
         settings.storageUsedInMb -= deleted.fileSizeInMb
