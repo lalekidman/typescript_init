@@ -158,7 +158,18 @@ export default class QueueSettings {
             return asset
           }
         })
-        let deleted: Gallery = settings[field].find((element: Gallery) => element._id === mediaId)
+        // let deleted: Gallery = settings[field].find((element: Gallery) => element._id === mediaId)
+        // if (!deleted) {
+        //   return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
+        // }
+        let deleted: Gallery = settings[field].find((element: Gallery) => {
+          if (element._id === mediaId) {
+            console.log(mediaId)
+            console.log('element', element)
+            return element
+          }
+        })
+        console.log(deleted)
         if (!deleted) {
           return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
         }
