@@ -10,7 +10,7 @@ class Industry {
       }
     }).then((response: any) => {
       const {data, status = '', statusText = ''} = response
-      return data
+      return data.data
     })
     .catch(() => {
       throw new Error('Failed to fetch industry data.')

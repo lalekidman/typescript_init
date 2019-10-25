@@ -74,6 +74,7 @@ export default class AccountRoute {
         })
       })
       .catch(err => {
+        console.log('ERROR: ', err)
         if (err.statusCode) {
           res.status(HttpStatus.BAD_REQUEST).send(err)
         } else {
@@ -127,6 +128,7 @@ export default class AccountRoute {
       }
       const industry = await new Industry().findById(partner.industryId)
       if (industry) {
+        responseData.industryId = industry._id 
         responseData.industry = industry.name 
         const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category: any) => category._id === partner.categoryId) : -1
         responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : ''
