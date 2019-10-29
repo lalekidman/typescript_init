@@ -129,7 +129,8 @@ export default class AccountRoute {
       const industry = await new Industry().findById(partner.industryId)
       if (industry) {
         responseData.industryId = industry._id 
-        responseData.industry = industry.name 
+        responseData.industryName = industry.name 
+        responseData.industry = industry 
         const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category: any) => category._id === partner.categoryId) : -1
         responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : ''
       }
