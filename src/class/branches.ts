@@ -72,7 +72,7 @@ export default class BusinessBranches extends Queries {
    * @param data 
    */
   //@ts-ignore
-  public save (partnerId: string, data: any) {
+  public save (partnerId: string, data: any, actionBy: any) {
     return this.formDataValidation(data)
       .then(() => {
         const {contacts = [], email, address, avatar, coordinates, about} = data
@@ -105,7 +105,6 @@ export default class BusinessBranches extends Queries {
               coordinates: coordinates
             }
           }))
-          console.log(newBranch)
           const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
           const uploader = await this.upload(filePath.concat(newBranch._id), avatar)
           const adminAccount = await new Account().addAccount(newBranch._id, {
@@ -115,10 +114,9 @@ export default class BusinessBranches extends Queries {
             partnerId: partnerId.toString(),
             email: email.toString(),
             contactNo: contacts[primaryContactIndex].number
-          })
+          }, actionBy)
           uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : ''
           newBranch.save()
-          console.log('rr: ', newBranch)
           // create branch queue settings
           const branchQueueSettings: IQueueSettingsModel = new QueueSettingsModel()
           const queueSettingsId = uuid()

@@ -33,8 +33,9 @@ export default class AccountRoute {
   public add = (req: IRequest, res: Response, next: NextFunction) => {
     const {partnerId = ''} = req.params
     const {avatar} = req.files
+    const user = JSON.parse(req.headers.user ? req.headers.user : <any> "{account: {}}")
     new Branches()
-    .save(partnerId, {...req.body, avatar})
+    .save(partnerId, {...req.body, avatar}, user)
     .then((response) => {
       res.status(HttpStatus.OK).send({
         success: true,

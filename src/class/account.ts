@@ -19,11 +19,14 @@ export default class Account {
       method: 'GET'
     })
   }
-  public addAccount (branchId: string, data: IAccountData) {
+  public addAccount (branchId: string, data: IAccountData, actionBy: any) {
     const url = `${this.URL}/${branchId}`
     return Http({
       url: url,
       data,
+      headers: {
+        user: JSON.stringify(actionBy)
+      },
       method: 'POST'
     })
   }
