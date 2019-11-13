@@ -33,8 +33,9 @@ export default class AccountRoute {
   public add = (req: IRequest, res: Response, next: NextFunction) => {
     const {partnerId = ''} = req.params
     const {avatar} = req.files
+    const user = JSON.parse(req.headers.user ? req.headers.user : <any> "{account: {}}")
     new Branches()
-    .save(partnerId, {...req.body, avatar})
+    .save(partnerId, {...req.body, avatar}, user)
     .then((response) => {
       res.status(HttpStatus.OK).send({
         success: true,
@@ -74,6 +75,7 @@ export default class AccountRoute {
         })
       })
       .catch(err => {
+        console.log('ERROR: ', err)
         if (err.statusCode) {
           res.status(HttpStatus.BAD_REQUEST).send(err)
         } else {
@@ -127,7 +129,9 @@ export default class AccountRoute {
       }
       const industry = await new Industry().findById(partner.industryId)
       if (industry) {
-        responseData.industry = industry.name 
+        responseData.industryId = industry._id 
+        responseData.industryName = industry.name 
+        responseData.industry = industry 
         const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category: any) => category._id === partner.categoryId) : -1
         responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : ''
       }
