@@ -42,7 +42,7 @@ export interface IUpdateBranchQueueSettings {
   hideCustomerNameField: boolean
   hideMobileNumberField: boolean
   autoSms: boolean
-  queuesAway: number
+  autoSmsQueuesAwayNotification: number
   queueTags: Array<IQueueTags>
 }
 

@@ -100,7 +100,7 @@ export default class Route {
       hideCustomerNameField,
       hideMobileNumberField,
       autoSms,
-      queuesAway,
+      autoSmsQueuesAwayNotification: queuesAway,
       queueTags: processedQueueTags
     }
     queueSettings.updateBranchQueueSettings(branchId, settings)
