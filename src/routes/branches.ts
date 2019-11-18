@@ -82,21 +82,33 @@ export default class AccountRoute {
    * get branch lists
    */
   public branchList = async (req: IRequest, res: Response, next: NextFunction) => {
-    const {branchId = ''} = req.query
-    return BranchModel
-      .find({})
-      .then(async (branches) => {
-        // if (!branch) {
-        //   throw new Error('No branch found.')
-        // }
-        // const settings = await BranchSettingModel.findOne({
-        //   branchId: branch._id
-        // })
-        // res.status(HttpStatus.OK).send({
-        //   ...JSON.parse(JSON.stringify(branch)),
-        //   // settings: settings
-        // })
-        res.status(HttpStatus.OK).send(branches)
+    const {branchId = '', partner} = req.query
+    return new Branches()
+      .getList(req.query)
+      .then(async (data) => {
+        const {data: branches} = data
+        const branchesFullDetails = await Promise.all(branches.map(async (branch) => {
+          const partner = await new Partner().findOne(branch.partnerId)
+          const responseData = {
+            ...JSON.parse(JSON.stringify(branch)),
+            partnerName: partner.name,
+            partnerAvatarUrl: partner.avatarUrl
+          }
+          const industry = await new Industry().findById(partner.industryId)
+          if (industry) {
+            responseData.industryId = industry._id 
+            responseData.industryName = industry.name 
+            responseData.industry = industry 
+            const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category: any) => category._id === partner.categoryId) : -1
+            responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : ''
+          }
+          const settings = await BranchSettingModel.findOne({
+            branchId: branchId
+          })
+          responseData.settings = settings
+          return responseData
+        }))
+        res.status(HttpStatus.OK).send({...data, data: branchesFullDetails})
       })
       .catch(err => {
         if (err.statusCode) {
