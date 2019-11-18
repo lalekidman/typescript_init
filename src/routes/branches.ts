@@ -138,6 +138,7 @@ export default class AccountRoute {
         settings: settings
       })
     } catch (err) {
+      console.log('ERR: ', err)
       if (err.statusCode) {
         res.status(HttpStatus.BAD_REQUEST).send(err)
       } else {

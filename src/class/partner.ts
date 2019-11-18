@@ -3,7 +3,8 @@ export default class Partner {
   constructor () {
   }
   public findOne (partnerId: string) {
-    const url = `http://${process.env.PARTNER_SERVICE_URL}:3000/${partnerId}`
+    const url = `http://${process.env.PARTNER_HOST}/${partnerId}`
+    console.log('RURL: ', url)
     return Http({
       url: url,
       method: 'GET'

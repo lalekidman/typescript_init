@@ -1,20 +1,19 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const branches_1 = require("../models/branches");
 const settings_1 = require("../models/settings");
-const app_error_1 = require("../utils/app-error");
 const queries_1 = require("../utils/queries");
 const uuid = require("uuid/v4");
 const constants_1 = require("../utils/constants");
-const RC = require("../utils/response-codes");
 const partner_1 = require("./partner");
 const account_1 = require("./account");
 const settings_2 = require("./settings");
@@ -73,24 +72,24 @@ class BusinessBranches extends queries_1.default {
         return this.formDataValidation(data)
             .then(() => {
             const { contacts = [], email, address, avatar, coordinates, about } = data;
-            return branches_1.default.find({
-                email
+            // return BranchModel.find({
+            //   email
+            // })
+            // .sort({
+            //   createdAt: -1
+            // })
+            // .then(branch => {
+            // if (!branch.length) {
+            return new partner_1.default().findOne(partnerId)
+                .catch((err) => {
+                console.log('Fetch partner detais failed. Error: ', err.message);
+                throw new Error('No partner found.');
             })
-                .sort({
-                createdAt: -1
-            })
-                .then(branch => {
-                if (!branch.length) {
-                    return new partner_1.default().findOne(partnerId)
-                        .catch((err) => {
-                        console.log('Fetch partner detais failed. Error: ', err.message);
-                        throw new Error('No partner found.');
-                    });
-                }
-                else {
-                    throw new app_error_1.default(RC.EMAIL_ALREADY_EXISTS, 'email you input is already exists to our database.');
-                }
-            }).then((partner) => __awaiter(this, void 0, void 0, function* () {
+                // } else {
+                //   throw new AppError(RC.EMAIL_ALREADY_EXISTS, 'email you input is already exists to our database.')
+                // }
+                // })
+                .then((partner) => __awaiter(this, void 0, void 0, function* () {
                 const primaryContactIndex = contacts.findIndex((prop) => (prop.isPrimary));
                 const newBranch = this.initilize(Object.assign(data, {
                     email,
@@ -124,7 +123,7 @@ class BusinessBranches extends queries_1.default {
                 branchQueueSettings._id = queueSettingsId;
                 branchQueueSettings.id = queueSettingsId;
                 branchQueueSettings.save();
-                return Object.assign({}, JSON.parse(JSON.stringify(newBranch)), { settings: branchSettings });
+                return Object.assign(Object.assign({}, JSON.parse(JSON.stringify(newBranch))), { settings: branchSettings });
             }));
             // }).then(async () => {
             // return Promise.resolve(DefaultQueueGroups.map((qg: any) => this.QG.save(Object.assign(Object.assign(qg, {businessBranchId: newBranch._id, businessUserId: newBranch._id})))))
@@ -167,7 +166,7 @@ class BusinessBranches extends queries_1.default {
                 }
                 branch.save()
                     .then((updatedBranch) => {
-                    resolve(Object.assign({}, updatedBranch.toObject(), { socialLinks }));
+                    resolve(Object.assign(Object.assign({}, updatedBranch.toObject()), { socialLinks }));
                 });
             }))
                 .catch((error) => {
@@ -175,6 +174,16 @@ class BusinessBranches extends queries_1.default {
                 reject(error);
             });
         });
+    }
+    getList(data) {
+        const { partnerId = '' } = data;
+        return this.aggregateWithPagination([
+            {
+                $match: partnerId ? {
+                    partnerId: partnerId.toString().trim()
+                } : {}
+            }
+        ], Object.assign(Object.assign({}, data), { sortBy: { fieldName: 'branchName', status: 1 } }), ['branchName', 'branchId']);
     }
 }
 exports.default = BusinessBranches;

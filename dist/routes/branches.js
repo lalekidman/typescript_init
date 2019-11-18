@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -29,7 +30,7 @@ class AccountRoute {
             const { partnerId = '' } = req.params;
             const { avatar } = req.files;
             new branches_1.default()
-                .save(partnerId, Object.assign({}, req.body, { avatar }))
+                .save(partnerId, Object.assign(Object.assign({}, req.body), { avatar }))
                 .then((response) => {
                 res.status(HttpStatus.OK).send({
                     success: true,
@@ -62,7 +63,7 @@ class AccountRoute {
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
-                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
+                res.status(HttpStatus.OK).send(Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
             }))
                 .catch(err => {
                 if (err.statusCode) {
@@ -77,21 +78,29 @@ class AccountRoute {
          * get branch lists
          */
         this.branchList = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            const { branchId = '' } = req.query;
-            return branches_2.default
-                .find({})
-                .then((branches) => __awaiter(this, void 0, void 0, function* () {
-                // if (!branch) {
-                //   throw new Error('No branch found.')
-                // }
-                // const settings = await BranchSettingModel.findOne({
-                //   branchId: branch._id
-                // })
-                // res.status(HttpStatus.OK).send({
-                //   ...JSON.parse(JSON.stringify(branch)),
-                //   // settings: settings
-                // })
-                res.status(HttpStatus.OK).send(branches);
+            const { branchId = '', partner } = req.query;
+            return new branches_1.default()
+                .getList(req.query)
+                .then((data) => __awaiter(this, void 0, void 0, function* () {
+                const { data: branches } = data;
+                const branchesFullDetails = yield Promise.all(branches.map((branch) => __awaiter(this, void 0, void 0, function* () {
+                    const partner = yield new partner_1.default().findOne(branch.partnerId);
+                    const responseData = Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl });
+                    const industry = yield new Industry().findById(partner.industryId);
+                    if (industry) {
+                        responseData.industryId = industry._id;
+                        responseData.industryName = industry.name;
+                        responseData.industry = industry;
+                        const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category) => category._id === partner.categoryId) : -1;
+                        responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : '';
+                    }
+                    const settings = yield settings_1.default.findOne({
+                        branchId: branchId
+                    });
+                    responseData.settings = settings;
+                    return responseData;
+                })));
+                res.status(HttpStatus.OK).send(Object.assign(Object.assign({}, data), { data: branchesFullDetails }));
             }))
                 .catch(err => {
                 if (err.statusCode) {
@@ -115,9 +124,10 @@ class AccountRoute {
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
-                res.status(HttpStatus.OK).send(Object.assign({}, JSON.parse(JSON.stringify(branch)), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
+                res.status(HttpStatus.OK).send(Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
             }
             catch (err) {
+                console.log('ERR: ', err);
                 if (err.statusCode) {
                     res.status(HttpStatus.BAD_REQUEST).send(err);
                 }

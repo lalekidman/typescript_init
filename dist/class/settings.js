@@ -100,7 +100,7 @@ class BranchSettings extends queries_1.default {
             .then(() => {
             const { modules = [constants_1.BRANCH_MODULES.QUEUE, constants_1.BRANCH_MODULES.RESERVATION], operationHours = [], socialLinks = [] } = data;
             const opHours = (operationHours.length === 0 || operationHours.length <= 6) ? DefaultOperationHours : operationHours;
-            const newBranchSetting = this.initilize(Object.assign({}, data, { branchId: this.branchId.toString().trim(), modules, operationHours: opHours.map((oph) => (Object.assign(oph, { _id: uuid() }))), socialLinks: socialLinks.map((social) => Object.assign(social, !social.id ? { id: uuid() } : {})) }));
+            const newBranchSetting = this.initilize(Object.assign(Object.assign({}, data), { branchId: this.branchId.toString().trim(), modules, operationHours: opHours.map((oph) => (Object.assign(oph, { _id: uuid() }))), socialLinks: socialLinks.map((social) => Object.assign(social, !social.id ? { id: uuid() } : {})) }));
             return newBranchSetting.save();
         });
     }
