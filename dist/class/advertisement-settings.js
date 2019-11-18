@@ -63,12 +63,19 @@ class QueueSettings {
                         }
                     }
                 }
-                for (let i in data.adsToDelete) {
-                    // @ts-ignore
-                    yield this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
-                }
                 settings.save()
                     .then((updatedSettings) => __awaiter(this, void 0, void 0, function* () {
+                    if (data.adsToDelete && data.adsToDelete.length >= 1) {
+                        for (let i in data.adsToDelete) {
+                            // @ts-ignore
+                            try {
+                                yield this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements');
+                            }
+                            catch (error) {
+                                return reject(error);
+                            }
+                        }
+                    }
                     const adSettings = yield this.getBranchAdvertisementSettings(branchId);
                     resolve(adSettings);
                 }))
@@ -143,18 +150,19 @@ class QueueSettings {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 settings_1.default.findOne({ branchId })
-                    .then((settings) => {
+                    .then((settings) => __awaiter(this, void 0, void 0, function* () {
                     if (!settings) {
-                        reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                        return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
                     }
                     let filtered = settings[field].filter((asset) => {
                         if (asset._id !== mediaId) {
                             return asset;
                         }
                     });
-                    let deleted = settings[field].find((element) => element._id === mediaId);
+                    let deleted = yield settings[field].find((element) => element._id === mediaId);
+                    console.log('DELETED', deleted);
                     if (!deleted) {
-                        reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS));
+                        return reject(new app_error_1.default(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'));
                     }
                     this.Aws.deleteFile(deleted.s3Path);
                     settings.storageUsedInMb -= deleted.fileSizeInMb;
@@ -170,7 +178,7 @@ class QueueSettings {
                         console.log(error);
                         reject(error);
                     });
-                })
+                }))
                     .catch((error) => {
                     console.log(error);
                     reject(error);

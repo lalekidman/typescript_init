@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const branches_1 = require("../class/branches");
 const partner_1 = require("../class/partner");
+const industry_1 = require("../class/industry");
 const settings_1 = require("../models/settings");
 const branches_2 = require("../models/branches");
 const settings_2 = require("./settings");
@@ -29,8 +30,9 @@ class AccountRoute {
         this.add = (req, res, next) => {
             const { partnerId = '' } = req.params;
             const { avatar } = req.files;
+            const user = JSON.parse(req.headers.user ? req.headers.user : "{account: {}}");
             new branches_1.default()
-                .save(partnerId, Object.assign(Object.assign({}, req.body), { avatar }))
+                .save(partnerId, Object.assign(Object.assign({}, req.body), { avatar }), user)
                 .then((response) => {
                 res.status(HttpStatus.OK).send({
                     success: true,
@@ -66,6 +68,7 @@ class AccountRoute {
                 res.status(HttpStatus.OK).send(Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
             }))
                 .catch(err => {
+                console.log('ERROR: ', err);
                 if (err.statusCode) {
                     res.status(HttpStatus.BAD_REQUEST).send(err);
                 }
@@ -86,7 +89,7 @@ class AccountRoute {
                 const branchesFullDetails = yield Promise.all(branches.map((branch) => __awaiter(this, void 0, void 0, function* () {
                     const partner = yield new partner_1.default().findOne(branch.partnerId);
                     const responseData = Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl });
-                    const industry = yield new Industry().findById(partner.industryId);
+                    const industry = yield new industry_1.default().findById(partner.industryId);
                     if (industry) {
                         responseData.industryId = industry._id;
                         responseData.industryName = industry.name;
@@ -116,15 +119,32 @@ class AccountRoute {
          */
         this.findOne = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const { branchId = '' } = req.params;
+            const { fullData, displayAll, withSettings = 0 } = req.query;
             try {
                 const branch = yield new branches_1.default().findOne({
                     _id: branchId
                 });
                 const partner = yield new partner_1.default().findOne(branch.partnerId);
+                const responseData = Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl });
+                const industry = yield new industry_1.default().findById(partner.industryId);
+                if (industry) {
+                    responseData.industryId = industry._id;
+                    responseData.industryName = industry.name;
+                    responseData.industry = industry;
+                    const ind = Array.isArray(industry.categoryList) ? industry.categoryList.findIndex((category) => category._id === partner.categoryId) : -1;
+                    responseData.categoryType = ind >= 0 ? industry.categoryList[ind].name : '';
+                }
+                // if (withSettings) {
                 const settings = yield settings_1.default.findOne({
                     branchId: branchId
                 });
-                res.status(HttpStatus.OK).send(Object.assign(Object.assign({}, JSON.parse(JSON.stringify(branch))), { partnerName: partner.name, partnerAvatarUrl: partner.avatarUrl, settings: settings }));
+                // const queueSettings = await QueueSettingModel.findOne({
+                //   branchId: branchId
+                // })
+                responseData.settings = settings;
+                // responseData.queueSettings = queueSettings
+                // }
+                res.status(HttpStatus.OK).send(responseData);
             }
             catch (err) {
                 console.log('ERR: ', err);
@@ -184,12 +204,35 @@ class AccountRoute {
      * validate update branch details
      */
     validateOnUpdateBranch(req, res, next) {
-        let { categoryId, about, branchEmail, contactNumbers = [], socialLinks = [] } = req.body;
+        // validate if files are images
+        let avatar, banner;
+        if (req.files) {
+            avatar = req.files.avatar;
+            banner = req.files.banner;
+        }
+        if (avatar) {
+            if (!regExp.validImages.test(avatar.type)) {
+                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'avatar requires a valid image'));
+            }
+        }
+        if (banner) {
+            if (!regExp.validImages.test(banner.type)) {
+                return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, 'banner requires a valid image'));
+            }
+        }
+        let { data } = req.body;
+        try {
+            data = JSON.parse(data);
+        }
+        catch (error) {
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '**@request body.data is JSON unparsable'));
+        }
+        let { categoryId, about, branchEmail, contactNumbers = [], socialLinks = [] } = data;
         // validate req body
         if (typeof (categoryId) !== 'string' || categoryId === '' ||
             typeof (about) !== 'string' || about === '' ||
             typeof (branchEmail) !== 'string' || !Array.isArray(contactNumbers) || !Array.isArray(socialLinks)) {
-            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '**@request body: {categoryId:string, about:string, branchEmail:string, contactNumbers:array, socialLinks:array}'));
+            return res.status(HttpStatus.BAD_REQUEST).json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '**@request body.data: {categoryId:string, about:string, branchEmail:string, contactNumbers:array, socialLinks:array}'));
         }
         // validate if email is valid
         let validateEmail = regExp.validEmail.test(branchEmail);
@@ -201,7 +244,7 @@ class AccountRoute {
             if (typeof contactNumbers[i].isPrimary !== 'boolean' || typeof contactNumbers[i].number !== 'string'
                 || appConstants.CONTACT_NUMBER_TYPES.indexOf(contactNumbers[i].type) === -1) {
                 return res.status(HttpStatus.BAD_REQUEST)
-                    .json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '@request body: contactNumbers: [{id?:string, isPrimary:boolean, number:validNumber, type:landline|mobile}]'));
+                    .json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '@request body.data: contactNumbers: [{id?:string, isPrimary:boolean, number:validNumber, type:landline|mobile}]'));
             }
             // validate mobile number
             if (contactNumbers[i].type === 'mobile') {
@@ -219,7 +262,7 @@ class AccountRoute {
         for (let i in socialLinks) {
             if (typeof socialLinks[i].url !== 'string' || appConstants.LINK_TYPES.indexOf(socialLinks[i].type) === -1) {
                 return res.status(HttpStatus.BAD_REQUEST)
-                    .json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '@request body: socialLinks: [{id?:string, url:string, type:facebook|instagram|company}]'));
+                    .json(new app_error_1.default(RC.UPDATE_BRANCH_FAILED, '@request body.data: socialLinks: [{id?:string, url:string, type:facebook|instagram|company}]'));
             }
             if (socialLinks[i].type === 'facebook') {
                 if (!regExp.validFbLink.test(socialLinks[i].url)) {
@@ -244,9 +287,18 @@ class AccountRoute {
      */
     updateBranch(req, res) {
         const { branchId } = req.params;
-        let { categoryId, about, branchEmail, contactNumbers = [], socialLinks = [] } = req.body;
-        new branches_1.default().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks)
+        let avatar, banner;
+        if (req.files) {
+            avatar = req.files.avatar;
+            banner = req.files.banner;
+        }
+        let { data } = req.body;
+        data = JSON.parse(data);
+        let { categoryId, about, branchEmail, contactNumbers = [], socialLinks = [] } = data;
+        new branches_1.default().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner)
             .then((updatedBranch) => {
+            // publish to redis subscribers
+            req.app.get('redisPublisher').publish('UPDATE_BRANCH', JSON.stringify({ data: updatedBranch, branchId }));
             res.status(HttpStatus.OK).json(updatedBranch);
         })
             .catch((error) => {
@@ -258,8 +310,8 @@ class AccountRoute {
         this.app.get('/', this.branchList);
         this.app.get('/branchId', this.findByBranchId);
         this.app.get('/:branchId', this.findOne);
-        this.app.patch('/:branchId', this.validateOnUpdateBranch, this.updateBranch);
-        this.app.patch('/:branchId/updateAddress', this.validateOnUpdateAddress, this.updateAddress);
+        this.app.patch('/:branchId', multiPartMiddleWare, this.validateOnUpdateBranch, this.updateBranch);
+        this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress);
         this.app.post('/:partnerId', multiPartMiddleWare, this.add);
         return this.app;
     }

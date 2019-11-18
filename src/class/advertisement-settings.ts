@@ -60,12 +60,19 @@ export default class QueueSettings {
             }
           }
         }
-        for (let i in data.adsToDelete) {
-          // @ts-ignore
-          await this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements')
-        }
         settings.save()
         .then(async (updatedSettings: any) => {
+          if (data.adsToDelete && data.adsToDelete.length >= 1) {
+            for (let i in data.adsToDelete) {
+              // @ts-ignore
+              try {
+                await this.deleteMedia(branchId, data.adsToDelete[i], 'advertisements')
+              }
+              catch (error) {
+                return reject(error)
+              }
+            }
+          }
           const adSettings = await this.getBranchAdvertisementSettings(branchId)
           resolve(adSettings)
         })
@@ -147,18 +154,19 @@ export default class QueueSettings {
   public async deleteMedia(branchId: string, mediaId: string, field: string) {
     return new Promise((resolve, reject) => {
       SettingsModel.findOne({branchId})
-      .then((settings: any) => {
+      .then(async (settings: any) => {
         if (!settings) {
-          reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
+          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
         }
         let filtered = settings[field].filter((asset: Gallery) => {
           if (asset._id !== mediaId) {
             return asset
           }
         })
-        let deleted: Gallery = settings[field].find((element: Gallery) => element._id === mediaId)
+        let deleted: Gallery = await settings[field].find((element: Gallery) => element._id === mediaId)
+        console.log('DELETED', deleted)
         if (!deleted) {
-          reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS))
+          return reject(new AppError(RC.NOT_FOUND_BRANCH_ADVERTISEMENT_SETTINGS, 'delete error. media does not exist'))
         }
         this.Aws.deleteFile(deleted.s3Path)
         settings.storageUsedInMb -= deleted.fileSizeInMb

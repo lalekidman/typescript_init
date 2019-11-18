@@ -6,7 +6,6 @@ class Partner {
     }
     findOne(partnerId) {
         const url = `http://${process.env.PARTNER_HOST}/${partnerId}`;
-        console.log('RURL: ', url);
         return http_1.default({
             url: url,
             method: 'GET'

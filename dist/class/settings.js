@@ -7,50 +7,50 @@ const helper_1 = require("../utils/helper");
 const uuid = require("uuid/v4");
 const DefaultOperationHours = [
     {
-        startValue: 3600000,
-        endValue: 36000000,
+        openingTime: 3600000,
+        closingTime: 36000000,
         enabled: true,
         day: 0,
         isWholeDay: false,
     },
     {
-        startValue: 3600000,
-        endValue: 36000000,
+        openingTime: 3600000,
+        closingTime: 36000000,
         enabled: true,
         day: 1,
         isWholeDay: false,
     },
     {
-        startValue: 3600000,
-        endValue: 36000000,
+        openingTime: 3600000,
+        closingTime: 36000000,
         enabled: true,
         day: 2,
         isWholeDay: false,
     },
     {
-        startValue: 3600000,
-        endValue: 36000000,
+        openingTime: 3600000,
+        closingTime: 36000000,
         enabled: true,
         day: 3,
         isWholeDay: false,
     },
     {
-        startValue: 3600000,
-        endValue: 36000000,
+        openingTime: 3600000,
+        closingTime: 36000000,
         enabled: true,
         day: 4,
         isWholeDay: false,
     },
     {
-        startValue: 3600000,
-        endValue: 36000000,
-        enabled: false,
+        openingTime: 3600000,
+        closingTime: 36000000,
+        enabled: true,
         day: 5,
-        isWholeDay: true,
+        isWholeDay: false,
     },
     {
-        startValue: 3600000,
-        endValue: 36000000,
+        openingTime: 3600000,
+        closingTime: 36000000,
         enabled: true,
         day: 6,
         isWholeDay: false,
@@ -104,6 +104,10 @@ class BranchSettings extends queries_1.default {
             return newBranchSetting.save();
         });
     }
+    findOne(query, project = {}) {
+        return settings_1.default
+            .findOne(query, project);
+    }
     /**
      * update total queue group created
      * @param branchId
@@ -124,6 +128,66 @@ class BranchSettings extends queries_1.default {
                 throw new Error('No branch data found.');
             }
             return setting;
+        });
+    }
+    /**
+     * update operationHours
+     * @param branchId
+     */
+    updateOperationHours({ isWeeklyOpened = false, operationHours = [] }) {
+        return this.findOne({
+            branchId: this.branchId
+        })
+            .then((branchSettings) => {
+            if (!branchSettings) {
+                throw new Error('No branch settings found.');
+            }
+            if (isWeeklyOpened) {
+                return branchSettings
+                    .set({ isWeeklyOpened: true })
+                    .save();
+            }
+            const opHours = ((operationHours.length === 0 || operationHours.length <= 6) ? DefaultOperationHours : operationHours)
+                .map((oph, index) => {
+                if (!oph._id) {
+                    oph._id = uuid();
+                }
+                return {
+                    _id: oph._id,
+                    openingTime: parseInt(oph.openingTime),
+                    closingTime: parseInt(oph.closingTime),
+                    day: parseInt(oph.day) <= 6 && parseInt(oph.day) >= 0 ? parseInt(oph.day) : index,
+                    isWholeDay: typeof (oph.isWholeDay) === 'boolean' ? oph.isWholeDay : false,
+                    enabled: typeof (oph.enabled) === 'boolean' ? oph.enabled : false,
+                };
+            });
+            return branchSettings.set({
+                isWeeklyOpened: false,
+                operationHours: opHours
+            })
+                .save();
+        });
+    }
+    /**
+     *
+     * @param location array of number/float
+     *  first element should be the long and the second one is for lat
+     */
+    updateGeoLocation(location) {
+        return this.findOne({
+            branchId: this.branchId
+        })
+            .then((branchSettings) => {
+            if (!branchSettings) {
+                throw new Error('No branch settings found.');
+            }
+            if (location.length <= 1) {
+                throw new Error('Location must be array with a 2 element, 0 is for long and 1 is for lng.');
+            }
+            return branchSettings.set({
+                'location.coordinates': location.splice(0, 2)
+            })
+                .save();
         });
     }
 }

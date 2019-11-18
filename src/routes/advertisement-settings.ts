@@ -28,7 +28,33 @@ export default class Route {
    * ** MIDDLEWARE ** on update advertisement settings 
    */
   private onUpdateAdvertisementSettings(req: IRequest, res: Response, next: NextFunction) {
-    const {enableCustomQr=false, customQrLink, imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+    // check file formats
+    if (req.files) {
+      let {media} = req.files
+      // ensure that media will be an array
+      if (typeof(media) !== 'undefined') {
+        if (!Array.isArray(media)) {
+          media = [media]
+        }
+        for (let i in media) {
+          const fileType = media[i].type
+          if (!regExp.validImages.test(fileType) && !regExp.validVideos.test(fileType)) {
+            return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
+              'Valid File Types: image(jpeg, jpg, png, gif, bmp, tiff) , video(mp4, webm, ogg)')) 
+          }
+        }
+      }
+    }
+    let {data} = req.body
+    try {
+      data = JSON.parse(data)
+    }
+    catch (error) {
+      console.log(error)
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.BAD_REQUEST_UPDATE_BRANCH_ADVERTISEMENT_SETTINGS,
+        '**@request body.data is JSON unparsable'))
+    }
+    const {enableCustomQr=false, customQrLink, imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = data
     // verify request.body
     if (typeof(enableCustomQr) !== 'boolean' ||
     typeof(imagePreviewDuration) !== 'number' ||
@@ -86,8 +112,19 @@ export default class Route {
   /**
    * update branch Advertisement Settings
    */
-  private updateBranchAdvertisementSettings(req: IRequest, res: Response) {
-    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = req.body
+  private updateBranchAdvertisementSettings = async (req: IRequest, res: Response) => {
+    let payload = JSON.parse(req.body.data)
+    // upload image first
+    if (req.files && req.files.media) {
+      try {
+        await this.uploader(req, res, 'advertisements')
+      }
+      catch(error) {
+        return error
+      }
+    }
+    console.log('PAYLOAD >>>>>>>>>>>>', payload)
+    const {enableCustomQr=false, customQrLink='', imagePreviewDuration=3, advertisements=[], adsToDelete=[]} = payload
     const data: IUpdateBranchAdvertisementSettings = {
       //@ts-ignore
       enableCustomQr,
@@ -96,6 +133,7 @@ export default class Route {
       advertisements,
       adsToDelete
     }
+    // update other form data
     const {branchId} = req.params
     advertisementSettings.updateBranchAdvertisementSettings(branchId, data)
     .then((updatedSettings) => {
@@ -115,6 +153,12 @@ export default class Route {
     // ensure that media will be an array
     if (!Array.isArray(media)) {
       media = [media]
+    }
+    // @ts-ignore
+    if (media.length > process.env.MAX_UPLOAD_LIMIT) {
+      return res.status(HttpStatus.BAD_REQUEST)
+      .json(new AppError(RC.FILE_UPLOAD_ERROR, 
+      `maximum upload limit is ${process.env.MAX_UPLOAD_LIMIT}`))
     }
     for (let i in media) {
       const fileSize = getFileSize(media[i].path)
@@ -161,8 +205,7 @@ export default class Route {
    * delete media from gallery
    */
   private deleteMedia(req: IRequest, res: Response) {
-    const {branchId} = req.params
-    const {mediaId} = req.body
+    const {branchId, mediaId} = req.params
     advertisementSettings.deleteMedia(branchId, mediaId, 'gallery')
     .then((updatedSettings) => {
       res.status(HttpStatus.OK).json(updatedSettings)
@@ -174,10 +217,10 @@ export default class Route {
 
   public initializeRoutes() {
     this.app.get('/', this.getBranchAdvertisementSettings)
-    this.app.patch('/', this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
-    this.app.post('/upload-to-gallery', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
-    this.app.post('/upload-to-ads-collection', multiPartMiddleWare, this.fileExists, this.uploadToAds)
-    this.app.delete('/delete-in-gallery', this.deleteMedia)
+    this.app.patch('/', multiPartMiddleWare, this.onUpdateAdvertisementSettings, this.updateBranchAdvertisementSettings)
+    this.app.post('/gallery/upload', multiPartMiddleWare, this.fileExists, this.uploadToGallery)
+    this.app.post('/ads/upload', multiPartMiddleWare, this.fileExists, this.uploadToAds)
+    this.app.delete('/gallery/:mediaId', this.deleteMedia)
     return this.app
   }
 }

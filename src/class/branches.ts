@@ -74,7 +74,7 @@ export default class BusinessBranches extends Queries {
    * @param data 
    */
   //@ts-ignore
-  public save (partnerId: string, data: any) {
+  public save (partnerId: string, data: any, actionBy: any) {
     return this.formDataValidation(data)
       .then(() => {
         const {contacts = [], email, address, avatar, coordinates, about} = data
@@ -108,7 +108,6 @@ export default class BusinessBranches extends Queries {
               coordinates: coordinates
             }
           }))
-          console.log(newBranch)
           const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
           const uploader = await this.upload(filePath.concat(newBranch._id), avatar)
           const adminAccount = await new Account().addAccount(newBranch._id, {
@@ -118,10 +117,9 @@ export default class BusinessBranches extends Queries {
             partnerId: partnerId.toString(),
             email: email.toString(),
             contactNo: contacts[primaryContactIndex].number
-          })
+          }, actionBy)
           uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : ''
           newBranch.save()
-          console.log('rr: ', newBranch)
           // create branch queue settings
           const branchQueueSettings: IQueueSettingsModel = new QueueSettingsModel()
           const queueSettingsId = uuid()
@@ -144,10 +142,45 @@ export default class BusinessBranches extends Queries {
   /**
    * edit branch
    */
-  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>) {
+  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>, avatar: any, banner: any) {
     return new Promise((resolve, reject) => {
       BranchModel.findOne({_id: branchId})
       .then(async (branch: any) => {
+        let errors: Array<any> = []
+        // upload images (avatar and banner)
+        let avatarUrl, bannerUrl
+        let settings: any
+        if (avatar) {
+          const s3FolderPathAvatar = `branch/${branchId}/avatar`
+          try {
+            let avatarUpload = await this.upload(s3FolderPathAvatar, avatar)
+            branch.avatarUrl = avatarUpload.imageUrl
+          }
+          catch (error) {
+            errors.push('avatar upload failed')
+          }
+        }
+        if (banner) {
+          const s3FolderPathBanner = `branch/${branchId}/banner`
+          try {
+            let bannerUpload = await this.upload(s3FolderPathBanner, banner)
+            bannerUrl = bannerUpload.imageUrl
+          }
+          catch (error) {
+            errors.push('banner upload failed')
+          }
+        }
+        // update banner (model location : Settings model)
+        try {
+          settings = await BranchSettings.findOneAndUpdate(
+            {branchId},
+            Object.assign({}, bannerUrl? {bannerUrl} : {}),
+            {new: true}
+          )
+        }
+        catch (error) {
+          errors.push(error)
+        }
         branch.email = branchEmail
         branch.categoryId = categoryId
         branch.about = about
@@ -176,7 +209,7 @@ export default class BusinessBranches extends Queries {
         }
         branch.save()
         .then((updatedBranch: any) => {
-          resolve({...updatedBranch.toObject(), ...{socialLinks}})
+          resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}})
         })
       })
       .catch((error) => {
