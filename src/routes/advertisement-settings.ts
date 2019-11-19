@@ -137,6 +137,7 @@ export default class Route {
     const {branchId} = req.params
     advertisementSettings.updateBranchAdvertisementSettings(branchId, data)
     .then((updatedSettings) => {
+      req.app.get('redisPublisher').publish('UPDATE_ADVERTISEMENT_SETTINGS', JSON.stringify({data: updatedSettings, branchId}))
       res.status(HttpStatus.OK).json(updatedSettings)
     })
     .catch((error) => {
@@ -181,6 +182,7 @@ export default class Route {
   private uploadToGallery = async (req: IRequest, res: Response) => {
     try {
       let upload = await this.uploader(req, res, 'gallery')
+      req.app.get('redisPublisher').publish('UPDATE_GALLERY', JSON.stringify({data: upload, branchId: req.params.branchId}))      
       return res.status(HttpStatus.OK).json(upload)
     }
     catch(error) {
