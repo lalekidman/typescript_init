@@ -23,6 +23,7 @@ export {IBranchModel}
 const filePath = 'avatars/branches/'
 interface IBranchFilter extends IPaginationData {
   partnerId?: string
+  branchIds?: any
 }
 export default class BusinessBranches extends Queries {
   // public KT: KyooToken
@@ -221,12 +222,20 @@ export default class BusinessBranches extends Queries {
   }
 
   public getList (data: IBranchFilter) {
-    const {partnerId = ''} = data
+    const {partnerId = '', branchIds = []} = data
+    const searchBranchIds = branchIds.split(',')
     return this.aggregateWithPagination([
       {
         $match: partnerId ? {
           partnerId: partnerId.toString().trim()
         }: {}
+      },
+      {
+        $match: branchIds.length >= 0 ? {
+          _id: {
+            $in: searchBranchIds
+          }
+        } : {}
       }
     ], {...data, sortBy: {fieldName: 'branchName', status: 1}}, ['branchName', 'branchId'])
   }

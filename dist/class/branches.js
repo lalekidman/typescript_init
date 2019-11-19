@@ -205,11 +205,19 @@ class BusinessBranches extends queries_1.default {
         });
     }
     getList(data) {
-        const { partnerId = '' } = data;
+        const { partnerId = '', branchIds = [] } = data;
+        const searchBranchIds = branchIds.split(',');
         return this.aggregateWithPagination([
             {
                 $match: partnerId ? {
                     partnerId: partnerId.toString().trim()
+                } : {}
+            },
+            {
+                $match: branchIds.length >= 0 ? {
+                    _id: {
+                        $in: searchBranchIds
+                    }
                 } : {}
             }
         ], Object.assign(Object.assign({}, data), { sortBy: { fieldName: 'branchName', status: 1 } }), ['branchName', 'branchId']);
