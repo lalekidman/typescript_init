@@ -3,7 +3,7 @@ import {default as BranchSettings, IBranchSettingsModel} from '../models/setting
 
 import AppError from '../utils/app-error'
 
-import Queries from '../utils/queries'
+import Queries, { IPaginationData } from '../utils/queries'
 
 import * as uuid from 'uuid/v4'
 
@@ -21,7 +21,10 @@ import { SocialLinks } from '../interfaces/settings';
 
 export {IBranchModel}
 const filePath = 'avatars/branches/'
-
+interface IBranchFilter extends IPaginationData {
+  partnerId?: string
+  branchIds?: any
+}
 export default class BusinessBranches extends Queries {
   // public KT: KyooToken
   public ModelInterface: any
@@ -76,23 +79,24 @@ export default class BusinessBranches extends Queries {
     return this.formDataValidation(data)
       .then(() => {
         const {contacts = [], email, address, avatar, coordinates, about} = data
-        return BranchModel.find({
-          email
-        })
-        .sort({
-          createdAt: -1
-        })
-        .then(branch => {
-          if (!branch.length) {
+        // return BranchModel.find({
+        //   email
+        // })
+        // .sort({
+        //   createdAt: -1
+        // })
+        // .then(branch => {
+          // if (!branch.length) {
             return new Partner().findOne(partnerId)
             .catch((err) => {
               console.log('Fetch partner detais failed. Error: ', err.message)
               throw new Error('No partner found.')
             })
-          } else {
-            throw new AppError(RC.EMAIL_ALREADY_EXISTS, 'email you input is already exists to our database.')
-          }
-        }).then(async (partner: any) => {
+          // } else {
+          //   throw new AppError(RC.EMAIL_ALREADY_EXISTS, 'email you input is already exists to our database.')
+          // }
+        // })
+        .then(async (partner: any) => {
           const primaryContactIndex = contacts.findIndex((prop: any) => (prop.isPrimary))
           const newBranch = this.initilize(Object.assign(data, {
             email,
@@ -217,4 +221,22 @@ export default class BusinessBranches extends Queries {
     })
   }
 
+  public getList (data: IBranchFilter) {
+    const {partnerId = '', branchIds = []} = data
+    const searchBranchIds = branchIds.split(',')
+    return this.aggregateWithPagination([
+      {
+        $match: partnerId ? {
+          partnerId: partnerId.toString().trim()
+        }: {}
+      },
+      {
+        $match: branchIds.length >= 0 ? {
+          _id: {
+            $in: searchBranchIds
+          }
+        } : {}
+      }
+    ], {...data, sortBy: {fieldName: 'branchName', status: 1}}, ['branchName', 'branchId'])
+  }
 }

@@ -4,7 +4,7 @@ import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
 const s3 = new Aws(process.env.S3_BUCKET_NAME)
-interface PaginationData {
+export interface IPaginationData {
   limitTo: number
   startAt: number
   searchFields: Array<string>
@@ -83,7 +83,7 @@ class Queries {
    * @param searchFields2 array of fields that needed to be search or to filter,
    * a function that return a pagination data.
    */
-  public aggregateWithPagination (pipeline: any[], data?: PaginationData, searchFields2: string[]= []): Promise<IAggregateWithPagination> {
+  public aggregateWithPagination (pipeline: any[], data?: IPaginationData, searchFields2: string[]= []): Promise<IAggregateWithPagination> {
     let {limitTo = 0, startAt = 0, sortBy = null, searchFields = [], searchText = ''} = <any> data || {}
     //@ts-ignore
     const endPage = parseInt(limitTo) > 0 ? parseInt(limitTo) : 20

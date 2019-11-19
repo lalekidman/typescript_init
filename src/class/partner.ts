@@ -4,7 +4,6 @@ export default class Partner {
   }
   public findOne (partnerId: string) {
     const url = `http://${process.env.PARTNER_HOST}/${partnerId}`
-    console.log('url: ', url)
     return Http({
       url: url,
       method: 'GET'

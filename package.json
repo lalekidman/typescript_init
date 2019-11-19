@@ -1,5 +1,5 @@
 {
-  "name": "total-philippines",
+  "name": "branch-service",
   "version": "1.0.0",
   "description": "Total Philippines SMS Ordering System that client can place a order by texting the gateway.",
   "main": "index.js",
@@ -51,5 +51,13 @@
     "@types/redis": "^2.8.14",
     "@types/socket.io": "^2.1.0",
     "@types/uuid": "^3.4.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lalekidman/typescript-boilerplate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lalekidman/typescript-boilerplate/issues"
+  },
+  "homepage": "https://github.com/lalekidman/typescript-boilerplate#readme"
 }
