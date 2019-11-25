@@ -11,6 +11,7 @@ import * as appConstants from '../utils/constants'
 import {IUpdateBranchQueueSettings} from '../utils/interfaces'
 import uuid = require('uuid');
 import * as regExp from '../utils/regularExpressions'
+import notification from '../class/notification';
 const advertisementSettings: AdvertisementSettings = new AdvertisementSettings()
 export default class Route {
   /**
@@ -114,6 +115,8 @@ export default class Route {
    */
   private updateBranchAdvertisementSettings = async (req: IRequest, res: Response) => {
     let payload = JSON.parse(req.body.data)
+    // @ts-ignore
+    let accountData = JSON.parse(req.headers.user)
     // upload image first
     if (req.files && req.files.media) {
       try {
@@ -138,6 +141,14 @@ export default class Route {
     advertisementSettings.updateBranchAdvertisementSettings(branchId, data)
     .then((updatedSettings) => {
       req.app.get('redisPublisher').publish('UPDATE_ADVERTISEMENT_SETTINGS', JSON.stringify({data: updatedSettings, branchId}))
+      // notify business
+      notification.invokeNotif(
+        branchId,
+        {
+          actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`
+        },
+        appConstants.BRANCH_NOTIFICATION_TYPES.ADVERTISEMENT_SETTINGS_UPDATE
+      )
       res.status(HttpStatus.OK).json(updatedSettings)
     })
     .catch((error) => {

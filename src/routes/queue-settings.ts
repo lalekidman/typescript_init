@@ -11,6 +11,7 @@ import * as appConstants from '../utils/constants'
 const queueSettings: QueueSettings = new QueueSettings()
 import {IUpdateBranchQueueSettings} from '../utils/interfaces'
 import uuid = require('uuid');
+import notification from '../class/notification';
 export default class Route {
   /**
    * 
@@ -80,6 +81,8 @@ export default class Route {
    */
   private async updateBranchQueueSettings(request: IRequest, response: Response) {
    const {branchId} = request.params
+   // @ts-ignore
+   let accountData = JSON.parse(request.headers.user)
    let {features=[], hideCustomerNameField=false, hideMobileNumberField=false, autoSms=true, queuesAway=3, queueTags=[]} = request.body  
     // remove duplicated queue tag
     queueTags = [...new Set(queueTags)]
@@ -107,6 +110,14 @@ export default class Route {
     .then((updatedSettings) => {
       // publish to redis subscribers
       request.app.get('redisPublisher').publish('UPDATE_QUEUE_SETTINGS', JSON.stringify({data: updatedSettings, branchId}))
+      // notify business
+      notification.invokeNotif(
+        branchId,
+        {
+          actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`
+        },
+        appConstants.BRANCH_NOTIFICATION_TYPES.QUEUE_SETTINGS_UPDATE
+      )
       response.status(HttpStatus.OK).json(updatedSettings)
     })
     .catch((error) => {

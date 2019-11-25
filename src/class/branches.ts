@@ -7,7 +7,7 @@ import Queries, { IPaginationData } from '../utils/queries'
 
 import * as uuid from 'uuid/v4'
 
-import {FORM_DATA_TYPES, ACCOUNT_ROLE_LEVEL} from '../utils/constants'
+import {FORM_DATA_TYPES, ACCOUNT_ROLE_LEVEL, BRANCH_NOTIFICATION_TYPES} from '../utils/constants'
 import * as RC from '../utils/response-codes'
 
 import Partner from './partner'
@@ -141,10 +141,69 @@ export default class BusinessBranches extends Queries {
   }
 
   /**
+   * check branch changes
+   */
+  private listChanges(oldData: any, newData: any) {
+    return new Promise((resolve, reject) => {
+      let updates = []
+      // check details update
+      if (
+        oldData.avatarUrl !== newData.avatarUrl ||
+        oldData.settings.bannerUrl !== newData.settings.bannerUrl ||
+        oldData.categoryId !== newData.categoryId ||
+        oldData.about !== newData.about
+      ) {
+        updates.push(BRANCH_NOTIFICATION_TYPES.BRANCH_DETAILS_UPDATE)
+      }
+      // check contact details update
+      let oldContacts = oldData.contacts.map((data: any) => {
+        return {
+          isPrimary: data.isPrimary,
+          number: data.number,
+          type: data.type
+        }
+      })
+      let newContacts = newData.contacts.map((data: any) => {
+        return {
+          isPrimary: data.isPrimary,
+          number: data.number,
+          type: data.type
+        }
+      })
+      for (let i in newData.contacts) {
+        delete oldData.contacts[i]._id
+      }
+      if (JSON.stringify(oldContacts) !== JSON.stringify(newContacts) ) {
+        updates.push(BRANCH_NOTIFICATION_TYPES.BRANCH_CONTACT_UPDATE)
+      }
+      // check if ther is an update in social links
+      let oldSocialLinks = oldData.settings.socialLinks.map((data: any) => {
+        return {
+          url: data.url,
+          type: data.type
+        }
+      })
+      let newSocialLinks = newData.settings.socialLinks.map((data: any) => {
+        return {
+          url: data.url,
+          type: data.type
+        }
+      })
+      if (JSON.stringify(oldSocialLinks) !== JSON.stringify(newSocialLinks) ) {
+        updates.push(BRANCH_NOTIFICATION_TYPES.BRANCH_SOCIAL_LINKS_UPDATE)
+      }
+      resolve(updates)
+    })
+  }
+
+  /**
    * edit branch
    */
   public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>, avatar: any, banner: any) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      const oldDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
+      const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
+      const oldData = {...oldDetails.toObject(), ...{settings: oldSettings.toObject()}}
       BranchModel.findOne({_id: branchId})
       .then(async (branch: any) => {
         let errors: Array<any> = []
@@ -209,8 +268,13 @@ export default class BusinessBranches extends Queries {
           return reject(error)
         }
         branch.save()
-        .then((updatedBranch: any) => {
-          resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}})
+        .then(async (updatedBranch: any) => {
+          const newDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
+          const newSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
+          const newData = {...newDetails.toObject(), ...{settings: newSettings.toObject()}}
+          const updates = await this.listChanges(oldData, newData)
+          console.log('UPDATES >>>>>>>>>>>>>', updates)
+          resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}, ...{updates}})
         })
       })
       .catch((error) => {

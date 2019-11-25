@@ -15,6 +15,7 @@ import { IRequest } from '../utils/interfaces';
 const multiPartMiddleWare = require('connect-multiparty')()
 import * as regExp from '../utils/regularExpressions'
 import { request } from 'http';
+import notification from '../class/notification';
 
 export default class AccountRoute {
 
@@ -190,6 +191,8 @@ export default class AccountRoute {
    */
   private async updateAddress(req: IRequest, res: Response) {
     const {branchId} = req.params
+    // @ts-ignore
+    let accountData = JSON.parse(req.headers.user)
     // extract data from request body
     let {street, province, city, zipcode} = req.body
     // update branch address
@@ -206,6 +209,13 @@ export default class AccountRoute {
       {new: true}
     )
     .then((updatedBranch: any) => {
+      notification.invokeNotif(
+        branchId,
+        {
+          actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`
+        },
+        appConstants.BRANCH_NOTIFICATION_TYPES.ADDRESS_UPDATE
+      )
       res.status(HttpStatus.OK).json({_id: updatedBranch._id, address: updatedBranch.address})
     })
     .catch((error) => {
@@ -306,6 +316,8 @@ export default class AccountRoute {
    */
   private updateBranch(req: IRequest, res: Response) {
     const {branchId} = req.params
+    // @ts-ignore
+    let accountData = JSON.parse(req.headers.user)
     let avatar, banner
     if (req.files) {
       avatar = req.files.avatar
@@ -315,9 +327,17 @@ export default class AccountRoute {
     data = JSON.parse(data)
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
     new Branches().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner)
-    .then((updatedBranch) => {
+    .then((updatedBranch: any) => {
       // publish to redis subscribers
       req.app.get('redisPublisher').publish('UPDATE_BRANCH', JSON.stringify({data: updatedBranch, branchId}))
+      // notify business for changes that happened
+      for (let i in updatedBranch.updates) {
+        notification.invokeNotif(
+          branchId,
+          {actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`},
+          updatedBranch.updates[i]
+        )
+      }
       res.status(HttpStatus.OK).json(updatedBranch)
     })
     .catch((error) => {
