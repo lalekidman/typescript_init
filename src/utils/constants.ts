@@ -32,3 +32,8 @@ export const FEATURES = [
 export const LINK_TYPES = ["facebook", "instagram", "company"]
 
 export const CONTACT_NUMBER_TYPES = ["landline", "mobile"]
+
+export const BRANCH_NOTIFICATION_TYPES = {
+  CUSTOMER_RATE_INCREASE: 16,
+  CUSTOMER_RATE_DECREASE: 17
+}
