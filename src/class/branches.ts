@@ -222,8 +222,9 @@ export default class BusinessBranches extends Queries {
   }
 
   public getList (data: IBranchFilter) {
-    const {partnerId = '', branchIds = []} = data
-    const searchBranchIds = branchIds.split(',')
+    const {partnerId = '', branchIds = null} = data
+    console.log('branchIds: ', branchIds)
+    const searchBranchIds = branchIds ? branchIds.split(',') : []
     return this.aggregateWithPagination([
       {
         $match: partnerId ? {
@@ -231,7 +232,7 @@ export default class BusinessBranches extends Queries {
         }: {}
       },
       {
-        $match: branchIds.length >= 0 ? {
+        $match: branchIds ? {
           _id: {
             $in: searchBranchIds
           }
