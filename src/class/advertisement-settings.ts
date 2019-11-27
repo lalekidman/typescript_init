@@ -6,6 +6,8 @@ import * as uuid from 'uuid'
 import { IUpdateBranchAdvertisementSettings } from '../utils/interfaces'
 import Queries from '../utils/queries'
 import Aws from '../utils/aws'
+import actionLogs from './actionLogs'
+import { GENERAL_LOGS_ACTION_TYPE, COLLECTION_NAMES } from '../utils/constants';
 const _ = require('lodash')
 
 
@@ -43,7 +45,7 @@ export default class QueueSettings {
   /**
    * update branch advertisement settings
    */
-  public updateBranchAdvertisementSettings(branchId: string, data: IUpdateBranchAdvertisementSettings) {
+  public updateBranchAdvertisementSettings(branchId: string, data: IUpdateBranchAdvertisementSettings, oldData: IBranchSettingsModel, source: string = '', actionBy: any = {}) {
     return new Promise((resolve, reject) => {
       SettingsModel.findOne({branchId})
       .then(async (settings: any) => {
@@ -74,6 +76,18 @@ export default class QueueSettings {
             }
           }
           const adSettings = await this.getBranchAdvertisementSettings(branchId)
+          // log action
+          actionLogs.save({
+            actionBy,
+            actionType: GENERAL_LOGS_ACTION_TYPE.EDIT,
+            branchId: branchId,
+            collectionName: COLLECTION_NAMES.BRANCH,
+            eventSummary: `Advertisement Settings of branch ${branchId} has been modified`,
+            module: 'Branch Settings - Advertisement Settings',
+            oldData,
+            newData: adSettings,
+            platform: source
+          })
           resolve(adSettings)
         })
         .catch((error: any) => {

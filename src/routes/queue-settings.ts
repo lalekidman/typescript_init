@@ -6,7 +6,7 @@ import * as RC from '../utils/response-codes'
 import { IRequest } from '../utils/interfaces';
 const multiPartMiddleWare = require('connect-multiparty')()
 import QueueSettings from '../class/queue-settings'
-import {validateModules} from '../utils/helper'
+import {validateModules, constructActionBy} from '../utils/helper'
 import * as appConstants from '../utils/constants'
 const queueSettings: QueueSettings = new QueueSettings()
 import {IUpdateBranchQueueSettings} from '../utils/interfaces'
@@ -81,8 +81,10 @@ export default class Route {
    */
   private async updateBranchQueueSettings(request: IRequest, response: Response) {
    const {branchId} = request.params
-   // @ts-ignore
-   let accountData = JSON.parse(request.headers.user)
+    // @ts-ignore
+    let accountData = JSON.parse(request.headers.user)
+    // @ts-ignore
+    let platform: string = request.headers.client
    let {features=[], hideCustomerNameField=false, hideMobileNumberField=false, autoSms=true, queuesAway=3, queueTags=[]} = request.body  
     // remove duplicated queue tag
     queueTags = [...new Set(queueTags)]
@@ -106,7 +108,7 @@ export default class Route {
       autoSmsQueuesAwayNotification: queuesAway,
       queueTags: processedQueueTags
     }
-    queueSettings.updateBranchQueueSettings(branchId, settings)
+    queueSettings.updateBranchQueueSettings(branchId, settings, platform, constructActionBy(accountData.account))
     .then((updatedSettings) => {
       // publish to redis subscribers
       request.app.get('redisPublisher').publish('UPDATE_QUEUE_SETTINGS', JSON.stringify({data: updatedSettings, branchId}))

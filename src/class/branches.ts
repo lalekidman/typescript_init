@@ -4,10 +4,11 @@ import {default as BranchSettings, IBranchSettingsModel} from '../models/setting
 import AppError from '../utils/app-error'
 
 import Queries, { IPaginationData } from '../utils/queries'
+import actionLogs from './actionLogs'
 
 import * as uuid from 'uuid/v4'
 
-import {FORM_DATA_TYPES, ACCOUNT_ROLE_LEVEL, BRANCH_NOTIFICATION_TYPES} from '../utils/constants'
+import {FORM_DATA_TYPES, ACCOUNT_ROLE_LEVEL, BRANCH_NOTIFICATION_TYPES, GENERAL_LOGS_ACTION_TYPE, COLLECTION_NAMES} from '../utils/constants'
 import * as RC from '../utils/response-codes'
 
 import Partner from './partner'
@@ -199,13 +200,14 @@ export default class BusinessBranches extends Queries {
   /**
    * edit branch
    */
-  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>, avatar: any, banner: any) {
+  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>, avatar: any, banner: any, source: string = '', actionBy: any = {}) {
     return new Promise(async (resolve, reject) => {
       const oldDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
       const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
       const oldData = {...oldDetails.toObject(), ...{settings: oldSettings.toObject()}}
       BranchModel.findOne({_id: branchId})
       .then(async (branch: any) => {
+        let oldDetails = branch.toObject()
         let errors: Array<any> = []
         // upload images (avatar and banner)
         let avatarUrl, bannerUrl
@@ -270,10 +272,34 @@ export default class BusinessBranches extends Queries {
         branch.save()
         .then(async (updatedBranch: any) => {
           const newDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
+          let newD = newDetails.toObject()
           const newSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
-          const newData = {...newDetails.toObject(), ...{settings: newSettings.toObject()}}
+          const newData = {...newD, ...{settings: newSettings.toObject()}}
           const updates = await this.listChanges(oldData, newData)
-          console.log('UPDATES >>>>>>>>>>>>>', updates)
+          // remove _id field from  contacts
+          function mapContacts(obj: any) {
+            obj.contacts = obj.contacts.map((data: any) => {
+              const {isPrimary, number, type} = data
+              return {
+                isPrimary,
+                number,
+                type
+              }
+            })
+            return obj
+          }
+          // log action
+          actionLogs.save({
+            actionBy,
+            actionType: GENERAL_LOGS_ACTION_TYPE.EDIT,
+            branchId: branchId,
+            collectionName: COLLECTION_NAMES.BRANCH,
+            eventSummary: `Branch, ${branch.name}, details has been modified`,
+            module: 'Branch Details - Edit Details',
+            oldData: mapContacts(oldDetails),
+            newData: mapContacts(newD),
+            platform: source
+          })
           resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}, ...{updates}})
         })
       })

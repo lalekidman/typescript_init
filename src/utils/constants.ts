@@ -44,3 +44,14 @@ export const BRANCH_NOTIFICATION_TYPES = {
   BRANCH_CONTACT_UPDATE: 30,
   BRANCH_SOCIAL_LINKS_UPDATE: 31
 }
+
+export const GENERAL_LOGS_ACTION_TYPE = {
+  ADD: 1,
+  EDIT: 2,
+  DELETE: 3,
+  SUSPEND: 4
+}
+
+export const COLLECTION_NAMES = {
+  BRANCH: 'branches'
+}

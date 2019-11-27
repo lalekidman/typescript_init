@@ -16,6 +16,7 @@ const multiPartMiddleWare = require('connect-multiparty')()
 import * as regExp from '../utils/regularExpressions'
 import { request } from 'http';
 import notification from '../class/notification';
+import { constructActionBy } from '../utils/helper';
 
 export default class AccountRoute {
 
@@ -318,6 +319,8 @@ export default class AccountRoute {
     const {branchId} = req.params
     // @ts-ignore
     let accountData = JSON.parse(req.headers.user)
+    // @ts-ignore
+    let platform: string = req.headers.client
     let avatar, banner
     if (req.files) {
       avatar = req.files.avatar
@@ -326,7 +329,7 @@ export default class AccountRoute {
     let {data} = req.body
     data = JSON.parse(data)
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
-    new Branches().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner)
+    new Branches().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner, platform, constructActionBy(accountData.account))
     .then((updatedBranch: any) => {
       // publish to redis subscribers
       req.app.get('redisPublisher').publish('UPDATE_BRANCH', JSON.stringify({data: updatedBranch, branchId}))
