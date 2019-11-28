@@ -69,7 +69,11 @@ export const ModelSchema:Schema = new Schema({
   },
   isWeeklyOpened: {
     type: Boolean,
-    default: true
+    default: false
+  },
+  isAlwaysOpen: {
+    type: Boolean,
+    default: false
   },
   tvDisplayType: {
     type: String,
@@ -216,6 +220,34 @@ export const ModelSchema:Schema = new Schema({
       type: Number
     }
   ],
+  featuredAccess: {
+    account: {
+      status: {
+        type: Boolean,
+        default: false
+      },
+      max: {
+        type: Number,
+        default: 0
+      },
+    },
+    queueGroup: {
+      status: {
+        type: Boolean,
+        default: false
+      },
+      max: {
+        type: Number,
+        default: 0
+      },
+    },
+    smsModule: {
+      status: {
+        type: Boolean,
+        default: false
+      }
+    }
+  },
   socialLinks: [
     socialLinksSchema
   ],

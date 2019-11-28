@@ -36,10 +36,13 @@ class Uploader {
       ACL
     }
     return new Promise((resolve, reject) => {
+      console.log('Uploading to AWS S3...')
       this.s3Uploader.upload(obj, (err: any, data: any) => {
         if (err) {
+          console.log('Failed to upload on AWS S3...\nError: ', err.message)
           reject(err);
         } else {
+          console.log('Successfully upload on AWS S3.')
           const {Location: imageUrl = ''} = data
           resolve({
             avatarUrl: imageUrl,

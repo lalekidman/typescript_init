@@ -6,6 +6,7 @@ interface IAccountData {
   partnerId: string
   contactNo: string
   roleLevel: number
+  avatarUrl?: string
 }
 export default class Account {
   private URL: string

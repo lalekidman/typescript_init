@@ -8,10 +8,6 @@ const schema: Schema = new Schema(
       type: String,
       required: true
     },
-    id: {
-      type: String,
-      required: true
-    },
     branchId: {
       type: String,
       required: true

@@ -14,7 +14,7 @@ import Partner from './partner'
 import Account from './account'
 import Settings from './settings'
 import {default as KyooToken} from '../utils/token'
-import { formDataValidator } from '../utils/helper';
+import { formDataValidator, ValidateEmail } from '../utils/helper';
 import QueueSettingsModel, {IQueueSettingsModel} from '../models/queue-settings'
 import { IContactList } from '../interfaces/branches';
 import { SocialLinks } from '../interfaces/settings';
@@ -37,11 +37,6 @@ export default class BusinessBranches extends Queries {
   private formDataValidation = (data: any) => {
     const {name, branchName, email, address, contacts = [], about} = data
     return formDataValidator([
-      {
-        fieldName: 'name',
-        type: FORM_DATA_TYPES.STRING,
-        value: name
-      },
       {
         fieldName: 'email',
         type: FORM_DATA_TYPES.STRING,
@@ -76,68 +71,96 @@ export default class BusinessBranches extends Queries {
    */
   //@ts-ignore
   public save (partnerId: string, data: any, actionBy: any) {
-    return this.formDataValidation(data)
-      .then(() => {
-        const {contacts = [], email, address, avatar, coordinates, about} = data
-        // return BranchModel.find({
-        //   email
-        // })
-        // .sort({
-        //   createdAt: -1
-        // })
-        // .then(branch => {
-          // if (!branch.length) {
-            return new Partner().findOne(partnerId)
-            .catch((err) => {
-              console.log('Fetch partner detais failed. Error: ', err.message)
-              throw new Error('No partner found.')
-            })
-          // } else {
-          //   throw new AppError(RC.EMAIL_ALREADY_EXISTS, 'email you input is already exists to our database.')
-          // }
-        // })
-        .then(async (partner: any) => {
-          const primaryContactIndex = contacts.findIndex((prop: any) => (prop.isPrimary))
-          const newBranch = this.initilize(Object.assign(data, {
-            email,
-            address,
-            partnerId,
-            about,
-            contacts: contacts.map((contact: any) => (Object.assign(contact, {_id: uuid()}))),
-            contactNo: contacts[primaryContactIndex].number,
-            location: {
-              coordinates: coordinates
-            }
-          }))
-          const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
-          const uploader = await this.upload(filePath.concat(newBranch._id), avatar)
-          const adminAccount = await new Account().addAccount(newBranch._id, {
-            firstName: 'Super Admin',
-            lastName: 'Admin',
-            roleLevel: ACCOUNT_ROLE_LEVEL.SUPER_ADMIN,
-            partnerId: partnerId.toString(),
-            email: email.toString(),
-            contactNo: contacts[primaryContactIndex].number
-          }, actionBy)
-          uploader.imageUrl ? newBranch.avatarUrl = uploader.imageUrl : ''
-          newBranch.save()
-          // create branch queue settings
-          const branchQueueSettings: IQueueSettingsModel = new QueueSettingsModel()
-          const queueSettingsId = uuid()
-          branchQueueSettings.branchId = newBranch._id
-          branchQueueSettings._id = queueSettingsId
-          branchQueueSettings.id = queueSettingsId
-          branchQueueSettings.save()
-          return {
-            ...JSON.parse(JSON.stringify(newBranch)),
-            settings: branchSettings
-          }
+    return new Partner().findOne(partnerId)
+    .catch((err) => {
+      console.log('Fetch partner detais failed. Error: ', err.message)
+      throw new Error('No partner found.')
+    })
+    .then(async (partner: any) => {
+      const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId} = data
+      const branch = await BranchModel.findOne({
+        branchId: data.branchId.toString().trim(),
+        partnerId: partnerId.toString().trim()
       })
+      if (branch) {
+        throw new Error('BranchId is already existed to this partner.')
+      }
+      //get the isPrimary = true on contactList
+      //##DEVNOTE: checking its variable type to make sure
+      //##DEVNOTE: formdata convert the boolean value to literal string, e.g. isPrimary: 'true'
+      const primaryContactIndex = contacts.findIndex((prop: any) => ((typeof(prop.isPrimary) === 'boolean' && prop.isPrimary === true) || (typeof(prop.isPrimary) === 'string' && prop.isPrimary === 'true')))
+      const newBranch = <IBranchModel> this.initilize({
+        branchName: branchName.toString(),
+        email: email.toString(),
+        address: address ? {
+          street: address.street.toString(),
+          province: address.province.toString(),
+          city: address.city.toString(),
+          zipcode: address.zipcode.toString(),
+        } : {},
+        branchId: branchId.toString().trim(),
+        partnerId,
+        about,
+        contacts: contacts.map((contact: any) => (Object.assign(contact, {_id: uuid()}))),
+        contactNo: contacts[primaryContactIndex].number,
+        location: {
+          coordinates: coordinates
+        }
+      })
+      if (!newBranch.branchId) {
+        throw new Error('branchId must not be empty or null.')
+      } else 
+      if (!newBranch.branchName) {
+        throw new Error('branchName must not be empty or null.')
+      } else if (!newBranch.email) {
+        throw new Error('branchName must not be empty or null.')
+      } else if (!ValidateEmail(newBranch.email)) {
+        throw new Error('Invalid email format.')
+      } else if (!newBranch.contactNo) {
+        throw new Error('contacts must have atleast 1 primary.')
+      }
+      // create settings,
+      const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
+      // upload branch avatar
+      const branchAvatar = await this.upload(filePath.concat(newBranch._id), avatar)
+      // upload branch banner
+      const branchBanner = await this.upload(filePath.concat(newBranch._id), banner)
+      const {firstName = '', lastName = ''}  = <any> account || {}
+      // upload avatar for default account
+      const accountAvatar = await this.upload(filePath.concat(newBranch._id), account.avatar)
+      await new Account().addAccount(newBranch._id, {
+        firstName: firstName.toString(),
+        lastName: lastName.toString(),
+        roleLevel: ACCOUNT_ROLE_LEVEL.SUPER_ADMIN,
+        partnerId: partnerId.toString(),
+        email: account ? account.email : '',
+        contactNo: contacts[primaryContactIndex].number,
+        avatarUrl: accountAvatar.imageUrl
+      }, actionBy)
+      newBranch.avatarUrl = branchAvatar.imageUrl
+      newBranch.bannerUrl = branchBanner.imageUrl
+      await newBranch.save()
+      // create branch queue settings
+      const queueSettingsId = uuid()
+      await new QueueSettingsModel({
+        _id: queueSettingsId,
+        branchId: newBranch._id,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }).save()
+      return {
+        ...JSON.parse(JSON.stringify(newBranch)),
+        settings: branchSettings
+      }
+    })
+    .catch(err => {
+      console.log('Failed to add branch.\nError: ', err)
+      throw err
+    })
       // }).then(async () => {
         // return Promise.resolve(DefaultQueueGroups.map((qg: any) => this.QG.save(Object.assign(Object.assign(qg, {businessBranchId: newBranch._id, businessUserId: newBranch._id})))))
       // }).then((queueGroups) => {
       //   return Object.assign(newBranch, {queueGroups})
-    })
   }
 
   /**
@@ -168,15 +191,19 @@ export default class BusinessBranches extends Queries {
             bannerUrl = bannerUpload.imageUrl
           }
           catch (error) {
-            errors.push('banner upload failed')
+            errors.push('banxxxxxxxxxxxxxxxxxxxxxxner upload failed')
           }
         }
         // update banner (model location : Settings model)
         try {
-          settings = await BranchSettings.findOneAndUpdate(
-            {branchId},
+          await BranchModel.findOneAndUpdate(
+            {
+              _id: branchId
+            },
             Object.assign({}, bannerUrl? {bannerUrl} : {}),
-            {new: true}
+            {
+              new: true
+            }
           )
         }
         catch (error) {

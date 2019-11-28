@@ -12,7 +12,7 @@ export interface uploadFiles {
 export interface UploadedImage {
   avatarUrl?: string
   fileName?: string
-  imageUrl?: string
+  imageUrl: string
 }
 export interface IRequest extends Request {
   files?: any

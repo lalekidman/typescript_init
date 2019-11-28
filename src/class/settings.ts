@@ -103,12 +103,18 @@ export default class BranchSettings extends Queries {
     return this.formDataValidator(data)
       .then(() => {
         const {modules = [BRANCH_MODULES.QUEUE, BRANCH_MODULES.RESERVATION], operationHours = [], socialLinks = []} = data
+        // check the variable type if string and check if its equal to true,
+        // also check if the variable type is boolean,
+        // otherwise set value to false
+        const isAlwaysOpen = (typeof(data.isAlwaysOpen) === 'string' && data.isAlwaysOpen === 'true') ? true : (typeof(data.isAlwaysOpen) === 'boolean') ? data.isAlwaysOpen : false
         const opHours = (operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours
         const newBranchSetting = this.initilize({
           ...data,
+          isAlwaysOpen,
+          isWeeklyOpen: isAlwaysOpen,
           branchId: this.branchId.toString().trim(),
           modules,
-          operationHours: opHours.map((oph: any) => (Object.assign(oph, {_id: uuid()})) ),
+          operationHours: opHours.map((oph: any) => (Object.assign(oph, {_id: uuid()})) ).sort((one:any, op2:any) => (one.day - op2)),
           socialLinks: socialLinks.map((social:any) => Object.assign(social, !social.id ? {id: uuid()} : {}))
         })
         return newBranchSetting.save()

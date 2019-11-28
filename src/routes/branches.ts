@@ -32,10 +32,14 @@ export default class AccountRoute {
    */
   public add = (req: IRequest, res: Response, next: NextFunction) => {
     const {partnerId = ''} = req.params
-    const {avatar} = req.files
-    const user = JSON.parse(req.headers.user ? req.headers.user : <any> "{account: {}}")
+    const {avatar, banner, accountAvatar} = req.files
+    const {account} = req.body
+    const user = req.headers.user ? JSON.parse(<any> req.headers.user) : {account: {}}
+    console.log('useruseruser: ', user)
+    // const user = JSON.parse(req.headers.user ? req.headers.user : <any> "{account: {}}")
+    console.log('USER: ', user)
     new Branches()
-    .save(partnerId, {...req.body, avatar}, user)
+    .save(partnerId, {...req.body, avatar, banner, account: account ? {...account, avatar: accountAvatar} : {}}, user)
     .then((response) => {
       res.status(HttpStatus.OK).send({
         success: true,
@@ -306,11 +310,9 @@ export default class AccountRoute {
    */
   private updateBranch(req: IRequest, res: Response) {
     const {branchId} = req.params
-    let avatar, banner
-    if (req.files) {
-      avatar = req.files.avatar
-      banner = req.files.banner
-    }
+    const {avatar = null, banner = null} = <any> req.files || {}
+    console.log('avataravataravataravatar: ', avatar)
+    console.log('bannerbannerbanner: ', banner)
     let {data} = req.body
     data = JSON.parse(data)
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data

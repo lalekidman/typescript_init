@@ -6,11 +6,21 @@ export interface TimeLists {
   id: string
   time: number
 }
+interface IStatus {
+  status: boolean
+}
+interface IAccess extends IStatus{
+  max: number
+}
 export interface RerservationTimeSlots {
   availableDays: number[]
   timeLists: TimeLists[]
 }
-
+export interface IFeaturedAccess {
+  account: IAccess
+  QueueGroup: IAccess
+  status: IStatus
+}
 export interface Gallery {
   _id: string
   mediaUrl?: string
@@ -74,6 +84,7 @@ export interface IPrintingDetails {
 }
 export default interface ISetting extends _init {
   isWeeklyOpened: boolean
+  isAlwaysOpen: boolean
   counter: number
   totalQueueGroup: number
   tvDisplayType: string
@@ -86,6 +97,7 @@ export default interface ISetting extends _init {
   imagePreviewDuration: number
   reservationTimeSlots: RerservationTimeSlots
   printingDetails: IPrintingDetails
+  featuredAccess: IFeaturedAccess
   smsConfig: ISmsConfig
   smsCredit: SmsCredit
   smsSettings: SmsSettings
