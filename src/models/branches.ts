@@ -1,21 +1,7 @@
 import {Schema, Document, model} from 'mongoose'
 import IBranch from '../interfaces/branches'
-//import Logs from '../class/logs';
+import AddedBySchema from './addedBy'
 export interface IBranchModel extends Document, IBranch {}
-const socialLinksSchema = new Schema({
-  id: {
-    type: String,
-    default: ''
-  },
-  url: {
-    type: String,
-    default: ''
-  },
-  type: {
-    type: String,
-    default: ''
-  }
-}, {_id: false})
 export const ModelSchema:Schema = new Schema({
   _id: {
     type: String,
@@ -38,6 +24,10 @@ export const ModelSchema:Schema = new Schema({
     default: null
   },
   categoryId: {
+    type: String,
+    default: ''
+  },
+  bannerUrl: {
     type: String,
     default: ''
   },
@@ -173,7 +163,8 @@ export const ModelSchema:Schema = new Schema({
   updatedAt: {
     type: Number,
     default: Date.now()
-  }
+  },
+  addedBy: AddedBySchema
 })
 //new Logs(ModelSchema, 'branches')
 export default model<IBranchModel>("branches", ModelSchema);

@@ -63,10 +63,6 @@ export const ModelSchema:Schema = new Schema({
     type: String,
     default: ''
   },
-  bannerUrl: {
-    type: String,
-    default: ''
-  },
   autoAssignQueue: {
     type: Boolean,
     default: false

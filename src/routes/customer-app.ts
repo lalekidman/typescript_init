@@ -42,7 +42,7 @@ export default class AccountRoute {
         avatarUrl: partner.avatarUrl,
         categoryId: partner.categoryId,
         industryId: partner.industryId,
-        industry: {
+        industries: {
           _id: industry._id,
           name: industry.name,
           category: industry.categoryList[ind].name
@@ -52,12 +52,20 @@ export default class AccountRoute {
   /**
    * get branch data by branchId
    */
-  public branchDetails = async (req: IRequest, res: Response, next: NextFunction) => {
+  public branchDetails = (req: IRequest, res: Response, next: NextFunction) => {
     const {branchId = ''} = req.params
+    console.log('HERE RF')
     return BranchModel
       .findOne({
         _id: branchId.toString().trim()
-      }, this.projection)
+      }, {
+        ...this.projection,
+        address: 1,
+        contacts: 1,
+        about: 1,
+        location: 1,
+        bannerUrl: 1
+      })
       .then(async (branch) => {
         if (!branch) {
           throw new Error('No branch found.')
@@ -68,7 +76,8 @@ export default class AccountRoute {
         res.status(HttpStatus.OK).send({
           ...JSON.parse(JSON.stringify(branch)),
           partner: await this.getPartnerData(branch.partnerId),
-          operationHours: settings ? settings.operationHours : []
+          operationHours: settings ? settings.operationHours : [],
+          gallery: settings ? settings.gallery : []
         })
       })
       .catch(err => {
