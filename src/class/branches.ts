@@ -221,11 +221,10 @@ export default class BusinessBranches extends Queries {
     })
   }
 
-  public getList (data: IBranchFilter) {
+  public getList (data: IBranchFilter, projection: any = null) {
     const {partnerId = '', branchIds = null} = data
-    console.log('branchIds: ', branchIds)
     const searchBranchIds = branchIds ? branchIds.split(',') : []
-    return this.aggregateWithPagination([
+    const query = <any> [
       {
         $match: partnerId ? {
           partnerId: partnerId.toString().trim()
@@ -238,6 +237,12 @@ export default class BusinessBranches extends Queries {
           }
         } : {}
       }
-    ], {...data, sortBy: {fieldName: 'branchName', status: 1}}, ['branchName', 'branchId'])
+    ]
+    if (projection) {
+      query.splice(query.length, 0, {
+        $project: projection
+      })
+    }
+    return this.aggregateWithPagination(query, {...data, sortBy: {fieldName: 'branchName', status: 1}}, ['branchName'])
   }
 }

@@ -22,6 +22,7 @@ import BranchRoute from './routes/branches'
 import QueueSettingsRoute from './routes/queue-settings'
 import AdvertisementSettingsRoute from './routes/advertisement-settings'
 import Notifications from './routes/notifications'
+import CustomerApp from './routes/customer-app'
 
 class App {
   public app: any
@@ -45,6 +46,7 @@ class App {
     this.app.use('/notifications', new Notifications().initializeRoutes())
     this.app.use('/:branchId/advertisement-settings', new AdvertisementSettingsRoute().initializeRoutes())
     this.app.use('/:branchId/queue-settings', new QueueSettingsRoute().initializeRoutes())
+    this.app.use('/customer-app', new CustomerApp().initializeRoutes())
     this.app.use('', new BranchRoute().initializeRoutes())
   }
   private initSocket (server: any):void {
