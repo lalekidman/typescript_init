@@ -26,7 +26,12 @@ export default class AccountRoute {
   private projection: any = {
     branchName: 1,
     avatarUrl: 1,
-    partnerId: 1
+    partnerId: 1,
+    address: 1,
+    contacts: 1,
+    about: 1,
+    location: 1,
+    bannerUrl: 1
   }
   constructor () {
     // initialize redis
@@ -58,14 +63,7 @@ export default class AccountRoute {
     return BranchModel
       .findOne({
         _id: branchId.toString().trim()
-      }, {
-        ...this.projection,
-        address: 1,
-        contacts: 1,
-        about: 1,
-        location: 1,
-        bannerUrl: 1
-      })
+      }, this.projection)
       .then(async (branch) => {
         if (!branch) {
           throw new Error('No branch found.')
@@ -104,7 +102,8 @@ export default class AccountRoute {
           const responseData = {
             ...JSON.parse(JSON.stringify(branch)),
             partner: await this.getPartnerData(branch.partnerId),
-            operationHours: settings ? settings.operationHours : []
+            operationHours: settings ? settings.operationHours : [],
+            gallery: settings ? settings.gallery : []
           }
           return responseData
         }))
