@@ -131,3 +131,29 @@ export function getFileSize(file: any) {
   const fileSizeInMegaBytes = fileSizeInBytes / 1000000.0
   return fileSizeInMegaBytes
 }
+
+
+/**
+ * construct actionBy
+ */
+export const constructActionBy = (accountData: any) => {
+  let actionBy = {
+    _id: '',
+    avatarUrl: '',
+    firstName: '',
+    lastName: '',
+    roleLevel: '',
+  }
+  try {
+    const {_id, avatarUrl, firstName, lastName, roleLevel} = accountData
+    actionBy._id = _id
+    actionBy.avatarUrl = avatarUrl
+    actionBy.firstName = firstName
+    actionBy.lastName = lastName
+    actionBy.roleLevel =  roleLevel
+  }
+  catch (error) {
+    console.log('CONSTRUCT ACTION BY ERROR', error)
+  }
+  return actionBy
+}

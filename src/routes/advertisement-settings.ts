@@ -5,12 +5,14 @@ import AppError from '../utils/app-error';
 import * as RC from '../utils/response-codes'
 import { IRequest, IUpdateBranchAdvertisementSettings } from '../utils/interfaces';
 const multiPartMiddleWare = require('connect-multiparty')()
-import {validateModules, getFileSize} from '../utils/helper'
+import {validateModules, getFileSize, constructActionBy} from '../utils/helper'
 import AdvertisementSettings from '../class/advertisement-settings'
 import * as appConstants from '../utils/constants'
 import {IUpdateBranchQueueSettings} from '../utils/interfaces'
 import uuid = require('uuid');
 import * as regExp from '../utils/regularExpressions'
+import notification from '../class/notification';
+import { IBranchSettingsModel } from '../models/settings';
 const advertisementSettings: AdvertisementSettings = new AdvertisementSettings()
 export default class Route {
   /**
@@ -113,7 +115,13 @@ export default class Route {
    * update branch Advertisement Settings
    */
   private updateBranchAdvertisementSettings = async (req: IRequest, res: Response) => {
+    const {branchId} = req.params
+    const oldData = <IBranchSettingsModel> await advertisementSettings.getBranchAdvertisementSettings(branchId)
     let payload = JSON.parse(req.body.data)
+    // @ts-ignore
+    let accountData = JSON.parse(req.headers.user)
+    // @ts-ignore
+    let platform: string = req.headers.client
     // upload image first
     if (req.files && req.files.media) {
       try {
@@ -134,10 +142,17 @@ export default class Route {
       adsToDelete
     }
     // update other form data
-    const {branchId} = req.params
-    advertisementSettings.updateBranchAdvertisementSettings(branchId, data)
+    advertisementSettings.updateBranchAdvertisementSettings(branchId, data, oldData, platform, constructActionBy(accountData.account))
     .then((updatedSettings) => {
       req.app.get('redisPublisher').publish('UPDATE_ADVERTISEMENT_SETTINGS', JSON.stringify({data: updatedSettings, branchId}))
+      // notify business
+      notification.invokeNotif(
+        branchId,
+        {
+          actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`
+        },
+        appConstants.BRANCH_NOTIFICATION_TYPES.ADVERTISEMENT_SETTINGS_UPDATE
+      )
       res.status(HttpStatus.OK).json(updatedSettings)
     })
     .catch((error) => {

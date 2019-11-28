@@ -4,6 +4,8 @@ import * as HttpStatus from 'http-status-codes'
 import AppError from '../utils/app-error';
 import * as RC from '../utils/response-codes'
 import { IRequest } from '../utils/interfaces';
+import notification from '../class/notification';
+import { BRANCH_NOTIFICATION_TYPES } from '../utils/constants';
 const multiPartMiddleWare = require('connect-multiparty')()
 
 export default class Settings {
@@ -38,10 +40,20 @@ export default class Settings {
    */
   public updateOperationHours = (req: IRequest, res: Response, next: NextFunction) => {
     const {branchId = ''} = req.params
+    // @ts-ignore
+    let accountData = JSON.parse(req.headers.user)
     const {isWeeklyOpened = false, operationHours = []} = req.body
     new BranchSettings(branchId)
     .updateOperationHours({isWeeklyOpened, operationHours})
     .then((response: any) => {
+      // notify business
+      notification.invokeNotif(
+        branchId,
+        {
+          actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`
+        },
+        BRANCH_NOTIFICATION_TYPES.OPERATION_HOURS_UPDATE
+      )
       res.status(HttpStatus.OK).send({
         operationHours: response.operationHours,
         isWeeklyOpened: response.isWeeklyOpened
@@ -61,9 +73,18 @@ export default class Settings {
   public updateLocation = (req: IRequest, res: Response, next: NextFunction) => {
     const {branchId = ''} = req.params
     const {location = []} = req.body
+    // @ts-ignore
+    let accountData = JSON.parse(req.headers.user)
     const Branch = new BranchSettings(branchId)
     Branch.updateGeoLocation(location)
     .then((response: any) => {
+      notification.invokeNotif(
+        branchId,
+        {
+          actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`
+        },
+        BRANCH_NOTIFICATION_TYPES.ADDRESS_UPDATE
+      )
       res.status(HttpStatus.OK).send(response)
     })
     .catch((err) => {

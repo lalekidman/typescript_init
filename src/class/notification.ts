@@ -7,11 +7,11 @@ class Notification {
     this.urlPrefix = `http://${process.env.NOTIFICATION_SERVICE_HOST}`
   }
 
-  public invokeNotif(branchId: string, customerRates: any, type: number) {
+  public invokeNotif(branchId: string, payload: any, type: number) {
     return new Promise((resolve, reject) => {
       axios.post(`${this.urlPrefix}/${branchId}/generic-notification`, {
         type,
-        customerRates
+        payload
       })
       .then((response) => {
         console.log(response.data)
