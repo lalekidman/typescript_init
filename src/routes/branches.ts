@@ -255,6 +255,7 @@ export default class AccountRoute {
         '**@request body.data is JSON unparsable'))
     }
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
+    console.log('SOCIAL LINKS', socialLinks)
     // validate req body
     if (typeof(categoryId) !== 'string' || categoryId === '' ||
     typeof(about) !== 'string' || about === '' || 
