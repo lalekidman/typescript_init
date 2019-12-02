@@ -95,7 +95,40 @@ export default class Settings {
       }
     })
   }
+  /**
+   * suspend branch (should not be allowed inside operation hours)
+   */
+  private suspendBranch = (req: Request, res: Response) => {
+    const {branchId} = req.params
+    const Branch = new BranchSettings(branchId)
+    Branch.suspend()
+    .then((suspended) => {
+      res.status(HttpStatus.OK).json(suspended)
+    })
+    .catch((error) => {
+      if (error.message) {
+        return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, error.message))
+      }
+      res.status(HttpStatus.BAD_REQUEST).json(error)
+    })
+  }
+  /**
+   * unsuspend branch
+   */
+  private unsuspendBranch = (req: Request, res: Response) => {
+    const {branchId} = req.params
+    const Branch = new BranchSettings(branchId)
+    Branch.unsuspend()
+    .then((unsuspended) => {
+      res.status(HttpStatus.OK).json(unsuspended)
+    })
+    .catch((error) => {
+      res.status(HttpStatus.BAD_REQUEST).json(error)
+    })
+  }
   public initializeRoutes () {
+    this.app.patch('/unsuspend', this.unsuspendBranch)
+    this.app.patch('/suspend', this.suspendBranch)
     this.app.patch('/queue-group-counter', this.updateTotalQueueGroupCreated)
     this.app.patch('/operation-hours', this.updateOperationHours)
     this.app.patch('/location', this.updateLocation)

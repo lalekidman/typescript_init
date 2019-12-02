@@ -1,6 +1,7 @@
 import Queries from '../utils/queries'
 import {IOperationHours} from '../interfaces/settings'
-import BranchSettingModel from '../models/settings'
+import BranchModel from '../models/branches'
+import BranchSettingModel, { IBranchSettingsModel } from '../models/settings'
 import { FORM_DATA_TYPES, BRANCH_MODULES } from '../utils/constants';
 import { formDataValidator } from '../utils/helper';
 import * as uuid from 'uuid/v4'
@@ -203,5 +204,50 @@ export default class BranchSettings extends Queries {
       })
       .save()
     })
+  }
+  /**
+   * suspend branch
+   * allow only outside operation hours
+   */
+  public suspend() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const settings = await BranchSettingModel.findOne({branchId: this.branchId})
+        if (!settings) {
+          throw new Error('No branch settings found.')
+        }
+        const currDT = new Date()
+        // UTC Hour and minute converted to milliseconds
+        const UTCHM = (currDT.getUTCHours() + (currDT.getUTCMinutes() / 60)) * 60 * 60 * 1000
+        const todaySettings = settings.operationHours.find((elem) => {
+          return elem.day === currDT.getDay()
+        })
+        if (todaySettings) {
+          if (todaySettings.openingTime <= UTCHM && todaySettings.closingTime >= UTCHM) {
+            throw new Error('Branch is currently operating')
+          }
+        }
+        const suspendedBranch = await BranchModel.findOneAndUpdate(
+          {_id: this.branchId},
+          {isSuspended: true},
+          {new: true}
+        )
+        resolve(suspendedBranch)
+      }
+      catch (error) {
+        console.log('suspendBranch Error:', error)
+        reject(error)
+      }
+    })
+  }
+  /**
+   * unsuspend branch
+   */
+  public unsuspend() {
+    return BranchModel.findOneAndUpdate(
+      {_id: this.branchId},
+      {isSuspended: false},
+      {new: true}
+    )
   }
 }
