@@ -79,6 +79,10 @@ export const ModelSchema:Schema = new Schema({
     type: String,
     default: 'queue'
   },
+  noOfQueueGroupsAllowed: {
+    type: Number,
+    default: 8
+  },
   operationHours: [
     {
       _id: {
