@@ -212,10 +212,10 @@ export default class BranchSettings extends Queries {
   public suspend() {
     return new Promise(async (resolve, reject) => {
       try {
-        const settings = await BranchSettingModel.findOne({branchId: this.branchId})
-        if (!settings) {
-          throw new Error('No branch settings found.')
-        }
+        // const settings = await BranchSettingModel.findOne({branchId: this.branchId})
+        // if (!settings) {
+        //   throw new Error('No branch settings found.')
+        // }
         // const currDT = new Date()
         // // UTC Hour and minute converted to milliseconds
         // const UTCHM = (currDT.getUTCHours() + (currDT.getUTCMinutes() / 60)) * 60 * 60 * 1000
