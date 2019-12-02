@@ -216,17 +216,17 @@ export default class BranchSettings extends Queries {
         if (!settings) {
           throw new Error('No branch settings found.')
         }
-        const currDT = new Date()
-        // UTC Hour and minute converted to milliseconds
-        const UTCHM = (currDT.getUTCHours() + (currDT.getUTCMinutes() / 60)) * 60 * 60 * 1000
-        const todaySettings = settings.operationHours.find((elem) => {
-          return elem.day === currDT.getDay()
-        })
-        if (todaySettings) {
-          if (todaySettings.openingTime <= UTCHM && todaySettings.closingTime >= UTCHM) {
-            throw new Error('Branch is currently operating')
-          }
-        }
+        // const currDT = new Date()
+        // // UTC Hour and minute converted to milliseconds
+        // const UTCHM = (currDT.getUTCHours() + (currDT.getUTCMinutes() / 60)) * 60 * 60 * 1000
+        // const todaySettings = settings.operationHours.find((elem) => {
+        //   return elem.day === currDT.getDay()
+        // })
+        // if (todaySettings) {
+        //   if (todaySettings.openingTime <= UTCHM && todaySettings.closingTime >= UTCHM) {
+        //     throw new Error('Branch is currently operating')
+        //   }
+        // }
         const suspendedBranch = await BranchModel.findOneAndUpdate(
           {_id: this.branchId},
           {isSuspended: true},
