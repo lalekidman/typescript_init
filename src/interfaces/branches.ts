@@ -12,7 +12,7 @@ export interface IContactList {
   isPrimary: boolean
 }
 export interface ILocation {
-  location: string
+  type: string
   coordinates: number[]
 }
 export interface IDisplayedQueue {
@@ -20,6 +20,17 @@ export interface IDisplayedQueue {
   queueGroupId: string
   bookingNo: string
   source?: string
+}
+export interface IAssignedDevices {
+  _id: string
+  deviceId: string
+  manufactureId: string
+  createdAt: number
+}
+export interface ISubscription {
+  planType: string
+  amountRate: number
+  SMSRate: number
 }
 export default interface BusinessBranches extends _init{
   branchName: string
@@ -52,4 +63,7 @@ export default interface BusinessBranches extends _init{
   contacts: Array<IContactList>
   address: IAddress
   displayedQueue: IDisplayedQueue
+  distributorId: string
+  assignedDevices: IAssignedDevices[]
+  subscription: ISubscription
 }

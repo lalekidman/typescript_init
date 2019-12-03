@@ -1,9 +1,10 @@
 import Queries from '../utils/queries'
-import {IOperationHours} from '../interfaces/settings'
+import {IOperationHours, IFeaturedAccess, ISocialLinks} from '../interfaces/settings'
 import BranchSettingModel from '../models/settings'
 import { FORM_DATA_TYPES, BRANCH_MODULES } from '../utils/constants';
 import { formDataValidator } from '../utils/helper';
 import * as uuid from 'uuid/v4'
+import { ILocation } from '../interfaces/branches';
 const DefaultOperationHours = [
   {
     openingTime: 3600000,
@@ -59,6 +60,14 @@ interface IOphData {
   operationHours: IOperationHours[]
   isWeeklyOpened: boolean
 }
+interface IBranchSettings {
+  isWeeklyOpened: boolean
+  operationHours?: IOperationHours[]
+  featuredAccess: IFeaturedAccess
+  coordinates: number[]
+  modules?: number[]
+  socialLinks: ISocialLinks[]
+}
 export default class BranchSettings extends Queries {
   private branchId: string
   constructor (branchId: string) {
@@ -99,26 +108,43 @@ export default class BranchSettings extends Queries {
    * @param data 
    */
   //@ts-ignore
-  public save (data: any) {
+  public save (data: IBranchSettings) {
     return this.formDataValidator(data)
-      .then(() => {
-        const {modules = [BRANCH_MODULES.QUEUE, BRANCH_MODULES.RESERVATION], operationHours = [], socialLinks = []} = data
+      .then(async () => {
+        const {modules = [BRANCH_MODULES.QUEUE, BRANCH_MODULES.RESERVATION], operationHours = [], socialLinks = [], featuredAccess, coordinates, isWeeklyOpened} = data
         // check the variable type if string and check if its equal to true,
         // also check if the variable type is boolean,
         // otherwise set value to false
-        const isAlwaysOpen = (typeof(data.isAlwaysOpen) === 'string' && data.isAlwaysOpen === 'true') ? true : (typeof(data.isAlwaysOpen) === 'boolean') ? data.isAlwaysOpen : false
-        const opHours = (operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours
+        const isAlwaysOpen = (typeof(isWeeklyOpened) === 'string' && isWeeklyOpened === 'true') ? true : (typeof(isWeeklyOpened) === 'boolean') ? isWeeklyOpened : false
         const newBranchSetting = this.initilize({
-          ...data,
-          isAlwaysOpen,
-          isWeeklyOpen: isAlwaysOpen,
-          branchId: this.branchId.toString().trim(),
-          modules,
-          operationHours: opHours.map((oph: any) => (Object.assign(oph, {_id: uuid()})) ).sort((one:any, op2:any) => (one.day - op2)),
-          socialLinks: socialLinks.map((social:any) => Object.assign(social, !social.id ? {id: uuid()} : {}))
+          branchId: this.branchId.toString().trim()
         })
-        return newBranchSetting.save()
+        await newBranchSetting.save()
+        await this.updateFeaturedAccess(featuredAccess)
+        if (coordinates.length === 2) {
+          await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
+        }
+        await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
+        return newBranchSetting
       })
+  }
+  public async updateSettings (data: IBranchSettings) {
+    try {
+      const {modules = [BRANCH_MODULES.QUEUE, BRANCH_MODULES.RESERVATION], operationHours = [], socialLinks = [], featuredAccess, coordinates, isWeeklyOpened} = data
+      // check the variable type if string and check if its equal to true,
+      // also check if the variable type is boolean,
+      // otherwise set value to false
+      const isAlwaysOpen = (typeof(isWeeklyOpened) === 'string' && isWeeklyOpened === 'true') ? true : (typeof(isWeeklyOpened) === 'boolean') ? isWeeklyOpened : false
+      await this.updateFeaturedAccess(featuredAccess)
+      if (coordinates.length === 2) {
+        console.log('###############################################HERE RIGHT')
+        await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
+      }
+      const branchSettings = await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
+      return branchSettings
+    } catch (err) {
+      console.log('#################### Error on updating branch settings: ', err.message)      
+    }
   }
   public findOne (query: any, project: any = {}) {
     return BranchSettingModel
@@ -167,7 +193,7 @@ export default class BranchSettings extends Queries {
           .set({isWeeklyOpened: true})
           .save()
       }
-      const opHours = ((operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours)
+      const opHours = (operationHours && (operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours)
         .map((oph: any, index) => {
           if (!oph._id) {
             oph._id = uuid()
@@ -181,6 +207,7 @@ export default class BranchSettings extends Queries {
             enabled: typeof(oph.enabled) === 'boolean' ? oph.enabled : false,
           }
         })
+        console.log('e: ', opHours)
       return branchSettings.set({
         isWeeklyOpened: false,
         operationHours: opHours
@@ -193,21 +220,79 @@ export default class BranchSettings extends Queries {
    * @param location array of number/float
    *  first element should be the long and the second one is for lat
    */ 
-  public updateGeoLocation (location: Number[]) {
+  public updateGeoLocation (coordinates: Number[]) {
     return this.findOne({
       branchId: this.branchId
     })
     .then((branchSettings) => {
+      console.log('l###################################ocatixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxon : ', coordinates)
       if (!branchSettings) {
         throw new Error('No branch settings found.')
       }
-      if (location.length <= 1) {
-        throw new Error('Location must be array with a 2 element, 0 is for long and 1 is for lng.')
+      if (coordinates.length <= 1) {
+        throw new Error('coordinates must be array with a 2 element, 0 is for long and 1 is for lng.')
       }
       return branchSettings.set({
-        'location.coordinates': location.splice(0, 2)
+        'location.coordinates': coordinates.splice(0, 2)
       })
       .save()
     })
   }
+  /**
+ * update featured access
+ * @param featured 
+ */
+ public async updateFeaturedAccess (featured: IFeaturedAccess) {
+  const {queueGroup, smsModule, account} = featured || {}
+  if (!featured) {
+    return;
+  }
+  if (queueGroup.max < 0) {
+    throw new Error('queue group max value must be greater than 0')
+  } else if (account.max) {
+    throw new Error('account max value must be greater than 0')
+  }
+  return BranchSettingModel.findOneAndUpdate({
+    _id: this.branchId, 
+    },
+    {
+      featuredAccess: featured
+    },
+    {
+      new: true
+    }
+  )
+  .then((branch: any) => {
+    if (!branch) {
+      throw new Error('No Branch data found.')
+    }
+    return branch
+  })
+ }
+ public async updateSocialLinks (socialLinks: ISocialLinks[]) {
+  return BranchSettingModel.findOneAndUpdate({
+    _id: this.branchId, 
+    },
+    {
+      socialLinks: socialLinks.map((link) => {
+        if (!link.id) {
+          link.id = uuid()
+        }
+        if (link.type === "facebook" || link.type === "instagram") {
+          let disected = link.url.split(/\//g)
+          link.url = disected[disected.length - 1]
+        }
+      })
+    },
+    {
+      new: true
+    }
+  )
+  .then((branch: any) => {
+    if (!branch) {
+      throw new Error('No Branch data found.')
+    }
+    return branch
+  })
+ }
 }

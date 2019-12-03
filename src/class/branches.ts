@@ -17,14 +17,30 @@ import Settings from './settings'
 import {default as KyooToken} from '../utils/token'
 import { formDataValidator, ValidateEmail } from '../utils/helper';
 import QueueSettingsModel, {IQueueSettingsModel} from '../models/queue-settings'
-import { IContactList } from '../interfaces/branches';
-import { SocialLinks } from '../interfaces/settings';
+import { IContactList, IAddress, ILocation, ISubscription, IAssignedDevices } from '../interfaces/branches';
+import { SocialLinks, IFeaturedAccess } from '../interfaces/settings';
 
 export {IBranchModel}
 const filePath = 'avatars/branches/'
 interface IBranchFilter extends IPaginationData {
   partnerId?: string
   branchIds?: any
+}
+interface IBranchData {
+  categoryId: string
+  about: string
+  featuredAccess: IFeaturedAccess
+  email: string
+  contactNumbers: Array<IContactList>
+  socialLinks: Array<SocialLinks>
+  avatar: any
+  banner: any
+  operationHours: any[]
+  coordinates: number[]
+  isWeeklyOpened: boolean
+  address: IAddress
+  subscription: ISubscription
+  assignedDevices: IAssignedDevices[]
 }
 export default class BusinessBranches extends Queries {
   // public KT: KyooToken
@@ -65,6 +81,7 @@ export default class BusinessBranches extends Queries {
       },
     ])
   }
+  
   /**
    * add new branch
    * @param partnerId 
@@ -78,7 +95,7 @@ export default class BusinessBranches extends Queries {
       throw new Error('No partner found.')
     })
     .then(async (partner: any) => {
-      const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId} = data
+      const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId, subscription, assignedDevices} = data
       const branch = await BranchModel.findOne({
         branchId: data.branchId.toString().trim(),
         partnerId: partnerId.toString().trim()
@@ -106,7 +123,9 @@ export default class BusinessBranches extends Queries {
         contactNo: contacts[primaryContactIndex].number,
         location: {
           coordinates: coordinates
-        }
+        },
+        subscription,
+        assignedDevices: assignedDevices ? assignedDevices.map((devices: any) => Object.assign(devices, {_id: uuid(), createdAt: Date.now()})) : []
       })
       if (!newBranch.branchId) {
         throw new Error('branchId must not be empty or null.')
@@ -122,13 +141,9 @@ export default class BusinessBranches extends Queries {
       }
       // create settings,
       const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
-      // upload branch avatar
-      const branchAvatar = await this.upload(filePath.concat(newBranch._id), avatar)
-      // upload branch banner
-      const branchBanner = await this.upload(filePath.concat(newBranch._id), banner)
+      const {avatarUrl, bannerUrl} = await this.uploadImages(branchId, {avatar, banner})
       const {firstName = '', lastName = ''}  = <any> account || {}
       // upload avatar for default account
-      const accountAvatar = await this.upload(filePath.concat(newBranch._id), account.avatar)
       await new Account().addAccount(newBranch._id, {
         firstName: firstName.toString(),
         lastName: lastName.toString(),
@@ -136,10 +151,10 @@ export default class BusinessBranches extends Queries {
         partnerId: partnerId.toString(),
         email: account ? account.email : '',
         contactNo: contacts[primaryContactIndex].number,
-        avatarUrl: accountAvatar.imageUrl
+        avatarUrl,
       }, actionBy)
-      newBranch.avatarUrl = branchAvatar.imageUrl
-      newBranch.bannerUrl = branchBanner.imageUrl
+      newBranch.avatarUrl = avatarUrl
+      newBranch.bannerUrl = bannerUrl
       await newBranch.save()
       // create branch queue settings
       const queueSettingsId = uuid()
@@ -223,75 +238,46 @@ export default class BusinessBranches extends Queries {
   /**
    * edit branch
    */
-  public updateBranch(branchId: string, categoryId: string, about: string, branchEmail: string, contactNumbers: Array<IContactList>, socialLinks: Array<SocialLinks>, avatar: any, banner: any, source: string = '', actionBy: any = {}) {
-    return new Promise(async (resolve, reject) => {
-      const oldDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
-      const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
-      const oldData = {...oldDetails.toObject(), ...{settings: oldSettings.toObject()}}
+  public updateBranch(branchId: string, data: IBranchData, source:string = '', actionBy: any = {}) {
+    const {avatar, about, banner, email: branchEmail, categoryId, contactNumbers, socialLinks, coordinates, featuredAccess, isWeeklyOpened, operationHours, address, subscription, assignedDevices = []} = data
+    return new Promise((resolve, reject) => {
+      console.log('############################3UPDATE BRANCH!!!!!!!!')
       BranchModel.findOne({_id: branchId})
       .then(async (branch: any) => {
         let oldDetails = branch.toObject()
+        const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
+        const oldData = {...oldDetails.toObject(), ...{settings: oldSettings.toObject()}}
         let errors: Array<any> = []
         // upload images (avatar and banner)
-        let avatarUrl, bannerUrl
         let settings: any
-        if (avatar) {
-          const s3FolderPathAvatar = `branch/${branchId}/avatar`
-          try {
-            let avatarUpload = await this.upload(s3FolderPathAvatar, avatar)
-            branch.avatarUrl = avatarUpload.imageUrl
-          }
-          catch (error) {
-            errors.push('avatar upload failed')
-          }
-        }
-        if (banner) {
-          const s3FolderPathBanner = `branch/${branchId}/banner`
-          try {
-            let bannerUpload = await this.upload(s3FolderPathBanner, banner)
-            bannerUrl = bannerUpload.imageUrl
-          }
-          catch (error) {
-            errors.push('banxxxxxxxxxxxxxxxxxxxxxxner upload failed')
-          }
-        }
-        // update banner (model location : Settings model)
-        try {
-          await BranchModel.findOneAndUpdate(
-            {
-              _id: branchId
-            },
-            Object.assign({}, bannerUrl? {bannerUrl} : {}),
-            {
-              new: true
-            }
-          )
-        }
-        catch (error) {
-          errors.push(error)
+        if (!branch) {
+          throw new Error('No branch details found.')
         }
         branch.email = branchEmail
         branch.categoryId = categoryId
         branch.about = about
-        for (let i in contactNumbers) {
-          if (!contactNumbers[i]._id) {
-            contactNumbers[i]["_id"] = uuid()
+        branch.contacts = contactNumbers.map((contact) => {
+          if (!contact._id) {
+            contact._id = uuid()
           }
-        }
-        branch.contacts = contactNumbers
+        })
+        const {avatarUrl, bannerUrl} = await this.uploadImages(branchId, {avatar, banner})
+        // update banner (model location : Settings model)
+        avatarUrl ? branch.avatarUrl = avatarUrl : ''
+        bannerUrl ? branch.bannerUrl = bannerUrl : ''
+        branch.save()
+        this.updateAddress(branchId, address)
+        this.updateSubscription(branchId, subscription)
+        this.updateAssignedDevices(branchId, assignedDevices)
         try {
-          let settings: any = await BranchSettings.findOne({branchId})
-          for (let i in socialLinks) {
-            if (!socialLinks[i].id) {
-              socialLinks[i]["id"] = uuid()
-            }
-            if (socialLinks[i].type === "facebook" || socialLinks[i].type === "instagram") {
-              let disected = socialLinks[i].url.split(/\//g)
-              socialLinks[i]["url"] = disected[disected.length - 1]
-            }
-          }
-          settings.socialLinks = socialLinks
-          settings.save()
+          // save branch settings
+          settings = await new Settings(branch._id).updateSettings({
+            socialLinks: socialLinks,
+            coordinates: coordinates,
+            featuredAccess,
+            isWeeklyOpened,
+            operationHours
+          })
         }
         catch (error) {
           return reject(error)
@@ -337,7 +323,120 @@ export default class BusinessBranches extends Queries {
       
     })
   }
-
+  /**
+   * upload banner and avatar image
+   * @param branchId 
+   * @param param1 
+   */
+  public async uploadImages (branchId: string, {banner, avatar}: {avatar: any, banner: any}) {
+    var photoUrl = <any> {avatarUrl: '', bannerUrl: ''}
+    try {
+      // upload branch avatar
+      const avatarUploaded = await this.upload(filePath.concat(branchId), avatar)
+      if (avatarUploaded.imageUrl) {
+        photoUrl.avatarUrl = avatarUploaded.imageUrl
+      }
+    } catch (err) {
+      console.log('Failed tyo upload branch avatar.\nError: ', err.message)
+    }
+    try {
+       // upload branch avatar
+       const bannerUploaded = await this.upload(filePath.concat(branchId), banner)
+       if (bannerUploaded.imageUrl) {
+        photoUrl.bannerUrl = bannerUploaded.imageUrl
+      }
+    } catch (err) {
+      console.log('Failed tyo upload branch avatar.\nError: ', err.message)
+    }
+    return <{avatarUrl: string, bannerUrl: string}>photoUrl
+  }
+  /**
+   * update branch address
+   * @param branchId 
+   * @param address 
+   */
+ public updateAddress (branchId: string, address: IAddress) {
+   const {city, province, street, zipcode} = address
+  return BranchModel.findOneAndUpdate({
+    _id: branchId
+    },
+    {
+      address: {
+        city: city.toString().trim(),
+        province: province.toString().trim(),
+        street: street.toString().trim(),
+        zipcode: zipcode.toString().trim()
+      }
+    },
+    {
+      new: true
+    }
+  )
+  .then((branch: any) => {
+    if (!branch) {
+      throw new Error('No Branch data found.')
+    }
+    return branch
+  })
+ }
+ /**
+  * update subscription plan
+  * @param branchId
+  * @param subscription 
+  */
+  public async updateSubscription (branchId: string, subscription: ISubscription) {
+    const {planType = '', SMSRate = 0, amountRate = 0} = subscription || {}
+    if (SMSRate < 0) {
+      throw new Error('@requestBody->subscription.SMSRate must be greater than 0. (e.g: {SMSRate: 0.5})')
+    }
+    if (amountRate < 0) {
+      throw new Error('@requestBody->subscription.amountRate must be greater than 0. (e.g: {amountRate: 1500})')
+    }
+    return BranchModel.findOneAndUpdate({
+      _id: branchId
+      },
+      {
+        subscription: {
+          planType: planType.toString().trim(),
+          SMSRate,
+          amountRate
+        }
+      },
+      {
+        new: true
+      }
+    )
+    .then((branch: any) => {
+      if (!branch) {
+        throw new Error('No Branch data found.')
+      }
+      return branch
+    })
+  }
+ /**
+  * update assigned devices
+  * @param branchId 
+  * @param assignedDevices 
+  */
+ public updateAssignedDevices (branchId: string, assignedDevices: IAssignedDevices[]) {
+  return BranchModel.findOneAndUpdate({
+    _id: branchId
+    },
+    {
+      // check if _id is existed, if not put uuid data on _id and current time on createdAt
+      assigedDevices: assignedDevices.map((devices: any) => devices._id ? devices : Object.assign(devices, {_id: uuid(), createdAt: Date.now()}))
+    },
+    {
+      new: true
+    }
+  )
+  .then((branch: any) => {
+    if (!branch) {
+      throw new Error('No Branch data found.')
+    }
+    return branch
+  })
+ }
   public getList (data: IBranchFilter, projection: any = null) {
     const {partnerId = '', branchIds = null} = data
     const searchBranchIds = branchIds ? branchIds.split(',') : []

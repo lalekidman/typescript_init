@@ -2,6 +2,24 @@ import {Schema, Document, model} from 'mongoose'
 import IBranch from '../interfaces/branches'
 import AddedBySchema from './addedBy'
 export interface IBranchModel extends Document, IBranch {}
+const AssignedDeviceSchema = new Schema({
+  _id: {
+    type: String,
+    default: ''
+  },
+  manufactureId:{
+    type: String,
+    default: ''
+  },
+  deviceId:{
+    type: String,
+    default: ''
+  },
+  createdAt: {
+    type: Number,
+    default: 0
+  }
+})
 export const ModelSchema:Schema = new Schema({
   _id: {
     type: String,
@@ -104,6 +122,7 @@ export const ModelSchema:Schema = new Schema({
       default: ''
     }
   },
+  
   contacts: [
     {
       _id: {
@@ -142,14 +161,21 @@ export const ModelSchema:Schema = new Schema({
       default: ''
     },
   },
-  location: {
-    type: {
+  assignedDevices: [
+    AssignedDeviceSchema
+  ],
+  subscription: {
+    planType: {
       type: String,
-      default: 'Point'
+      default: ''
     },
-    coordinates: {
-      type: [Number],
-      index: '2dsphere'
+    amountRate: {
+      type: Number,
+      default: 0
+    },
+    SMSRate: {
+      type: Number,
+      default: 0
     }
   },
   lastSignIn: {
