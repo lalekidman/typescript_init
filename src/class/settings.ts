@@ -137,6 +137,7 @@ export default class BranchSettings extends Queries {
       const isAlwaysOpen = (typeof(isWeeklyOpened) === 'string' && isWeeklyOpened === 'true') ? true : (typeof(isWeeklyOpened) === 'boolean') ? isWeeklyOpened : false
       await this.updateFeaturedAccess(featuredAccess)
       if (coordinates.length === 2) {
+        console.log('###############################################HERE RIGHT')
         await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
       }
       const branchSettings = await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
@@ -192,7 +193,7 @@ export default class BranchSettings extends Queries {
           .set({isWeeklyOpened: true})
           .save()
       }
-      const opHours = ((operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours)
+      const opHours = (operationHours && (operationHours.length === 0 || operationHours.length <=6) ? DefaultOperationHours : operationHours)
         .map((oph: any, index) => {
           if (!oph._id) {
             oph._id = uuid()
@@ -206,6 +207,7 @@ export default class BranchSettings extends Queries {
             enabled: typeof(oph.enabled) === 'boolean' ? oph.enabled : false,
           }
         })
+        console.log('e: ', opHours)
       return branchSettings.set({
         isWeeklyOpened: false,
         operationHours: opHours
@@ -218,19 +220,20 @@ export default class BranchSettings extends Queries {
    * @param location array of number/float
    *  first element should be the long and the second one is for lat
    */ 
-  public updateGeoLocation (location: Number[]) {
+  public updateGeoLocation (coordinates: Number[]) {
     return this.findOne({
       branchId: this.branchId
     })
     .then((branchSettings) => {
+      console.log('l###################################ocatixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxon : ', coordinates)
       if (!branchSettings) {
         throw new Error('No branch settings found.')
       }
-      if (location.length <= 1) {
-        throw new Error('Location must be array with a 2 element, 0 is for long and 1 is for lng.')
+      if (coordinates.length <= 1) {
+        throw new Error('coordinates must be array with a 2 element, 0 is for long and 1 is for lng.')
       }
       return branchSettings.set({
-        'location.coordinates': location.splice(0, 2)
+        'location.coordinates': coordinates.splice(0, 2)
       })
       .save()
     })
@@ -240,7 +243,10 @@ export default class BranchSettings extends Queries {
  * @param featured 
  */
  public async updateFeaturedAccess (featured: IFeaturedAccess) {
-  const {queueGroup, smsModule, account} = featured
+  const {queueGroup, smsModule, account} = featured || {}
+  if (!featured) {
+    return;
+  }
   if (queueGroup.max < 0) {
     throw new Error('queue group max value must be greater than 0')
   } else if (account.max) {

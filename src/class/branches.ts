@@ -124,7 +124,7 @@ export default class BusinessBranches extends Queries {
           coordinates: coordinates
         },
         subscription,
-        assignedDevices: assignedDevices.map((devices: any) => Object.assign(devices, {_id: uuid(), createdAt: Date.now()}))
+        assignedDevices: assignedDevices ? assignedDevices.map((devices: any) => Object.assign(devices, {_id: uuid(), createdAt: Date.now()})) : []
       })
       if (!newBranch.branchId) {
         throw new Error('branchId must not be empty or null.')
@@ -182,7 +182,7 @@ export default class BusinessBranches extends Queries {
    * edit branch
    */
   public updateBranch(branchId: string, data: IBranchData) {
-    const {avatar, about, banner, email: branchEmail, categoryId, contactNumbers, socialLinks, coordinates, featuredAccess, isWeeklyOpened, operationHours, address, subscription, assignedDevices} = data
+    const {avatar, about, banner, email: branchEmail, categoryId, contactNumbers, socialLinks, coordinates, featuredAccess, isWeeklyOpened, operationHours, address, subscription, assignedDevices = []} = data
     return new Promise((resolve, reject) => {
       console.log('############################3UPDATE BRANCH!!!!!!!!')
       BranchModel.findOne({_id: branchId})
@@ -222,11 +222,7 @@ export default class BusinessBranches extends Queries {
         catch (error) {
           return reject(error)
         }
-        branch.save()
-        .then((updatedBranch: any) => {
-          resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}})
-          // resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}})
-        })
+        return resolve({...branch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}})
       })
       .catch((error) => {
         console.log(error)
@@ -297,7 +293,7 @@ export default class BusinessBranches extends Queries {
   * @param subscription 
   */
   public async updateSubscription (branchId: string, subscription: ISubscription) {
-    const {planType = '', SMSRate = 0, amountRate = 0} = subscription
+    const {planType = '', SMSRate = 0, amountRate = 0} = subscription || {}
     if (SMSRate < 0) {
       throw new Error('@requestBody->subscription.SMSRate must be greater than 0. (e.g: {SMSRate: 0.5})')
     }
