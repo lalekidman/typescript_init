@@ -18,8 +18,8 @@ export interface RerservationTimeSlots {
 }
 export interface IFeaturedAccess {
   account: IAccess
-  QueueGroup: IAccess
-  status: IStatus
+  queueGroup: IAccess
+  smsModule: IStatus
 }
 export interface Gallery {
   _id: string
@@ -37,6 +37,7 @@ export interface SocialLinks {
   url: string
   type: string
 }
+export interface ISocialLinks extends SocialLinks {}
 export interface IOperationHours {
   _id?: string
   openingTime: number

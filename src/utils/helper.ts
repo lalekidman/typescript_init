@@ -24,7 +24,7 @@ export const ValidateMobileNo = (contactNo: string|number): string|null => {
   const newN = contactNo.toString().replace(/ /g, '').replace(/-/g, '')
   const patt = /^(\+639|09|9)\d{9}$/g
   const txt = newN.toString().match(patt)
-  return txt ? txt[0]: null
+  return txt ? txt[0].substr(txt[0].length - 10, 10): null
 }
 export const ValidateEmail = (email: string): boolean => {
   const pattern = /^\S+@\S+$/

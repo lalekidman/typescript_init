@@ -15,6 +15,7 @@ import { IRequest } from '../utils/interfaces';
 const multiPartMiddleWare = require('connect-multiparty')()
 import * as regExp from '../utils/regularExpressions'
 import { request } from 'http';
+import { ValidateMobileNo } from '../utils/helper'
 
 export default class AccountRoute {
 
@@ -195,27 +196,17 @@ export default class AccountRoute {
   private async updateAddress(req: IRequest, res: Response) {
     const {branchId} = req.params
     // extract data from request body
-    let {street, province, city, zipcode} = req.body
+    const {street, province, city, zipcode} = req.body
     // update branch address
-    BranchModel.findOneAndUpdate(
-      {_id: branchId},
-      {
-        address: {
-          street,
-          province,
-          city,
-          zipcode
-        }
-      },
-      {new: true}
-    )
-    .then((updatedBranch: any) => {
-      res.status(HttpStatus.OK).json({_id: updatedBranch._id, address: updatedBranch.address})
-    })
-    .catch((error) => {
-      console.log(error)
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
-    })
+    new Branches()
+      .updateAddress(branchId, {street, province, city, zipcode})
+      .then((updatedBranch: any) => {
+        res.status(HttpStatus.OK).json({_id: updatedBranch._id, address: updatedBranch.address})
+      })
+      .catch((error) => {
+        console.log(error)
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
+      })
   }
   /**
    * validate update branch details
@@ -241,7 +232,7 @@ export default class AccountRoute {
     }
     let {data} = req.body
     try {
-      data = JSON.parse(data)
+      data = data ? JSON.parse(data) : req.body
     }
     catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
@@ -249,7 +240,8 @@ export default class AccountRoute {
     }
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
     // validate req body
-    if (typeof(categoryId) !== 'string' || categoryId === '' ||
+    if (
+    // if (typeof(categoryId) !== 'string' || categoryId === '' ||
     typeof(about) !== 'string' || about === '' || 
     typeof(branchEmail) !== 'string' || !Array.isArray(contactNumbers) || !Array.isArray(socialLinks)) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
@@ -262,7 +254,11 @@ export default class AccountRoute {
     }
     // validate contactNumbers
     for (let i in contactNumbers) {
-      if (typeof contactNumbers[i].isPrimary !== 'boolean' || typeof contactNumbers[i].number !== 'string'
+      if (typeof contactNumbers[i].isPrimary === 'string' && (contactNumbers[i].isPrimary === 'true' || contactNumbers[i].isPrimary === 'false')) {
+        contactNumbers[i].isPrimary = contactNumbers[i].isPrimary === 'true'
+      }
+      contactNumbers[i].number = ValidateMobileNo(contactNumbers[i].number)
+      if ((typeof contactNumbers[i].isPrimary !== 'boolean') || typeof (contactNumbers[i].number) !== 'string'
       || appConstants.CONTACT_NUMBER_TYPES.indexOf(contactNumbers[i].type) === -1) {
         return res.status(HttpStatus.BAD_REQUEST)
         .json(new AppError(RC.UPDATE_BRANCH_FAILED,
@@ -311,19 +307,46 @@ export default class AccountRoute {
   private updateBranch(req: IRequest, res: Response) {
     const {branchId} = req.params
     const {avatar = null, banner = null} = <any> req.files || {}
-    console.log('avataravataravataravatar: ', avatar)
-    console.log('bannerbannerbanner: ', banner)
     let {data} = req.body
-    data = JSON.parse(data)
-    let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
-    new Branches().updateBranch(branchId, categoryId, about, branchEmail, contactNumbers, socialLinks, avatar, banner)
+    // if data is empty, it should be all on req.body
+    let {
+      categoryId,
+      about,
+      branchEmail,
+      contactNumbers=[],
+      socialLinks=[],
+      assignedDevices,
+      subscription,
+      isWeeklyOpened,
+      featuredAccess,
+      coordinates,
+      operationHours,
+      address
+    } = data ? JSON.parse(data) : req.body
+    new Branches().updateBranch(branchId, {
+      categoryId,
+      about,
+      email: branchEmail,
+      contactNumbers,
+      socialLinks,
+      avatar,
+      banner,
+      assignedDevices,
+      subscription,
+      isWeeklyOpened,
+      featuredAccess,
+      coordinates,
+      operationHours,
+      address
+    })
     .then((updatedBranch) => {
       // publish to redis subscribers
       req.app.get('redisPublisher').publish('UPDATE_BRANCH', JSON.stringify({data: updatedBranch, branchId}))
       res.status(HttpStatus.OK).json(updatedBranch)
     })
     .catch((error) => {
-      res.status(HttpStatus.BAD_REQUEST).json(error)
+      console.log('NO ERROR? : ', error)
+      res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, error.message))
     })
   }
   public initializeRoutes () {
