@@ -6,7 +6,7 @@ export interface IQueueTags extends _init {
 
 export default interface IQueueSettings extends _init {
   branchId: string
-  features: number
+  features: Array<number>
   hideCustomerNameField: boolean
   hideMobileNumberField: boolean
   autoSms: boolean
