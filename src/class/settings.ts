@@ -248,9 +248,9 @@ export default class BranchSettings extends Queries {
   if (!featured) {
     return;
   }
-  if (queueGroup.max <= 0) {
+  if (queueGroup.max < 0) {
     throw new Error('queue group max value must be greater than 0')
-  } else if (account.max <= 0) {
+  } else if (account.max < 0) {
     throw new Error('account max value must be greater than 0')
   }
   return BranchSettingModel.findOneAndUpdate({
