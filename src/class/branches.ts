@@ -259,7 +259,7 @@ export default class BusinessBranches extends Queries {
               socialLinks[i]["id"] = uuid()
             }
             if (socialLinks[i].type === "facebook" || socialLinks[i].type === "instagram") {
-              let disected = socialLinks[i].url.split(/\//g)
+              let disected = socialLinks[i].url.split(/com\//g)
               socialLinks[i]["url"] = disected[disected.length - 1]
             }
           }

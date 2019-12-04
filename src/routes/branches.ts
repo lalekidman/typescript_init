@@ -255,6 +255,7 @@ export default class AccountRoute {
         '**@request body.data is JSON unparsable'))
     }
     let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
+    console.log('SOCIAL LINKS', socialLinks)
     // validate req body
     if (typeof(categoryId) !== 'string' || categoryId === '' ||
     typeof(about) !== 'string' || about === '' || 
@@ -287,29 +288,29 @@ export default class AccountRoute {
         }
       }
     }
-    // validate Links
-    for (let i in socialLinks) {
-      if (typeof socialLinks[i].url !== 'string' || appConstants.LINK_TYPES.indexOf(socialLinks[i].type) === -1) {
-        return res.status(HttpStatus.BAD_REQUEST)
-        .json(new AppError(RC.UPDATE_BRANCH_FAILED,
-          '@request body.data: socialLinks: [{id?:string, url:string, type:facebook|instagram|company}]'))
-      }
-      if (socialLinks[i].type === 'facebook') {
-        if (!regExp.validFbLink.test(socialLinks[i].url)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Fb Link'))
-        }
-      }
-      if (socialLinks[i].type === 'instagram') {
-        if (!regExp.validInstagramLink.test(socialLinks[i].url)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Instagram Link'))
-        }
-      }
-      if (socialLinks[i].type === 'company') {
-        if (!regExp.validUrl.test(socialLinks[i].url)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Company Website'))
-        }
-      }
-    }
+    // // validate Links
+    // for (let i in socialLinks) {
+    //   if (typeof socialLinks[i].url !== 'string' || appConstants.LINK_TYPES.indexOf(socialLinks[i].type) === -1) {
+    //     return res.status(HttpStatus.BAD_REQUEST)
+    //     .json(new AppError(RC.UPDATE_BRANCH_FAILED,
+    //       '@request body.data: socialLinks: [{id?:string, url:string, type:facebook|instagram|company}]'))
+    //   }
+    //   if (socialLinks[i].type === 'facebook') {
+    //     if (!regExp.validFbLink.test(socialLinks[i].url)) {
+    //       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Fb Link'))
+    //     }
+    //   }
+    //   if (socialLinks[i].type === 'instagram') {
+    //     if (!regExp.validInstagramLink.test(socialLinks[i].url)) {
+    //       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Instagram Link'))
+    //     }
+    //   }
+    //   if (socialLinks[i].type === 'company') {
+    //     if (!regExp.validUrl.test(socialLinks[i].url)) {
+    //       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Company Website'))
+    //     }
+    //   }
+    // }
     next()
   }
   /**
