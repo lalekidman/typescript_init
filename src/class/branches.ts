@@ -88,16 +88,18 @@ export default class BusinessBranches extends Queries {
    * @param data 
    */
   //@ts-ignore
-  public save (partnerId: string, data: any, actionBy: any) {
+  public save (partnerId: string, body: any, actionBy: any) {
     return new Partner().findOne(partnerId)
     .catch((err) => {
       console.log('Fetch partner detais failed. Error: ', err.message)
       throw new Error('No partner found.')
     })
     .then(async (partner: any) => {
-      const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId, subscription, assignedDevices} = data
+      // const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId, subscription, assignedDevices, data} = body
+      const {avatar, banner, data} = body
+      const {account, branchId, subscription, assignedDevices, coordinates, about, branchName = '', contactNumbers = [], email, address} = JSON.parse(data)
       const branch = await BranchModel.findOne({
-        branchId: data.branchId.toString().trim(),
+        branchId: branchId.toString().trim(),
         partnerId: partnerId.toString().trim()
       })
       if (branch) {
@@ -106,21 +108,22 @@ export default class BusinessBranches extends Queries {
       //get the isPrimary = true on contactList
       //##DEVNOTE: checking its variable type to make sure
       //##DEVNOTE: formdata convert the boolean value to literal string, e.g. isPrimary: 'true'
-      const primaryContactIndex = contacts.findIndex((prop: any) => ((typeof(prop.isPrimary) === 'boolean' && prop.isPrimary === true) || (typeof(prop.isPrimary) === 'string' && prop.isPrimary === 'true')))
+      const primaryContactIndex = contactNumbers.findIndex((prop: any) => ((typeof(prop.isPrimary) === 'boolean' && prop.isPrimary === true) || (typeof(prop.isPrimary) === 'string' && prop.isPrimary === 'true')))
+      const {street, province, city, zipcode} = address
       const newBranch = <IBranchModel> this.initilize({
-        branchName: branchName.toString(),
-        email: email.toString(),
+        branchName: branchName,
+        email: email,
         address: address ? {
-          street: address.street.toString(),
-          province: address.province.toString(),
-          city: address.city.toString(),
-          zipcode: address.zipcode.toString(),
+          street: street,
+          province: province,
+          city: city,
+          zipcode: zipcode,
         } : {},
-        branchId: branchId.toString().trim(),
+        branchId: branchId,
         partnerId,
         about,
-        contacts: contacts.map((contact: any) => (Object.assign(contact, {_id: uuid()}))),
-        contactNo: contacts[primaryContactIndex].number,
+        contacts: contactNumbers.map((contact: any) => (Object.assign(contact, {_id: uuid()}))),
+        contactNo: contactNumbers[primaryContactIndex].number,
         location: {
           coordinates: coordinates
         },
@@ -140,17 +143,17 @@ export default class BusinessBranches extends Queries {
         throw new Error('contacts must have atleast 1 primary.')
       }
       // create settings,
-      const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(data))))
+      const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(JSON.parse(data)))))
       const {avatarUrl, bannerUrl} = await this.uploadImages(branchId, {avatar, banner})
       const {firstName = '', lastName = ''}  = <any> account || {}
       // upload avatar for default account
-      await new Account().addAccount(newBranch._id, {
+      const accountx = await new Account().addAccount(newBranch._id, {
         firstName: firstName.toString(),
         lastName: lastName.toString(),
         roleLevel: ACCOUNT_ROLE_LEVEL.SUPER_ADMIN,
         partnerId: partnerId.toString(),
         email: account ? account.email : '',
-        contactNo: contacts[primaryContactIndex].number,
+        contactNo: contactNumbers[primaryContactIndex].number,
         avatarUrl,
       }, actionBy)
       newBranch.avatarUrl = avatarUrl

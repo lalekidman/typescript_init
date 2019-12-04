@@ -146,6 +146,7 @@ export default class BranchSettings extends Queries {
       console.log('#################### Error on updating branch settings: ', err.message)      
     }
   }
+  
   public findOne (query: any, project: any = {}) {
     return BranchSettingModel
       .findOne(query, project)
@@ -243,17 +244,17 @@ export default class BranchSettings extends Queries {
  * @param featured 
  */
  public async updateFeaturedAccess (featured: IFeaturedAccess) {
-  const {queueGroup, smsModule, account} = featured || {}
+  const {queueGroup, smsModule, account} = featured
   if (!featured) {
     return;
   }
-  if (queueGroup.max < 0) {
+  if (queueGroup.max <= 0) {
     throw new Error('queue group max value must be greater than 0')
-  } else if (account.max) {
+  } else if (account.max <= 0) {
     throw new Error('account max value must be greater than 0')
   }
   return BranchSettingModel.findOneAndUpdate({
-    _id: this.branchId, 
+    branchId: this.branchId, 
     },
     {
       featuredAccess: featured
