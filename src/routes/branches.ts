@@ -20,6 +20,7 @@ import { constructActionBy, ValidateMobileNo } from '../utils/helper';
 
 import QueueSettingsRoute from './queue-settings'
 import AdvertisementSettingsRoute from './advertisement-settings'
+import { AddPartnerValidator } from '../validators/partners'
 
 export default class AccountRoute {
 
@@ -282,12 +283,10 @@ export default class AccountRoute {
     const {branchId} = req.params
     const {avatar = null, banner = null} = <any> req.files || {}
     let accountData = req.headers.user ? JSON.parse(<any>req.headers.user) : {}
-    let {data} = req.body
     // if data is empty, it should be all on req.body
     let {
-      categoryId,
       about,
-      branchEmail,
+      email,
       contactNumbers=[],
       socialLinks=[],
       assignedDevices,
@@ -296,12 +295,13 @@ export default class AccountRoute {
       featuredAccess,
       coordinates,
       operationHours,
-      address
-    } = data ? JSON.parse(data) : req.body
+      address,
+      branchName
+    } = req.body
     new Branches().updateBranch(branchId, {
-      categoryId,
+      branchName,
       about,
-      email: branchEmail,
+      email,
       contactNumbers,
       socialLinks,
       avatar,
@@ -332,6 +332,33 @@ export default class AccountRoute {
       res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, error.message))
     })
   }
+  /**
+   * suspend selected branch
+   */
+  private suspendBranch(req: IRequest, res: Response) {
+    const {branchId} = req.params
+    let accountData = req.headers.user ? JSON.parse(<any>req.headers.user) : {}
+    // if data is empty, it should be all on req.body
+    const {suspendStatus = false} = req.body
+    new Branches().suspendBranch(branchId, suspendStatus)
+      .then((updatedBranch: any) => {
+        // publish to redis subscribers
+        // req.app.get('redisPublisher').publish('UPDATE_BRANCH', JSON.stringify({data: updatedBranch, branchId}))
+        // notify business for changes that happened
+        // for (let i in updatedBranch.updates) {
+        //   notification.invokeNotif(
+        //     branchId,
+        //     {actionBy: `${accountData.account.firstName} ${accountData.account.lastName}`},
+        //     updatedBranch.updates[i]
+        //   )
+        // }
+        res.status(HttpStatus.OK).json(updatedBranch)
+      })
+      .catch((error) => {
+        console.log('NO ERROR? : ', error)
+        res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, error.message))
+      })
+  }
   public initializeRoutes () {
     this.app.use(multiPartMiddleWare, this.mapRequestBody)
     this.app.use('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
@@ -340,7 +367,8 @@ export default class AccountRoute {
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
-    this.app.patch('/:branchId', multiPartMiddleWare,this.validateOnUpdateBranch, this.updateBranch)
+    this.app.patch('/:branchId', multiPartMiddleWare, AddPartnerValidator.pipeline, AddPartnerValidator.middleware, this.validateOnUpdateBranch, this.updateBranch)
+    this.app.patch('/:branchId/suspend-status', this.suspendBranch)
     // this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     return this.app

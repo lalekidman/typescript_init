@@ -27,8 +27,10 @@ interface IBranchFilter extends IPaginationData {
   branchIds?: any
 }
 interface IBranchData {
-  categoryId: string
+  categoryId?: string
   about: string
+  branchName?: string
+  branchId?: string
   email: string
   contactNumbers: Array<IContactList>
   socialLinks: Array<SocialLinks>
@@ -89,14 +91,17 @@ export default class BusinessBranches extends Queries {
    */
   //@ts-ignore
   public save (partnerId: string, body: any, actionBy: any) {
+    const {branchId} = body
     return new Partner().findOne(partnerId)
     .catch((err) => {
       console.log('Fetch partner detais failed. Error: ', err.message)
       throw new Error('No partner found.')
     })
-    .then(async (partner: any) => {
+    .then(() => {
       // const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId, subscription, assignedDevices, data} = body
-      // const {avatar, banner, data} = body
+      return this.checkBranchId(partnerId, branchId)
+    })
+    .then(async () => {
       console.log('bodybodybodybodybodybodybodybodybodybodybodybodybodybody: ', body)
       const {account, branchId, subscription, assignedDevices, coordinates, about, branchName = '', contactNumbers = [], email, address, avatar, banner,} = body
       const branch = await BranchModel.findOne({
@@ -182,7 +187,24 @@ export default class BusinessBranches extends Queries {
       // }).then((queueGroups) => {
       //   return Object.assign(newBranch, {queueGroups})
   }
-
+  /**
+   * check if the branchId inside of that partnerId is already exist
+   * @param partnerId 
+   * @param branchTxtId 
+   * @param branchId 
+   */
+  private async checkBranchId (partnerId: string, branchTxtId: string, branchId?: string) {
+    return BranchModel.findOne(Object.assign({
+      branchId: branchTxtId.toString().trim(),
+      partnerId: partnerId.toString().trim()
+    }, branchId ? {_id: {$ne: branchId}} : {}))
+      .then((branch) => {
+        if (branch) {
+          throw new Error('BranchId is already existed to this partner.')
+        }
+        return true
+      })
+  }
   /**
    * check branch changes
    */
@@ -242,21 +264,47 @@ export default class BusinessBranches extends Queries {
   /**
    * edit branch
    */
-  public updateBranch(branchId: string, data: IBranchData, source:string = '', actionBy: any = {}) {
-    const {avatar, about, banner, email: branchEmail, categoryId, contactNumbers, socialLinks, coordinates, featuredAccess, isWeeklyOpened, operationHours, address, subscription, assignedDevices = []} = data
+  public async updateBranch(branchId: string, data: IBranchData, source:string = '', actionBy: any = {}) {
+    const {
+      avatar,
+      about,
+      banner,
+      email: branchEmail,
+      categoryId,
+      branchName = '',
+      contactNumbers,
+      socialLinks,
+      coordinates,
+      featuredAccess,
+      isWeeklyOpened,
+      operationHours,
+      address,
+      subscription,
+      assignedDevices = [],
+      branchId: branchTextId = ''
+    } = data
     return new Promise((resolve, reject) => {
-      console.log('############################3UPDATE BRANCH!!!!!!!!')
       BranchModel.findOne({_id: branchId})
       .then(async (branch) => {
         let settings: any
         if (!branch) {
           throw new Error('No branch details found.')
         }
+        // throw error if the branchId is already exists
+        await this.checkBranchId(branch.partnerId, branchTextId, branch._id)
         let oldDetails = branch.toObject()
         const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
         const oldData = {...oldDetails, ...{settings: oldSettings.toObject()}}
         let errors: Array<any> = []
         branch.email = branchEmail
+        if (branchName) {
+          branch.branchName = branchName
+        }
+        // check if the branchTextId or branchId is existed.
+        // ## DEVNOTE: on business portal, branchId is optional or disabled on UI.
+        if (branchTextId) {
+          branch.branchId = branchTextId
+        }
         if (categoryId) {
           branch.categoryId = categoryId
         }
@@ -450,6 +498,34 @@ export default class BusinessBranches extends Queries {
     return branch
   })
  }
+ /**
+  * suspend selected branch
+  * @param branchId 
+  * @param assignedDevices 
+  */
+ public suspendBranch (branchId: string, suspendStatus: boolean) {
+  return BranchModel.findOneAndUpdate({
+      _id: branchId
+    },
+    {
+      isSuspended: suspendStatus
+    },
+    {
+      new: true
+    }
+  )
+  .then((branch: any) => {
+    if (!branch) {
+      throw new Error('No Branch data found.')
+    }
+    return branch
+  })
+ }
+ /**
+  * get list
+  * @param data 
+  * @param projection 
+  */
   public getList (data: IBranchFilter, projection: any = null) {
     const {partnerId = '', branchIds = null} = data
     const searchBranchIds = branchIds ? branchIds.split(',') : []
