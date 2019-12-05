@@ -51,3 +51,27 @@ export const getClientInfo = (req: IRequest2) => {
     userId: req.user ? req.user._id : "b7a8823f-41df-4845-ba54-cbb168bfcb28"
   }
 }
+/**
+ * generate query string for internal request
+ * @param queryString 
+ * @param queryData
+ * @param fieldName optional, if its object or array
+ */
+export const generateQueryString = (queryString: string, queryData: any, fieldName?: string) => {
+  for (var query in queryData) {
+    // check if fieldName is not empty, if not, add query inside of the '[]' eg: filterBy[value] = testValue
+    const queryField = fieldName ? `${fieldName}[${query}]` : query
+    try {
+      // check if the value is object
+      if (typeof(queryData[query]) === 'object') {
+        // recursion call
+        queryString = queryString.concat(generateQueryString(queryString, queryData[query], query))
+      } else {
+        queryString = queryString.concat(`&${queryField}=${queryData[query]}`)
+      }
+    } catch (err) {
+      queryString = queryString.concat(`&${queryField}=${queryData[query]}`)
+    }
+  }
+  return queryString
+}

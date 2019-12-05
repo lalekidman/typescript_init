@@ -1,6 +1,6 @@
 import * as S3 from 'aws-sdk/clients/s3'
 import * as fs from 'fs'
-import {uploadFiles} from './interfaces'
+import {uploadFiles, UploadedImage} from './interfaces'
 class Uploader {
   private BucketName: string
   private s3Uploader: any
@@ -40,7 +40,7 @@ class Uploader {
         } else {
           console.log('Successfully upload on AWS S3.')
           const {Location: imageUrl = ''} = data
-          resolve({
+          return resolve(<UploadedImage>{
             avatarUrl: imageUrl,
             fileName: avatar.originalFilename,
             imageUrl: imageUrl

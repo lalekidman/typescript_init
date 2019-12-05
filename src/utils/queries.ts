@@ -4,18 +4,18 @@ import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
 const s3 = new Aws('kyoo-bucket')
-interface PaginationData {
+interface IPaginationData {
   limitTo: number
   startAt: number
   searchFields: Array<string>
   searchText: string
-  sortBy: SortBy
+  sortBy: ISortBy
 }
-interface SortBy {
+interface ISortBy {
   fieldName: string
   status: number
 }
-interface Pagination {
+interface IPagination {
   totalPages: number
   data: [any]
 }
@@ -78,7 +78,8 @@ class Queries {
     return Promise.resolve(<any> (typeof(id) === 'string' ? this.ModelSchema.findOne({_id: id}) : id))
   }
   public upload (filepath: string, file: any): Promise<UploadedImage> {
-    return Promise.resolve( file ? s3.upload(filepath, file) : {imageUrl: ''})
+    //@ts-ignore
+    return Promise.resolve(file ? s3.upload(filepath, file) : {imageUrl: ''})
   }
   public uploadMany (filepath: string, files: Array<any>) {
     return Promise.all(files.map((file: any) => this.upload(filepath, file)))
@@ -90,7 +91,7 @@ class Queries {
    * @param searchFields2 array of fields that needed to be search or to filter,
    * a function that return a pagination data.
    */
-  public aggregateWithPagination (pipeline: any[], data?: PaginationData, searchFields2: string[]= []): Promise<IAggregateWithPagination> {
+  public aggregateWithPagination (pipeline: any[], data?: IPaginationData, searchFields2: string[]= []): Promise<IAggregateWithPagination> {
     let {limitTo = 0, startAt = 0, sortBy = null, searchFields = [], searchText = ''} = <any> data || {}
     //@ts-ignore
     const endPage = parseInt(limitTo) > 0 ? parseInt(limitTo) : 20
@@ -146,7 +147,7 @@ class Queries {
         }
     }])
     return this.ModelSchema.aggregate(paginationQuery).then((response: any) => {
-      return <Pagination> (response.length >= 1 ? {
+      return <IPagination> (response.length >= 1 ? {
         data: response[0].data,
         totalPages: Math.ceil((response[0].counts / endPage)),
         totalCounts: response[0].counts
