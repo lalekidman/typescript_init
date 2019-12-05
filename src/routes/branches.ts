@@ -39,6 +39,7 @@ export default class AccountRoute {
     var {data} = req.body
     try {
       req.body = data ? JSON.parse(data) : req.body
+      console.log('FUCKING DATA: ', req.body)
     }
     catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
@@ -109,7 +110,6 @@ export default class AccountRoute {
    */
   public branchList = async (req: IRequest, res: Response, next: NextFunction) => {
     const {branchId = '', partner} = req.query
-    console.log('££££££££££££££££££££££££££E:req.queryreq.queryreq.queryreq.query ', req.query)
     return new Branches()
       .getList(req.query)
       .then(async (data) => {
@@ -212,16 +212,17 @@ export default class AccountRoute {
       }
     }
     
-    let {about, branchEmail, contactNumbers=[], socialLinks=[]} = req.body
+    let {about, email, contactNumbers=[], socialLinks=[]} = req.body
     // validate req body
+    console.log('ereq.bodyreq.bodyreq.body: ', req.body)
     if (
     typeof(about) !== 'string' || about === '' || 
-    typeof(branchEmail) !== 'string' || !Array.isArray(contactNumbers) || !Array.isArray(socialLinks)) {
+    typeof(email) !== 'string' || !Array.isArray(contactNumbers) || !Array.isArray(socialLinks)) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
         '**@request body.data: {categoryId:string, about:string, branchEmail:string, contactNumbers:array, socialLinks:array}'))
     }
     // validate if email is valid
-    let validateEmail = regExp.validEmail.test(branchEmail)
+    let validateEmail = regExp.validEmail.test(email)
     if (!validateEmail) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'invalid branchEmail format'))
     }
@@ -273,12 +274,6 @@ export default class AccountRoute {
       }
     }
     next()
-  }
-  /**
-   * validation of featured access
-   */
-  private validateOnFeaturedAccess = (req: IRequest, res: Response, next: NextFunction) => {
-    const {featuredAccess = {}} = req.body
   }
   /**
    * update branch details
@@ -338,7 +333,7 @@ export default class AccountRoute {
     })
   }
   public initializeRoutes () {
-    this.app.use(this.mapRequestBody)
+    this.app.use(multiPartMiddleWare, this.mapRequestBody)
     this.app.use('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     this.app.use('/:branchId/advertisement-settings', new AdvertisementSettingsRoute().initializeRoutes())
     this.app.use('/:branchId/queue-settings', new QueueSettingsRoute().initializeRoutes())

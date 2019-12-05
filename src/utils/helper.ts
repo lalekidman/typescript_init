@@ -3,6 +3,9 @@ import { IRequest} from './interfaces';
 import { FORM_DATA_TYPES } from './constants';
 import AppError from './app-error';
 import * as RC from './response-codes'
+import {NextFunction, Request, Response} from 'express'
+import { validationResult } from 'express-validator';
+import * as HttpStatus from 'http-status-codes'
 const fs = require('fs')
 export interface IGeoInfo {
   range: number[]
@@ -156,4 +159,12 @@ export const constructActionBy = (accountData: any) => {
     console.log('CONSTRUCT ACTION BY ERROR', error)
   }
   return actionBy
+}
+export const formValidatorMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  let result: any = validationResult(req)
+  if (result.errors.length !== 0) {
+    return res.status(HttpStatus.BAD_REQUEST)
+    .json(result)
+  }
+  next()
 }
