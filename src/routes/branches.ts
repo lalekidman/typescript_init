@@ -18,6 +18,9 @@ import { request } from 'http';
 import notification from '../class/notification';
 import { constructActionBy, ValidateMobileNo } from '../utils/helper';
 
+import QueueSettingsRoute from './queue-settings'
+import AdvertisementSettingsRoute from './advertisement-settings'
+
 export default class AccountRoute {
 
   /**
@@ -173,44 +176,7 @@ export default class AccountRoute {
       }
     }
   }
-  /**
-   * ** MIDDLEWARE ** update branch data validation
-   */
-  private validateOnUpdateAddress(req: IRequest, res: Response, next: NextFunction) {
-    let {street, province, city, zipcode} = req.body
-    const validationError = new AppError(
-      RC.UPDATE_BRANCH_FAILED,
-      '** @request body: {street:string, province:string, city:string, zipcode:number(length=4)}'
-    )
-    // validate request body
-    if (typeof(street) !== 'string' || typeof(province) !== 'string' || typeof(city) !== 'string' || typeof(zipcode) !== 'number') {
-      return res.status(HttpStatus.BAD_REQUEST).json(validationError)
-    }
-    if (!street || !province || !city || zipcode.toString().length !== 4) {
-      return res.status(HttpStatus.BAD_REQUEST).json(validationError)
-    }
-    return next()
-  }
-  /**
-   * update branch address
-   */
-  private async updateAddress(req: IRequest, res: Response) {
-    const {branchId} = req.params
-    // @ts-ignore
-    let accountData = JSON.parse(req.headers.user)
-    // extract data from request body
-    const {street, province, city, zipcode} = req.body
-    // update branch address
-    new Branches()
-      .updateAddress(branchId, {street, province, city, zipcode})
-      .then((updatedBranch: any) => {
-        res.status(HttpStatus.OK).json({_id: updatedBranch._id, address: updatedBranch.address})
-      })
-      .catch((error) => {
-        console.log(error)
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(error)
-      })
-  }
+  
   /**
    * validate update branch details
    */
@@ -363,11 +329,13 @@ export default class AccountRoute {
   }
   public initializeRoutes () {
     this.app.use('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
+    this.app.use('/:branchId/advertisement-settings', new AdvertisementSettingsRoute().initializeRoutes())
+    this.app.use('/:branchId/queue-settings', new QueueSettingsRoute().initializeRoutes())
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
     this.app.patch('/:branchId', multiPartMiddleWare,this.validateOnUpdateBranch, this.updateBranch)
-    this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
+    // this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     return this.app
   }

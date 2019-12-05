@@ -61,10 +61,10 @@ interface IOphData {
   isWeeklyOpened: boolean
 }
 interface IBranchSettings {
-  isWeeklyOpened: boolean
+  isWeeklyOpened?: boolean
   operationHours?: IOperationHours[]
-  featuredAccess: IFeaturedAccess
-  coordinates: number[]
+  featuredAccess?: IFeaturedAccess
+  coordinates?: number[]
   modules?: number[]
   socialLinks: ISocialLinks[]
 }
@@ -120,8 +120,10 @@ export default class BranchSettings extends Queries {
           branchId: this.branchId.toString().trim()
         })
         await newBranchSetting.save()
-        await this.updateFeaturedAccess(featuredAccess)
-        if (coordinates.length === 2) {
+        if (featuredAccess) {
+          await this.updateFeaturedAccess(featuredAccess)
+        }
+        if (coordinates && coordinates.length === 2) {
           await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
         }
         await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
@@ -135,9 +137,10 @@ export default class BranchSettings extends Queries {
       // also check if the variable type is boolean,
       // otherwise set value to false
       const isAlwaysOpen = (typeof(isWeeklyOpened) === 'string' && isWeeklyOpened === 'true') ? true : (typeof(isWeeklyOpened) === 'boolean') ? isWeeklyOpened : false
-      await this.updateFeaturedAccess(featuredAccess)
-      if (coordinates.length === 2) {
-        console.log('###############################################HERE RIGHT')
+      if (featuredAccess) {
+        await this.updateFeaturedAccess(featuredAccess)
+      }
+      if (coordinates && coordinates.length === 2) {
         await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
       }
       const branchSettings = await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
@@ -245,9 +248,6 @@ export default class BranchSettings extends Queries {
  */
  public async updateFeaturedAccess (featured: IFeaturedAccess) {
   const {queueGroup, smsModule, account} = featured
-  if (!featured) {
-    return;
-  }
   if (queueGroup.max < 0) {
     throw new Error('queue group max value must be greater than 0')
   } else if (account.max < 0) {

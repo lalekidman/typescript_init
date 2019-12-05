@@ -29,18 +29,18 @@ interface IBranchFilter extends IPaginationData {
 interface IBranchData {
   categoryId: string
   about: string
-  featuredAccess: IFeaturedAccess
   email: string
   contactNumbers: Array<IContactList>
   socialLinks: Array<SocialLinks>
   avatar: any
   banner: any
-  operationHours: any[]
-  coordinates: number[]
-  isWeeklyOpened: boolean
-  address: IAddress
-  subscription: ISubscription
-  assignedDevices: IAssignedDevices[]
+  featuredAccess?: IFeaturedAccess
+  operationHours?: any[]
+  coordinates?: number[]
+  isWeeklyOpened?: boolean
+  address?: IAddress
+  subscription?: ISubscription
+  assignedDevices?: IAssignedDevices[]
 }
 export default class BusinessBranches extends Queries {
   // public KT: KyooToken
@@ -246,38 +246,47 @@ export default class BusinessBranches extends Queries {
     return new Promise((resolve, reject) => {
       console.log('############################3UPDATE BRANCH!!!!!!!!')
       BranchModel.findOne({_id: branchId})
-      .then(async (branch: any) => {
-        let oldDetails = branch.toObject()
-        const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
-        const oldData = {...oldDetails.toObject(), ...{settings: oldSettings.toObject()}}
-        let errors: Array<any> = []
-        // upload images (avatar and banner)
+      .then(async (branch) => {
         let settings: any
         if (!branch) {
           throw new Error('No branch details found.')
         }
+        let oldDetails = branch.toObject()
+        const oldSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
+        const oldData = {...oldDetails, ...{settings: oldSettings.toObject()}}
+        let errors: Array<any> = []
         branch.email = branchEmail
-        branch.categoryId = categoryId
+        if (categoryId) {
+          branch.categoryId = categoryId
+        }
         branch.about = about
         branch.contacts = contactNumbers.map((contact) => {
           if (!contact._id) {
             contact._id = uuid()
           }
+          return contact
         })
+        // upload images (avatar and banner)
         const {avatarUrl, bannerUrl} = await this.uploadImages(branchId, {avatar, banner})
         // update banner (model location : Settings model)
         avatarUrl ? branch.avatarUrl = avatarUrl : ''
         bannerUrl ? branch.bannerUrl = bannerUrl : ''
         branch.save()
-        this.updateAddress(branchId, address)
-        this.updateSubscription(branchId, subscription)
-        this.updateAssignedDevices(branchId, assignedDevices)
+        if (address) {
+          await this.updateAddress(branchId, address)
+        }
+        if (subscription) {
+          await this.updateSubscription(branchId, subscription)
+        }
+        if (assignedDevices && assignedDevices.length >= 1) {
+          await this.updateAssignedDevices(branchId, assignedDevices)
+        }
         try {
           // save branch settings
           settings = await new Settings(branch._id).updateSettings({
             socialLinks: socialLinks,
-            coordinates: coordinates,
-            featuredAccess,
+            coordinates: coordinates ? coordinates : [],
+            featuredAccess: featuredAccess,
             isWeeklyOpened,
             operationHours
           })
@@ -285,38 +294,38 @@ export default class BusinessBranches extends Queries {
         catch (error) {
           return reject(error)
         }
-        branch.save()
-        .then(async (updatedBranch: any) => {
-          const newDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
-          let newD = newDetails.toObject()
-          const newSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
-          const newData = {...newD, ...{settings: newSettings.toObject()}}
-          const updates = await this.listChanges(oldData, newData)
-          // remove _id field from  contacts
-          function mapContacts(obj: any) {
-            obj.contacts = obj.contacts.map((data: any) => {
-              const {isPrimary, number, type} = data
-              return {
-                isPrimary,
-                number,
-                type
-              }
+        return Promise.resolve(branch)
+          .then(async (updatedBranch) => {
+            const newDetails = <IBranchModel> (await BranchModel.findOne({_id: branchId}))
+            let newD = newDetails.toObject()
+            const newSettings = <IBranchSettingsModel> await BranchSettings.findOne({branchId})
+            const newData = {...newD, ...{settings: newSettings.toObject()}}
+            const updates = await this.listChanges(oldData, newData)
+            // remove _id field from  contacts
+            function mapContacts(obj: any) {
+              obj.contacts = obj.contacts.map((data: any) => {
+                const {isPrimary, number, type} = data
+                return {
+                  isPrimary,
+                  number,
+                  type
+                }
+              })
+              return obj
+            }
+            // log action
+            actionLogs.save({
+              actionBy,
+              actionType: GENERAL_LOGS_ACTION_TYPE.EDIT,
+              branchId: branchId,
+              collectionName: COLLECTION_NAMES.BRANCH,
+              eventSummary: `Branch, ${branch.name}, details has been modified`,
+              module: 'Branch Details - Edit Details',
+              oldData: mapContacts(oldDetails),
+              newData: mapContacts(newD),
+              platform: source
             })
-            return obj
-          }
-          // log action
-          actionLogs.save({
-            actionBy,
-            actionType: GENERAL_LOGS_ACTION_TYPE.EDIT,
-            branchId: branchId,
-            collectionName: COLLECTION_NAMES.BRANCH,
-            eventSummary: `Branch, ${branch.name}, details has been modified`,
-            module: 'Branch Details - Edit Details',
-            oldData: mapContacts(oldDetails),
-            newData: mapContacts(newD),
-            platform: source
-          })
-          resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}, ...{updates}})
+            resolve({...updatedBranch.toObject(), ...{socialLinks}, ...{settings}, ...{errors}, ...{updates}})
         })
       })
       .catch((error) => {
@@ -358,7 +367,7 @@ export default class BusinessBranches extends Queries {
    * @param branchId 
    * @param address 
    */
- public updateAddress (branchId: string, address: IAddress) {
+ public async updateAddress (branchId: string, address: IAddress) {
    const {city, province, street, zipcode} = address
   return BranchModel.findOneAndUpdate({
     _id: branchId
