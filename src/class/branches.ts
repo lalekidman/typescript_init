@@ -96,8 +96,9 @@ export default class BusinessBranches extends Queries {
     })
     .then(async (partner: any) => {
       // const {contacts = [], email, address, avatar, banner, coordinates, about, branchName = '', account, branchId, subscription, assignedDevices, data} = body
-      const {avatar, banner, data} = body
-      const {account, branchId, subscription, assignedDevices, coordinates, about, branchName = '', contactNumbers = [], email, address} = JSON.parse(data)
+      // const {avatar, banner, data} = body
+      console.log('bodybodybodybodybodybodybodybodybodybodybodybodybodybody: ', body)
+      const {account, branchId, subscription, assignedDevices, coordinates, about, branchName = '', contactNumbers = [], email, address, avatar, banner,} = body
       const branch = await BranchModel.findOne({
         branchId: branchId.toString().trim(),
         partnerId: partnerId.toString().trim()
@@ -143,7 +144,7 @@ export default class BusinessBranches extends Queries {
         throw new Error('contacts must have atleast 1 primary.')
       }
       // create settings,
-      const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(JSON.parse(data)))))
+      const branchSettings = JSON.parse(JSON.stringify((await new Settings(newBranch._id).save(body))))
       const {avatarUrl, bannerUrl} = await this.uploadImages(branchId, {avatar, banner})
       const {firstName = '', lastName = ''}  = <any> account || {}
       // upload avatar for default account
@@ -319,7 +320,7 @@ export default class BusinessBranches extends Queries {
               actionType: GENERAL_LOGS_ACTION_TYPE.EDIT,
               branchId: branchId,
               collectionName: COLLECTION_NAMES.BRANCH,
-              eventSummary: `Branch, ${branch.name}, details has been modified`,
+              eventSummary: `Branch, ${updatedBranch.branchName}, details has been modified`,
               module: 'Branch Details - Edit Details',
               oldData: mapContacts(oldDetails),
               newData: mapContacts(newD),

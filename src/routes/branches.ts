@@ -32,19 +32,31 @@ export default class AccountRoute {
     // initialize redis
     this.app = Router({mergeParams: true})
   }
+  private mapRequestBody = (req: IRequest, res: Response, next: NextFunction) => {
+    if (!req.body) {
+      return next()
+    }
+    var {data} = req.body
+    try {
+      req.body = data ? JSON.parse(data) : req.body
+    }
+    catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
+        '**@request body.data is JSON unparsable'))
+    }
+    return next()
+  }
   /**
    * add branch route
    */
   public add = (req: IRequest, res: Response, next: NextFunction) => {
     const {partnerId = ''} = req.params
     const {avatar, banner, accountAvatar} = req.files
-    const {account} = req.body
+    var data = req.body
+    const {account} = data
     const user = req.headers.user ? JSON.parse(<any> req.headers.user) : {account: {}}
-    console.log('useruseruser: ', user)
-    // const user = JSON.parse(req.headers.user ? req.headers.user : <any> "{account: {}}")
-    console.log('USER: ', user)
     new Branches()
-    .save(partnerId, {...req.body, avatar, banner, account: account ? {...account, avatar: accountAvatar} : {}}, user)
+    .save(partnerId, {...data, avatar, banner, account: account ? {...account, avatar: accountAvatar} : {}}, user)
     .then((response) => {
       res.status(HttpStatus.OK).send({
         success: true,
@@ -97,6 +109,7 @@ export default class AccountRoute {
    */
   public branchList = async (req: IRequest, res: Response, next: NextFunction) => {
     const {branchId = '', partner} = req.query
+    console.log('££££££££££££££££££££££££££E:req.queryreq.queryreq.queryreq.query ', req.query)
     return new Branches()
       .getList(req.query)
       .then(async (data) => {
@@ -176,7 +189,6 @@ export default class AccountRoute {
       }
     }
   }
-  
   /**
    * validate update branch details
    */
@@ -199,18 +211,10 @@ export default class AccountRoute {
           'banner requires a valid image'))
       }
     }
-    let {data} = req.body
-    try {
-      data = data ? JSON.parse(data) : req.body
-    }
-    catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
-        '**@request body.data is JSON unparsable'))
-    }
-    let {categoryId, about, branchEmail, contactNumbers=[], socialLinks=[]} = data
+    
+    let {about, branchEmail, contactNumbers=[], socialLinks=[]} = req.body
     // validate req body
     if (
-    // if (typeof(categoryId) !== 'string' || categoryId === '' ||
     typeof(about) !== 'string' || about === '' || 
     typeof(branchEmail) !== 'string' || !Array.isArray(contactNumbers) || !Array.isArray(socialLinks)) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
@@ -271,6 +275,12 @@ export default class AccountRoute {
     next()
   }
   /**
+   * validation of featured access
+   */
+  private validateOnFeaturedAccess = (req: IRequest, res: Response, next: NextFunction) => {
+    const {featuredAccess = {}} = req.body
+  }
+  /**
    * update branch details
    */
   private updateBranch(req: IRequest, res: Response) {
@@ -328,6 +338,7 @@ export default class AccountRoute {
     })
   }
   public initializeRoutes () {
+    this.app.use(this.mapRequestBody)
     this.app.use('/:branchId/settings', new BranchSettingsRoute().initializeRoutes())
     this.app.use('/:branchId/advertisement-settings', new AdvertisementSettingsRoute().initializeRoutes())
     this.app.use('/:branchId/queue-settings', new QueueSettingsRoute().initializeRoutes())

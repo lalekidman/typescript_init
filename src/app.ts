@@ -7,7 +7,6 @@ import * as mongoose from 'mongoose'
 import * as passport from 'passport'
 import * as HttpStatus from 'http-status-codes'
 import * as morgan from 'morgan'
-import * as session from 'express-session';
 import * as cookieParser from 'cookie-parser'
 import {createClient} from 'redis'
 
@@ -16,8 +15,6 @@ import flash = require('connect-flash')
 import {Server as SocketServer} from 'socket.io'
 import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
-const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH'
-
 import BranchRoute from './routes/branches'
 import Notifications from './routes/notifications'
 import CustomerApp from './routes/customer-app'
