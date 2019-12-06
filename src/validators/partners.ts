@@ -3,6 +3,7 @@ import {Response, Request, NextFunction} from 'express'
 import { formValidatorMiddleware, ValidateEmail, ValidateMobileNo,  } from '../utils/helper'
 import { LINK_TYPES, CONTACT_NUMBER_TYPES } from '../utils/constants'
 import * as regExp from '../utils/regularExpressions'
+import { IOperationHours } from '../interfaces/settings'
 /**
    * validation of featured access
    */
@@ -68,6 +69,10 @@ export const validateSocialLinks = (socialLinks: any[]) => {
   }
   return true
 }
+/**
+ * validate mobile numbers
+ * @param contactNumbers 
+ */
 export const validateOnMobileNumbers = (contactNumbers: any[]) => {
   for (let i in contactNumbers) {
     if (typeof contactNumbers[i].isPrimary === 'string' && (contactNumbers[i].isPrimary === 'true' || contactNumbers[i].isPrimary === 'false')) {
@@ -92,16 +97,29 @@ export const validateOnMobileNumbers = (contactNumbers: any[]) => {
   }
   return true
 }
-const validateOnUpdateAddress = (address: any, {req}: any) => {
+/**
+ * validate address properties
+ * @param address 
+ */
+const validateOnUpdateAddress = (address: any) => {
   const {street, province, city, zipcode} = address
   // validate request body
-  if ((typeof(street) !== 'string' || typeof(province) !== 'string' || typeof(city) !== 'string' || typeof(parseInt(zipcode)) !== 'number') || 
-    (!street || !province || !city || zipcode.toString().length !== 4)
+  if (
+    // check if all address properties are empty string or empty value
+    (!(street === '' && province === '' && city === '' && zipcode.toString() === '')) && (
+      // check the address properties if suitable
+      (typeof(street) !== 'string' || typeof(province) !== 'string' || typeof(city) !== 'string' || typeof(parseInt(zipcode)) !== 'number') ||
+      // check
+      (!street || !province || !city || zipcode.toString().length !== 4))
     ) {
     throw new Error('Invalid Data: address: {street:string, province:string, city:string, zipcode:number(length=4)}')
   }
   return true
 }
+/**
+ * validate coordinates value
+ * @param coordinates 
+ */
 const validateCoordinates = (coordinates: any, {req}: any) => {
   const {lat, lng} = coordinates
   // validate request body
@@ -114,7 +132,12 @@ const validateCoordinates = (coordinates: any, {req}: any) => {
   }
   return true
 }
-const validateBranchId = (branchId: string, {req}: any) => {
+/**
+ * 
+ * @param branchId 
+ * @param param1 
+ */
+const validateBranchId = (branchId: string) => {
   const patt = /\s/g
   // validate request body
   if (!branchId) {
@@ -122,6 +145,37 @@ const validateBranchId = (branchId: string, {req}: any) => {
   } else if (patt.test(branchId.trim())){
     throw new Error('Invalid branchId format. Must be no space/s on it. branchId: string')
   }
+  return true
+}
+const validateOperationHours = (operationHours: any [], {req}: any) => {
+  if (!operationHours) {
+    return true
+  }
+  const errMessage = 'Invalid operationHours value. operationHours: [{openingTime: milis, closingTime: milis, day: number(e.g: 0 - sunday, 1 - monday, 6 - saturday), enabled: boolean, isWholeDay: boolean}] with a length of 7.'
+  // validate request body
+  const booleanString = ['true', 'false']
+  if (operationHours.length === 7) {
+    throw new Error(errMessage)
+  }
+  // (operation.day >= 0 && operation.day <= 6)
+  req.body.operationHours = operationHours.map((operation) => {
+    if (
+      typeof(parseInt(operation.openingTime)) !== 'number' || 
+      typeof(parseInt(operation.closingTime)) !== 'number' || 
+      typeof(parseInt(operation.day)) !== 'number' ||
+      typeof(operation.enabled) !== 'boolean' && booleanString.indexOf(operation.enabled) === -1 ||
+      typeof(operation.isWholeDay) !== 'boolean' && booleanString.indexOf(operation.isWholeDay) === -1
+      ) {
+        throw new Error (errMessage)
+      }
+    return {
+      openingTime: parseInt(operation.openingTime),
+      closingTime: parseInt(operation.closingTime),
+      day: parseInt(operation.day),
+      enabled: operation.enabled === 'true',
+      isWholeDay: operation.isWholeDay === 'true'
+    }
+  })
   return true
 }
 export const AddUpdateBranchValidator = {
