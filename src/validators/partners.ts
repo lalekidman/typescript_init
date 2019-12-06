@@ -95,7 +95,7 @@ export const validateOnMobileNumbers = (contactNumbers: any[]) => {
 const validateOnUpdateAddress = (address: any, {req}: any) => {
   const {street, province, city, zipcode} = address
   // validate request body
-  if ((typeof(street) !== 'string' || typeof(province) !== 'string' || typeof(city) !== 'string' || typeof(zipcode) !== 'number') || 
+  if ((typeof(street) !== 'string' || typeof(province) !== 'string' || typeof(city) !== 'string' || typeof(parseInt(zipcode)) !== 'number') || 
     (!street || !province || !city || zipcode.toString().length !== 4)
     ) {
     throw new Error('Invalid Data: address: {street:string, province:string, city:string, zipcode:number(length=4)}')
