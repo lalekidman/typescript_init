@@ -20,7 +20,7 @@ import { constructActionBy, ValidateMobileNo } from '../utils/helper';
 
 import QueueSettingsRoute from './queue-settings'
 import AdvertisementSettingsRoute from './advertisement-settings'
-import { AddPartnerValidator } from '../validators/partners'
+import { AddUpdateBranchValidator, SuspendBranchValidator } from '../validators/partners'
 
 export default class AccountRoute {
 
@@ -40,7 +40,6 @@ export default class AccountRoute {
     var {data} = req.body
     try {
       req.body = data ? JSON.parse(data) : req.body
-      console.log('FUCKING DATA: ', req.body)
     }
     catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED,
@@ -251,39 +250,16 @@ export default class AccountRoute {
         }
       }
     }
-    // validate Links
-    for (let i in socialLinks) {
-      if (typeof socialLinks[i].url !== 'string' || appConstants.LINK_TYPES.indexOf(socialLinks[i].type) === -1) {
-        return res.status(HttpStatus.BAD_REQUEST)
-        .json(new AppError(RC.UPDATE_BRANCH_FAILED,
-          '@request body.data: socialLinks: [{id?:string, url:string, type:facebook|instagram|company}]'))
-      }
-      if (socialLinks[i].type === 'facebook') {
-        if (!regExp.validFbLink.test(socialLinks[i].url)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Fb Link'))
-        }
-      }
-      if (socialLinks[i].type === 'instagram') {
-        if (!regExp.validInstagramLink.test(socialLinks[i].url)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Instagram Link'))
-        }
-      }
-      if (socialLinks[i].type === 'company') {
-        if (!regExp.validUrl.test(socialLinks[i].url)) {
-          return res.status(HttpStatus.BAD_REQUEST).json(new AppError(RC.UPDATE_BRANCH_FAILED, 'Invalid Company Website'))
-        }
-      }
-    }
+   
     next()
   }
   /**
    * update branch details
    */
   private updateBranch(req: IRequest, res: Response) {
-    const {branchId} = req.params
+    const {branchId: bId} = req.params
     const {avatar = null, banner = null} = <any> req.files || {}
     let accountData = req.headers.user ? JSON.parse(<any>req.headers.user) : {}
-    // if data is empty, it should be all on req.body
     let {
       about,
       email,
@@ -296,12 +272,17 @@ export default class AccountRoute {
       coordinates,
       operationHours,
       address,
-      branchName
+      branchName,
+      branchId
     } = req.body
-    new Branches().updateBranch(branchId, {
+    console.log('read; ', req.body)
+    res.end()
+    return
+    new Branches().updateBranch(bId, {
       branchName,
       about,
       email,
+      branchId,
       contactNumbers,
       socialLinks,
       avatar,
@@ -367,8 +348,9 @@ export default class AccountRoute {
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
-    this.app.patch('/:branchId', multiPartMiddleWare, AddPartnerValidator.pipeline, AddPartnerValidator.middleware, this.validateOnUpdateBranch, this.updateBranch)
-    this.app.patch('/:branchId/suspend-status', this.suspendBranch)
+    this.app.patch('/:branchId', multiPartMiddleWare, AddUpdateBranchValidator.pipeline, AddUpdateBranchValidator.middleware, this.updateBranch)
+    // this.app.patch('/:branchId', multiPartMiddleWare, AddUpdateBranchValidator.pipeline, AddUpdateBranchValidator.middleware, this.validateOnUpdateBranch, this.updateBranch)
+    this.app.patch('/:branchId/suspend-status', SuspendBranchValidator.pipeline, SuspendBranchValidator.middleware, this.suspendBranch)
     // this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
     this.app.post('/:partnerId', multiPartMiddleWare, this.add)
     return this.app

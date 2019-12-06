@@ -26,6 +26,10 @@ interface IBranchFilter extends IPaginationData {
   partnerId?: string
   branchIds?: any
 }
+export interface ICoordinates {
+  lat: number
+  lng: number
+}
 interface IBranchData {
   categoryId?: string
   about: string
@@ -38,7 +42,7 @@ interface IBranchData {
   banner: any
   featuredAccess?: IFeaturedAccess
   operationHours?: any[]
-  coordinates?: number[]
+  coordinates?: ICoordinates
   isWeeklyOpened?: boolean
   address?: IAddress
   subscription?: ISubscription
@@ -334,7 +338,7 @@ export default class BusinessBranches extends Queries {
           // save branch settings
           settings = await new Settings(branch._id).updateSettings({
             socialLinks: socialLinks,
-            coordinates: coordinates ? coordinates : [],
+            coordinates: coordinates,
             featuredAccess: featuredAccess,
             isWeeklyOpened,
             operationHours

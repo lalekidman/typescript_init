@@ -5,6 +5,7 @@ import { FORM_DATA_TYPES, BRANCH_MODULES } from '../utils/constants';
 import { formDataValidator } from '../utils/helper';
 import * as uuid from 'uuid/v4'
 import { ILocation } from '../interfaces/branches';
+import { ICoordinates } from './branches';
 const DefaultOperationHours = [
   {
     openingTime: 3600000,
@@ -64,7 +65,7 @@ interface IBranchSettings {
   isWeeklyOpened?: boolean
   operationHours?: IOperationHours[]
   featuredAccess?: IFeaturedAccess
-  coordinates?: number[]
+  coordinates?: ICoordinates
   modules?: number[]
   socialLinks: ISocialLinks[]
 }
@@ -123,8 +124,8 @@ export default class BranchSettings extends Queries {
         if (featuredAccess) {
           await this.updateFeaturedAccess(featuredAccess)
         }
-        if (coordinates && coordinates.length === 2) {
-          await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
+        if (coordinates) {
+          await this.updateGeoLocation(coordinates)
         }
         await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
         return newBranchSetting
@@ -140,8 +141,8 @@ export default class BranchSettings extends Queries {
       if (featuredAccess) {
         await this.updateFeaturedAccess(featuredAccess)
       }
-      if (coordinates && coordinates.length === 2) {
-        await this.updateGeoLocation(coordinates.map((coor: any) => parseFloat(coor)))
+      if (coordinates) {
+        await this.updateGeoLocation(coordinates)
       }
       const branchSettings = await this.updateOperationHours({isWeeklyOpened: isAlwaysOpen, operationHours})
       return branchSettings
@@ -224,7 +225,7 @@ export default class BranchSettings extends Queries {
    * @param location array of number/float
    *  first element should be the long and the second one is for lat
    */ 
-  public updateGeoLocation (coordinates: Number[]) {
+  public updateGeoLocation (coordinates: ICoordinates) {
     return this.findOne({
       branchId: this.branchId
     })
@@ -233,11 +234,11 @@ export default class BranchSettings extends Queries {
       if (!branchSettings) {
         throw new Error('No branch settings found.')
       }
-      if (coordinates.length <= 1) {
-        throw new Error('coordinates must be array with a 2 element, 0 is for long and 1 is for lng.')
-      }
+      // if (coordinates.length <= 1) {
+      //   throw new Error('coordinates must be array with a 2 element, 0 is for long and 1 is for lng.')
+      // }
       return branchSettings.set({
-        'location.coordinates': coordinates.splice(0, 2)
+        'location.coordinates': [coordinates.lat, coordinates.lng]
       })
       .save()
     })
