@@ -117,7 +117,9 @@ const validateCoordinates = (coordinates: any, {req}: any) => {
 const validateBranchId = (branchId: string, {req}: any) => {
   const patt = /\s/g
   // validate request body
-  if (patt.test(branchId)){
+  if (!branchId) {
+    throw new Error('Invalid value. Must not be null or undefined. branchId: string')
+  } else if (patt.test(branchId.trim())){
     throw new Error('Invalid branchId format. Must be no space/s on it. branchId: string')
   }
   return true

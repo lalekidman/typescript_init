@@ -275,9 +275,6 @@ export default class AccountRoute {
       branchName,
       branchId
     } = req.body
-    console.log('read; ', req.body)
-    res.end()
-    return
     new Branches().updateBranch(bId, {
       branchName,
       about,
@@ -352,7 +349,7 @@ export default class AccountRoute {
     // this.app.patch('/:branchId', multiPartMiddleWare, AddUpdateBranchValidator.pipeline, AddUpdateBranchValidator.middleware, this.validateOnUpdateBranch, this.updateBranch)
     this.app.patch('/:branchId/suspend-status', SuspendBranchValidator.pipeline, SuspendBranchValidator.middleware, this.suspendBranch)
     // this.app.patch('/:branchId/address', this.validateOnUpdateAddress, this.updateAddress)
-    this.app.post('/:partnerId', multiPartMiddleWare, this.add)
+    this.app.post('/:partnerId', multiPartMiddleWare, AddUpdateBranchValidator.pipeline, AddUpdateBranchValidator.middleware, this.add)
     return this.app
   }
 } 
