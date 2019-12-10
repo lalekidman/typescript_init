@@ -256,7 +256,6 @@ export default class AccountRoute {
         }
       }
     }
-   
     next()
   }
   /**

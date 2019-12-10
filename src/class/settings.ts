@@ -1,6 +1,12 @@
 import Queries from '../utils/queries'
+<<<<<<< HEAD
 import {IOperationHours, IFeaturedAccess, ISocialLinks} from '../interfaces/settings'
 import BranchSettingModel from '../models/settings'
+=======
+import {IOperationHours} from '../interfaces/settings'
+import BranchModel from '../models/branches'
+import BranchSettingModel, { IBranchSettingsModel } from '../models/settings'
+>>>>>>> 9b3ebf6eeee3acf603cc11fb97f5ca637567141d
 import { FORM_DATA_TYPES, BRANCH_MODULES } from '../utils/constants';
 import { formDataValidator } from '../utils/helper';
 import * as uuid from 'uuid/v4'
@@ -230,7 +236,6 @@ export default class BranchSettings extends Queries {
       branchId: this.branchId
     })
     .then((branchSettings) => {
-      console.log('l###################################ocatixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxon : ', coordinates)
       if (!branchSettings) {
         throw new Error('No branch settings found.')
       }

@@ -93,6 +93,7 @@ export default interface ISetting extends _init {
   socialLinks: Array<SocialLinks>
   modules: Array<string>
   operationHours: Array<IOperationHours>
+  noOfQueueGroupsAllowed: number
   gallery: Array<Gallery>
   advertisements: Array<Gallery>
   imagePreviewDuration: number
