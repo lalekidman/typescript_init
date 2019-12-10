@@ -54,21 +54,56 @@ export const getClientInfo = (req: IRequest2) => {
     userId: req.user ? req.user._id : "b7a8823f-41df-4845-ba54-cbb168bfcb28"
   }
 }
+export const formValidatorMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  let result: any = validationResult(req)
+  if (result.errors.length !== 0) {
+    return res.status(HttpStatus.BAD_REQUEST)
+    .json(result)
+  }
+  next()
+}
+
+/**
+ * construct actionBy
+ */
+export const constructActionBy = (accountData: any) => {
+  let actionBy = {
+    _id: '',
+    avatarUrl: '',
+    firstName: '',
+    lastName: '',
+    roleLevel: '',
+  }
+  try {
+    const {_id, avatarUrl, firstName, lastName, roleLevel} = accountData
+    actionBy._id = _id
+    actionBy.avatarUrl = avatarUrl
+    actionBy.firstName = firstName
+    actionBy.lastName = lastName
+    actionBy.roleLevel =  roleLevel
+  }
+  catch (error) {
+    console.log('CONSTRUCT ACTION BY ERROR', error)
+  }
+  return actionBy
+}
 /**
  * generate query string for internal request
  * @param queryString 
  * @param queryData
- * @param fieldName optional, if its object or array
+ * @param fieldName optional, object properties or index of array
  */
 export const generateQueryString = (queryString: string, queryData: any, fieldName?: string) => {
+  var x = 0
   for (var query in queryData) {
     // check if fieldName is not empty, if not, add query inside of the '[]' eg: filterBy[value] = testValue
     const queryField = fieldName ? `${fieldName}[${query}]` : query
     try {
+      // console.log('queryData[query]: ', queryData[query])
       // check if the value is object
       if (typeof(queryData[query]) === 'object') {
         // recursion call
-        queryString = queryString.concat(generateQueryString(queryString, queryData[query], query))
+        queryString = generateQueryString(queryString, queryData[query], query)
       } else {
         queryString = queryString.concat(`&${queryField}=${queryData[query]}`)
       }
@@ -77,12 +112,4 @@ export const generateQueryString = (queryString: string, queryData: any, fieldNa
     }
   }
   return queryString
-}
-export const formValidatorMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  let result: any = validationResult(req)
-  if (result.errors.length !== 0) {
-    return res.status(HttpStatus.BAD_REQUEST)
-    .json(result)
-  }
-  next()
 }
