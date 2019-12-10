@@ -9,11 +9,16 @@ interface IPaginationData {
   startAt: number
   searchFields: Array<string>
   searchText: string
-  sortBy: ISortBy
+  sortBy: ISortBy | ISortBy[]
+  filterBy: IFilterBy
 }
 interface ISortBy {
   fieldName: string
   status: number
+}
+interface IFilterBy {
+  fieldName: string
+  value: string
 }
 interface IPagination {
   totalPages: number
@@ -98,7 +103,13 @@ class Queries {
     //@ts-ignore
     const startPage = parseInt(startAt) > 0 ? parseInt(startAt) : 0
     //@ts-ignore
-    const sortTo = sortBy ? {[sortBy.fieldName]: parseInt(sortBy.status)} : {_id: 1}
+    var sortTo = {_id: 1}
+    if (sortBy) {
+      sortTo = Array.isArray(sortBy) ? sortBy.reduce((obj, s) => {
+        obj[s.fieldName] = parseInt(s.status)
+        return obj
+      }, {}) : {[sortBy.fieldName]: sortBy.status}
+    }
     const q = (searchFields.length >= 1 ? searchFields : searchFields2).map((field: string) => ({[field]: {
       $regex: new RegExp(searchText, 'gi')
     }}))

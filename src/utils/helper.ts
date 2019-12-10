@@ -1,5 +1,8 @@
 import * as moment from 'moment'
 import { IRequest} from './interfaces';
+import {Request, Response, NextFunction} from 'express'
+import {validationResult} from 'express-validator'
+import * as HttpStatus from 'http-status-codes'
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -74,4 +77,12 @@ export const generateQueryString = (queryString: string, queryData: any, fieldNa
     }
   }
   return queryString
+}
+export const formValidatorMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  let result: any = validationResult(req)
+  if (result.errors.length !== 0) {
+    return res.status(HttpStatus.BAD_REQUEST)
+    .json(result)
+  }
+  next()
 }
