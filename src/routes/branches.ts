@@ -190,6 +190,12 @@ export default class AccountRoute {
     }
   }
   /**
+   * get branch data by id
+   */
+  public resendEmailVerification = async (req: IRequest, res: Response, next: NextFunction) => {
+    
+  }
+  /**
    * validate update branch details
    */
   private validateOnUpdateBranch(req: IRequest, res: Response, next: NextFunction) {
@@ -345,6 +351,7 @@ export default class AccountRoute {
     this.app.get('/', this.branchList)
     this.app.get('/branchId', this.findByBranchId)
     this.app.get('/:branchId', this.findOne)
+    // this.app.get('/:branchId/resend-verification', this.findOne)
     this.app.patch('/:branchId', multiPartMiddleWare, AddUpdateBranchValidator.pipeline, AddUpdateBranchValidator.middleware, this.updateBranch)
     // this.app.patch('/:branchId', multiPartMiddleWare, AddUpdateBranchValidator.pipeline, AddUpdateBranchValidator.middleware, this.validateOnUpdateBranch, this.updateBranch)
     this.app.patch('/:branchId/suspend-status', SuspendBranchValidator.pipeline, SuspendBranchValidator.middleware, this.suspendBranch)

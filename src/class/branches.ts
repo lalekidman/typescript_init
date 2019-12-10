@@ -531,8 +531,16 @@ export default class BusinessBranches extends Queries {
   * @param projection 
   */
   public getList (data: IBranchFilter, projection: any = null) {
-    const {partnerId = '', branchIds = null} = data
+    const {partnerId = '', branchIds = null, filterBy} = data
     const searchBranchIds = branchIds ? branchIds.split(',') : []
+    var filterTo:any = {}
+    if (filterBy) {
+      if (filterBy.fieldName === 'status') {
+        filterTo = {
+          isSuspended: parseInt(filterBy.value) === 1
+        }
+      }
+    }
     const query = <any> [
       {
         $match: partnerId ? {
@@ -545,6 +553,9 @@ export default class BusinessBranches extends Queries {
             $in: searchBranchIds
           }
         } : {}
+      },
+      {
+        $match: filterTo
       }
     ]
     if (projection) {
@@ -552,6 +563,6 @@ export default class BusinessBranches extends Queries {
         $project: projection
       })
     }
-    return this.aggregateWithPagination(query, {...data, sortBy: {fieldName: 'branchName', status: 1}}, ['branchName'])
+    return this.aggregateWithPagination(query, {...data, sortBy: {fieldName: 'branchName', status: 1}}, ['branchName', 'branchId'])
   }
 }

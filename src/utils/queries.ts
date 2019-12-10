@@ -10,10 +10,15 @@ export interface IPaginationData {
   searchFields: Array<string>
   searchText: string
   sortBy: SortBy
+  filterBy: IFilterBy
 }
 interface SortBy {
   fieldName: string
   status: number
+}
+interface IFilterBy {
+  fieldName: string
+  value: string
 }
 interface Pagination {
   totalPages: number
