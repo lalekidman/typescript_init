@@ -1,7 +1,7 @@
 {
-  "name": "total-philippines",
+  "name": "ts-boilerplate",
   "version": "1.0.0",
-  "description": "Total Philippines SMS Ordering System that client can place a order by texting the gateway.",
+  "description": "for start up project.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -48,5 +48,13 @@
     "@types/passport-local": "^1.0.33",
     "@types/socket.io": "^2.1.0",
     "@types/uuid": "^3.4.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lalekidman/boilerplate-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lalekidman/boilerplate-ts/issues"
+  },
+  "homepage": "https://github.com/lalekidman/boilerplate-ts#readme"
 }
