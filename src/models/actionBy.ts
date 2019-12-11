@@ -1,7 +1,5 @@
 import {Schema, Document, model} from 'mongoose'
-import IAddedBy from '../interfaces/addedBy'
-export interface IAddedByModel extends Document, IAddedBy {}
-export default  <Schema> new Schema(
+ export default  <Schema> new Schema(
   {
     _id: {
       type: String,
