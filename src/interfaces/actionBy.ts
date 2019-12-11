@@ -1,5 +1,4 @@
-import {_init} from '../utils/interfaces'
-export default interface IAddedBy extends _init {
+export default interface IActionBy {
   _id: any
   firstName: string
   lastName: string
