@@ -4,4 +4,5 @@ export default interface IActionBy {
   lastName: string
   roleLevel: number
   avatarUrl: string
+  name: string
 }

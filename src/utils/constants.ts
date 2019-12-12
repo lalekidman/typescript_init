@@ -1,0 +1,3 @@
+export const SEARCH_VARIABLE_TYPES = {
+  MOBILE_NUMBER: 3
+}
