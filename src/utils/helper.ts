@@ -3,6 +3,7 @@ import { IRequest} from './interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
 import * as HttpStatus from 'http-status-codes'
+import * as RegexValidator from './regex-validator'
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -21,8 +22,7 @@ interface IRequest2 extends IRequest{
 export const TrimMobileNo = (contactNo: string|number): string => contactNo.toString().replace(/[^+\d]+/g, "")
 export const ValidateMobileNo = (contactNo: string|number): string|null => {
   const newN = contactNo.toString().trim().replace(/ /g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '')
-  const patt = /^((\+639|639|09|9)\d{9})$/g
-  const txt = newN.toString().match(patt)
+  const txt = newN.toString().match(RegexValidator.ValidateMobileNo)
   return txt ? txt[0].substr(txt[0].length - 10, 10): null
 }
 export const ValidateEmail = (email: string): boolean => {
