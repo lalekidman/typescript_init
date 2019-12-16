@@ -41,10 +41,10 @@ export const ModelSchema:Schema = new Schema({
     type: String,
     default: null
   },
-  categoryId: {
-    type: String,
-    default: ''
-  },
+  // categoryId: {
+  //   type: String,
+  //   default: ''
+  // },
   bannerUrl: {
     type: String,
     default: ''

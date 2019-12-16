@@ -309,9 +309,9 @@ export default class BusinessBranches extends Queries {
         if (branchTextId) {
           branch.branchId = branchTextId
         }
-        if (categoryId) {
-          branch.categoryId = categoryId
-        }
+        // if (categoryId) {
+        //   branch.categoryId = categoryId
+        // }
         branch.about = about
         branch.contacts = contactNumbers.map((contact) => {
           if (!contact._id) {

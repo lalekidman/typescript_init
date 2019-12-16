@@ -173,6 +173,7 @@ export default class AccountRoute {
       socialLinks=[],
       address
     } = data ? JSON.parse(data) : req.body
+    console.log('xxxxxxxxxxxxxxxxxxxxe: ', data)
     new Branches().updateBranch(branchId, {
       categoryId,
       about,

@@ -253,6 +253,7 @@ export default class BranchSettings extends Queries {
   } else if (account.max < 0) {
     throw new Error('account max value must be greater than 0')
   }
+  console.log('featured: ', featured)
   return BranchSettingModel.findOneAndUpdate({
     branchId: this.branchId, 
     },

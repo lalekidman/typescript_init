@@ -17,17 +17,21 @@ export const validateOnFeaturedAccess = (value: any, {req}: any) => {
   ) {
     throw new Error('Invalid data. featuredAccess: {queueGroup: {status: boolean, max: validNumber}, account: {status: boolean, max: validNumber}, smsModule: {status: boolean}}')
   }
+  const checkBoolean = (status: any) => {
+    return typeof(status) === 'boolean' ?  status : status === 'true'
+  }
+  console.log('VALUEL ', value)
   req.body.featuredAccess = {
     queueGroup: {
-      status: queueGroup.status === 'true',
+      status: checkBoolean(queueGroup.status),
       max: parseInt(queueGroup.max)
     },
     account: {
-      status: account.status === 'true',
+      status: checkBoolean(queueGroup.status),
       max: parseInt(account.max)
     },
     smsModule: {
-      status: smsModule.status === 'true'
+      status: checkBoolean(queueGroup.status)
     }
   }
   return true
