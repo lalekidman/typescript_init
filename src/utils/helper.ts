@@ -4,6 +4,7 @@ import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
 import * as HttpStatus from 'http-status-codes'
 import * as RegexValidator from './regex-validator'
+import AppError from './app-error';
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -112,4 +113,20 @@ export const generateQueryString = (queryString: string, queryData: any, fieldNa
     }
   }
   return queryString
+}
+/**
+ * custom error checker
+ * @param res 
+ * @param AppErrorMessage 
+ */
+export const ErrorResponse = (res: Response, AppErrorMessage: any) => {
+  return (err: any) => {
+    // check if the error is have a statusCode.
+    // ##DEVNOTE: it means the err is AppError
+    if (err.statusCode) {
+      res.status(HttpStatus.BAD_REQUEST).send(err)
+    } else {
+      res.status(HttpStatus.BAD_REQUEST).send(new AppError(AppErrorMessage, err.message))
+    }
+  }
 }
