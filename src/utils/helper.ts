@@ -117,16 +117,18 @@ export const generateQueryString = (queryString: string, queryData: any, fieldNa
 /**
  * custom error checker
  * @param res 
- * @param AppErrorMessage 
+ * @param AppErrorMessage
+ * @param httpStatusCode
+ *  - optional, 
  */
-export const ErrorResponse = (res: Response, AppErrorMessage: any) => {
+export const ErrorResponse = (res: Response, AppErrorMessage: any, httpStatusCode: number = HttpStatus.BAD_REQUEST) => {
   return (err: any) => {
     // check if the error is have a statusCode.
     // ##DEVNOTE: it means the err is AppError
     if (err.statusCode) {
-      res.status(HttpStatus.BAD_REQUEST).send(err)
+      res.status(httpStatusCode).send(err)
     } else {
-      res.status(HttpStatus.BAD_REQUEST).send(new AppError(AppErrorMessage, err.message))
+      res.status(httpStatusCode).send(new AppError(AppErrorMessage, err.message))
     }
   }
 }

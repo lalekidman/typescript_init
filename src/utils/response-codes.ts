@@ -18,18 +18,8 @@ export const UNAUTHORIZED_REQUEST = {
   error: 'UNAUTHORIZED_REQUEST',
   source: ''
 }
-export const FIELDS_ARE_REQUIRED = {
-  statusCode: 10300,
-  error: 'FIELDS_ARE_REQUIRED',
-  source: 'All fields are required'
-}
-export const INVALID_VARIABLE_TYPE = {
-  statusCode: 10301,
-  error: 'INVALID_VARIABLE_TYPE',
-  source: ''
-}
-export const INALID_VALUE = {
-  statusCode: 10302,
-  error: 'INALID_VALUE',
+export const INVALID_FILE_TYPE = {
+  statusCode: 10701,
+  error: 'INVALID_FILE_TYPE',
   source: ''
 }
