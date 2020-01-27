@@ -63,7 +63,45 @@ export const formValidatorMiddleware = (req: Request, res: Response, next: NextF
   }
   next()
 }
-
+/**
+ * middleware for express validator and can validate data on files request params
+ * @param fileName 
+ */
+export const formValidatorMiddleWareWithFiles = (fileName: string | string[]) => {
+  return (req: IRequest, res: Response, next: NextFunction) => {
+    let result: any = validationResult(req)
+    if (!req.files) {
+      next()
+      return
+    }
+    const validateUploadedImage = (fileName: string) => {
+      if (req.files[fileName]) {
+        if (!(req.files[fileName].type.match(RegexValidator.ValidateImage))) {
+          result.errors.push({
+            value: req.files[fileName],
+            msg: `allow file type to upload. ${(RegexValidator.ValidateImage).toString()}`,
+            params: fileName,
+            location: 'file'
+          })
+        }
+      }
+      return false
+    }
+    if (Array.isArray(fileName)) {
+      for(const x in fileName) {
+        validateUploadedImage(fileName[x])
+      }
+    } else {
+      validateUploadedImage(fileName)
+    }
+    if (result.errors.length !== 0) {
+      return res.status(HttpStatus.BAD_REQUEST)
+        .json(result)
+    }
+    next()
+    return
+  }
+}
 /**
  * construct actionBy
  */
@@ -96,6 +134,7 @@ export const constructActionBy = (accountData: any) => {
  */
 export const generateQueryString = (queryString: string, queryData: any, fieldName?: string) => {
   var x = 0
+  const andSign = queryString ? '&' : ''
   for (var query in queryData) {
     // check if fieldName is not empty, if not, add query inside of the '[]' eg: filterBy[value] = testValue
     const queryField = fieldName ? `${fieldName}[${query}]` : query
@@ -106,10 +145,10 @@ export const generateQueryString = (queryString: string, queryData: any, fieldNa
         // recursion call
         queryString = generateQueryString(queryString, queryData[query], query)
       } else {
-        queryString = queryString.concat(`&${queryField}=${queryData[query]}`)
+        queryString = queryString.concat(andSign).concat(`${queryField}=${queryData[query]}`)
       }
     } catch (err) {
-      queryString = queryString.concat(`&${queryField}=${queryData[query]}`)
+      queryString = queryString.concat(andSign).concat(`${queryField}=${queryData[query]}`)
     }
   }
   return queryString

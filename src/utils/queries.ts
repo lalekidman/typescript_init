@@ -4,7 +4,7 @@ import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
 const s3 = new Aws('kyoo-bucket')
-interface IPaginationData {
+export interface IPaginationData {
   limitTo: number
   startAt: number
   searchFields: Array<string>
@@ -20,28 +20,23 @@ interface IFilterBy {
   fieldName: string
   value: string
 }
-interface IPagination {
-  totalPages: number
-  data: [any]
-}
 interface IAggregateWithPagination {
   data: any[]
   totalPages: number
-  totalCount: number
+  totalCounts: number
 }
 interface IAppError {
   statusCode: number
   error: string
   source: string
 }
-class Queries {
+class Queries<T> {
   public ModelSchema: any
   public ModelInterface: any
   private errorMsg: string | IAppError = ''
-  constructor (mod: any, Model?: any) {
+  constructor (mod: T) {
     if (!mod) throw new Error('model is required.')
     this.ModelSchema = mod
-    this.ModelInterface = Model
   }
   public save (data: object) {
     const collection = this.initilize(data)
@@ -103,7 +98,7 @@ class Queries {
     //@ts-ignore
     const startPage = parseInt(startAt) > 0 ? parseInt(startAt) : 0
     //@ts-ignore
-    var sortTo = {_id: 1}
+    var sortTo = {createdAt: -1}
     if (sortBy) {
       sortTo = Array.isArray(sortBy) ? sortBy.reduce((obj, s) => {
         obj[s.fieldName] = parseInt(s.status)
@@ -158,7 +153,7 @@ class Queries {
         }
     }])
     return this.ModelSchema.aggregate(paginationQuery).then((response: any) => {
-      return <IPagination> (response.length >= 1 ? {
+      return <IAggregateWithPagination> (response.length >= 1 ? {
         data: response[0].data,
         totalPages: Math.ceil((response[0].counts / endPage)),
         totalCounts: response[0].counts
