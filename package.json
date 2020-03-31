@@ -4,6 +4,8 @@
   "description": "for start up project.",
   "main": "index.js",
   "scripts": {
+    "start": "pm2-dev dist/app.js",
+    "dev": "nodemon -L dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Darryl Fabian",
