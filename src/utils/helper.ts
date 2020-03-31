@@ -3,6 +3,7 @@ import { IRequest} from './interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
 import * as HttpStatus from 'http-status-codes'
+import {ValidateImage} from './regex-validator'
 import * as RegexValidator from './regex-validator'
 import AppError from './app-error';
 export interface IGeoInfo {
@@ -48,13 +49,6 @@ export const generateSearchFields = (searchFields: string[], searchText: string)
   $regex: new RegExp(searchText, 'gi')
 }})))
 
-export const getClientInfo = (req: IRequest2) => {
-  return {
-    geoInfo: <IGeoInfo> req.geoInfo || {},
-    ip: req.clientIp || '0.0.0.0',
-    userId: req.user ? req.user._id : "b7a8823f-41df-4845-ba54-cbb168bfcb28"
-  }
-}
 export const formValidatorMiddleware = (req: Request, res: Response, next: NextFunction) => {
   let result: any = validationResult(req)
   if (result.errors.length !== 0) {

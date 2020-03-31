@@ -16,7 +16,9 @@ const ImageValidator = (fileName: string) => {
     }
     if (req.files[fileName]) {
       if (!(req.files[fileName].type.match(ValidateImage))) {
-        res.status(HttpStatus.BAD_REQUEST).send(new AppError(RC.INVALID_FILE_TYPE, `uploaded file type must be either ${(ValidateImage).toString()}`))
+        res.status(HttpStatus.BAD_REQUEST).send({
+          error: `uploaded file type must be either ${(ValidateImage).toString()}`
+        })
         return
       }
     }
