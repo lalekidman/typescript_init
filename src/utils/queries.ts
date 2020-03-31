@@ -113,7 +113,7 @@ class Queries<T> {
       },
       {
         $facet: {
-          data: ,
+          data: firstPipeline,
           totalPages: [
             {
               $group: {
@@ -145,22 +145,6 @@ class Queries<T> {
         totalPages: endPage >= 1 ? Math.ceil((response[0].counts / endPage)) : 1,
         totalCounts: response[0].counts
       }: {data: [], totalPages: 0, totalCounts: 0})
-    })
-  }
-  public setSuspendStatus (id: string) {
-    return this.findOne({_id: id}, {isSuspended: 1}).then((mod: any) => {
-      if (mod.isSuspended === undefined) {
-        throw new Error('this model is not supported of suspend/unsuspend function.')
-      }
-      return mod.set({isSuspended: !mod.isSuspended}).save()
-    })
-  }
-  public suspendAccount (id: string, status?: number) {
-    return this.findOne({_id: id}).then((data: any) => {
-      if (!data.email.status && !data.isVerified) {
-        throw new Error('account must be verified before suspending account.')
-      }
-      return data.set({status: !data.status}).save()
     })
   }
   public get query () {
