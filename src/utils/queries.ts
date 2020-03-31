@@ -40,34 +40,12 @@ class Queries<T> {
   }
   public save (data: object) {
     const collection = this.initilize(data)
-    return collection.save()
+    return <T>collection.save()
   }
   public initilize (data: any) {
     const id = uuid()
-    return new this.ModelSchema(Object.assign(data, {id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}))
-  }
-  public setErrorMsg (error: string | IAppError) {
-    return this.errorMsg = error
-  }
-  update (id: string, data: object) {
-    return this.ModelSchema.update({
-      id: id
-    }, {
-      $set: data
-    })
-  }
-  public findOne (query = {}, projection = {}) {
-    return this.ModelSchema.findOne(query, projection).sort({_id: 1}).then((data: Document) => {
-      if (data) {
-        return data
-      } else {
-        if (typeof(this.errorMsg) === 'string') {
-          throw new Error('No data found.')
-        } else {
-          throw new AppError(this.errorMsg);
-        }
-      }
-    })
+    //override the _id id createdAt and updatedAt when the data object already have it.
+    return new this.ModelSchema(Object.assign({id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}, data))
   }
   /**
    * 
@@ -94,7 +72,7 @@ class Queries<T> {
   public aggregateWithPagination (pipeline: any[], data?: IPaginationData, searchFields2: string[]= []): Promise<IAggregateWithPagination> {
     let {limitTo = 0, startAt = 0, sortBy = null, searchFields = [], searchText = ''} = <any> data || {}
     //@ts-ignore
-    const endPage = parseInt(limitTo) > 0 ? parseInt(limitTo) : 20
+    const endPage = parseInt(limitTo) >= 0 ? parseInt(limitTo) : 20
     //@ts-ignore
     const startPage = parseInt(startAt) > 0 ? parseInt(startAt) : 0
     //@ts-ignore
@@ -104,6 +82,25 @@ class Queries<T> {
         obj[s.fieldName] = parseInt(s.status)
         return obj
       }, {}) : {[sortBy.fieldName]: sortBy.status}
+    }
+    const firstPipeline = <any[]>[
+      {
+        $sort: sortTo
+      },
+      {
+        $skip: startPage
+      },
+      {
+        $limit: endPage
+      }
+    ]
+    // if limitTO is equal to = 0, will remove the $limit on the pipeline
+    if (endPage === 0) {
+      const ind = firstPipeline.findIndex((stage) => Object.keys(stage)[0] === '$limit')
+      if (ind >= 0) {
+        // remove ethe $limit on the pipeline.
+        firstPipeline.splice(ind ,1)
+      }
     }
     const q = (searchFields.length >= 1 ? searchFields : searchFields2).map((field: string) => ({[field]: {
       $regex: new RegExp(searchText, 'gi')
@@ -116,17 +113,7 @@ class Queries<T> {
       },
       {
         $facet: {
-          data: [
-            {
-              $sort: sortTo
-            },
-            {
-              $skip: startPage
-            },
-            {
-              $limit: endPage
-            }
-          ],
+          data: ,
           totalPages: [
             {
               $group: {
@@ -155,7 +142,7 @@ class Queries<T> {
     return this.ModelSchema.aggregate(paginationQuery).then((response: any) => {
       return <IAggregateWithPagination> (response.length >= 1 ? {
         data: response[0].data,
-        totalPages: Math.ceil((response[0].counts / endPage)),
+        totalPages: endPage >= 1 ? Math.ceil((response[0].counts / endPage)) : 1,
         totalCounts: response[0].counts
       }: {data: [], totalPages: 0, totalCounts: 0})
     })

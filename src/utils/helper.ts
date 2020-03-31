@@ -63,43 +63,45 @@ export const formValidatorMiddleware = (req: Request, res: Response, next: NextF
   }
   next()
 }
+
 /**
- * middleware for express validator and can validate data on files request params
- * @param fileName 
+ * validate request params middleware
+ * @param pipeline express validator pipeline such as query | body | params | cookie | header etc...
+ * @param imageFileName fileName or array of fileName that needed to be check if image type
  */
-export const formValidatorMiddleWareWithFiles = (fileName: string | string[]) => {
-  return (req: IRequest, res: Response, next: NextFunction) => {
+export const requestParamsValidatorMiddleware = (pipeline: any[], imageFileName?: string | string[]) => {
+  return async (req: IRequest, res: Response, next: NextFunction) => {
+    await Promise.all(pipeline.map(validation => validation.run(req)));
     let result: any = validationResult(req)
-    if (!req.files) {
-      next()
-      return
-    }
+    
     const validateUploadedImage = (fileName: string) => {
-      if (req.files[fileName]) {
-        if (!(req.files[fileName].type.match(RegexValidator.ValidateImage))) {
+      const image = req.files[fileName]
+      if (image && image.size > 0) {
+        if (!(image.type.match(ValidateImage))) {
           result.errors.push({
-            value: req.files[fileName],
-            msg: `allow file type to upload. ${(RegexValidator.ValidateImage).toString()}`,
-            params: fileName,
+            value: image,
+            msg: `allow file type to upload. ${(ValidateImage).toString()}`,
+            param: fileName,
             location: 'file'
           })
         }
       }
       return false
     }
-    if (Array.isArray(fileName)) {
-      for(const x in fileName) {
-        validateUploadedImage(fileName[x])
+    if (imageFileName) {
+      if (Array.isArray(imageFileName)) {
+        for(const x in imageFileName) {
+          validateUploadedImage(imageFileName[x])
+        }
+      } else {
+        validateUploadedImage(imageFileName)
       }
-    } else {
-      validateUploadedImage(fileName)
     }
-    if (result.errors.length !== 0) {
+    if (!(result.isEmpty())) {
       return res.status(HttpStatus.BAD_REQUEST)
-        .json(result)
+      .json(result)
     }
     next()
-    return
   }
 }
 /**
@@ -134,8 +136,8 @@ export const constructActionBy = (accountData: any) => {
  */
 export const generateQueryString = (queryString: string, queryData: any, fieldName?: string) => {
   var x = 0
-  const andSign = queryString ? '&' : ''
   for (var query in queryData) {
+    const andSign = queryString ? '&' : '?'
     // check if fieldName is not empty, if not, add query inside of the '[]' eg: filterBy[value] = testValue
     const queryField = fieldName ? `${fieldName}[${query}]` : query
     try {

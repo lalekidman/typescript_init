@@ -1,16 +1,17 @@
 interface IError {
   statusCode: number
-  error: string
-  source?: string
+  errorCode: string
+  errorMessage: string
 }
 export default class AppError extends Error {
   public statusCode: number
-  public error: string
   public source?: string
+  public errorCode?: string
+  public errorMessage?: string
   constructor (data: IError, errMsg?: (string | null)) {
-    super(`${data.statusCode} - ${data.error}. Source: ${errMsg || data.source}`)
+    super(`${data.statusCode} - ${data.errorCode}. Source: ${errMsg || data.errorMessage}`)
     this.statusCode = data.statusCode
-    this.error = data.error
-    this.source = errMsg || data.source
+    this.errorCode = data.errorCode
+    this.errorMessage = this.errorMessage
   }
 }
