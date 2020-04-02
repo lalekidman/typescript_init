@@ -4,3 +4,12 @@ export const SERVER_PORT = process.env.DB_PORT || 8080
 export const SEARCH_VARIABLE_TYPES = {
   MOBILE_NUMBER: 3
 }
+export enum REQUEST_LOCATION_TYPES {
+  BODY = 'body',
+  PARAM ='param',
+  QUERY = 'query',
+  COOKIES = 'cookies',
+  HEADERS = 'headers',
+  SYSTEM = 'system',
+  DATABASE = 'database'
+}

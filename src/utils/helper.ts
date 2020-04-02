@@ -6,6 +6,7 @@ import * as HttpStatus from 'http-status-codes'
 import {ValidateImage} from './regex-validator'
 import * as RegexValidator from './regex-validator'
 import AppError from './app-error';
+import { REQUEST_LOCATION_TYPES } from './constants';
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -160,10 +161,21 @@ export const ErrorResponse = (res: Response, AppErrorMessage: any, httpStatusCod
   return (err: any) => {
     // check if the error is have a statusCode.
     // ##DEVNOTE: it means the err is AppError
-    if (err.statusCode) {
-      res.status(httpStatusCode).send(err)
+    if (err.param) {
+      res.status(httpStatusCode).send({
+        errors: [err]
+      })
     } else {
-      res.status(httpStatusCode).send(new AppError(AppErrorMessage, err.message))
+      res.status(httpStatusCode).send({
+        errors: [
+          {
+            location: REQUEST_LOCATION_TYPES.SYSTEM,
+            msg: err.message,
+            param: '',
+            value: ''
+          }
+        ]
+      })
     }
   }
 }
