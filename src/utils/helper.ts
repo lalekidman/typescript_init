@@ -95,7 +95,7 @@ export const requestParamsValidatorMiddleware = (pipeline: any[], imageFileName?
     }
     if (imageFileName) {
       if (Array.isArray(imageFileName)) {
-        for(const x in imageFileName) {
+        for(let x in imageFileName) {
           validateUploadedImage(imageFileName[x])
         }
       } else {
