@@ -18,19 +18,14 @@ export interface IGeoInfo {
   metro: number
   area: number
 }
-interface IRequest2 extends IRequest{
-  geoInfo: IGeoInfo
-  clientIp: string
+interface IRequestImageParamValidation {
+  isRequired: boolean
+  fileName: string
 }
-export const TrimMobileNo = (contactNo: string|number): string => contactNo.toString().replace(/[^+\d]+/g, "")
 export const ValidateMobileNo = (contactNo: string|number): string|null => {
   const newN = contactNo.toString().trim().replace(/ /g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '')
   const txt = newN.toString().match(RegexValidator.ValidateMobileNo)
   return txt ? txt[0].substr(txt[0].length - 10, 10): null
-}
-export const ValidateEmail = (email: string): boolean => {
-  const pattern = /^\S+@\S+$/
-  return pattern.test(email)
 }
 /**
  * 
@@ -69,14 +64,29 @@ export const requestParamsValidatorMiddleware = (pipeline: any[], imageFileName?
     await Promise.all(pipeline.map(validation => validation.run(req)));
     let result: any = validationResult(req)
     
-    const validateUploadedImage = (fileName: string) => {
-      const image = req.files[fileName]
+    const validateUploadedImage = (uploadedImage: string | IRequestImageParamValidation) => {
+      const _paramName = (typeof(uploadedImage) === 'string') ? uploadedImage : uploadedImage.fileName
+      var image = req.files[_paramName]
+      const imageURL = req.body[_paramName]
+      if (imageURL && (typeof imageURL === 'string' && ValidateImage.test(imageURL))) {
+        // if imageURL is not empty and image format, skip the validation
+        return true
+      }
+      if (!(typeof(uploadedImage) === 'string') && (uploadedImage.isRequired && !image)) {
+        result.errors.push({
+          value: image,
+          msg: `this field is required. ${_paramName}: ${(ValidateImage).toString()} `,
+          param: _paramName,
+          location: 'file'
+        })
+        return false
+      }
       if (image && image.size > 0) {
         if (!(image.type.match(ValidateImage))) {
           result.errors.push({
             value: image,
             msg: `allow file type to upload. ${(ValidateImage).toString()}`,
-            param: fileName,
+            param: _paramName,
             location: 'file'
           })
         }

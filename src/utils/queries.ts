@@ -57,7 +57,7 @@ class Queries<T> {
   }
   public upload (filepath: string, file: any): Promise<UploadedImage> {
     //@ts-ignore
-    return Promise.resolve(file ? s3.upload(filepath, file) : {imageUrl: ''})
+    return Promise.resolve(file && file.size >= 1 ? s3.upload(filepath, file) : {imageUrl: ''})
   }
   public uploadMany (filepath: string, files: Array<any>) {
     return Promise.all(files.map((file: any) => this.upload(filepath, file)))
