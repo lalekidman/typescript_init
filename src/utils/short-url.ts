@@ -5,7 +5,6 @@ export default class ShortURL {
     this.DOMAIN = domain
   }
   public generate (url: string) {
-    console.log('this.domain.concat(url): ', this.DOMAIN.concat(url))
     return http({
       url: 'https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=',
       method: 'POST',
