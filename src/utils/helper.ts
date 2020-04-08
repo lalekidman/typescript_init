@@ -72,7 +72,7 @@ export const requestParamsValidatorMiddleware = (pipeline: any[], imageFileName?
         // if imageURL is not empty and image format, skip the validation
         return true
       }
-      if (!(typeof(uploadedImage) === 'string') && (uploadedImage.isRequired && !image)) {
+      if (!(typeof(uploadedImage) === 'string') && (uploadedImage.isRequired && image?.size <= 0)) {
         result.errors.push({
           value: image,
           msg: `this field is required. ${_paramName}: ${(ValidateImage).toString()} `,

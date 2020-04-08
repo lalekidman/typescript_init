@@ -1,16 +1,37 @@
 import http from './http'
+import { DYNAMIC_LINK_API_KEY } from './constants'
+// import * as http from 'request'
 export default class ShortURL {
-  private DOMAIN : string
-  constructor (domain: string) {
-    this.DOMAIN = domain
+  private HOST : string
+  /**
+   * create short url using dynamic links of firebase.
+   * @param host 
+   */
+  constructor (host: string) {
+    this.HOST = host
   }
-  public generate (url: string) {
+  public generate (url: string, data: any) {
+    const {metaTags = null} =data
     return http({
-      url: 'https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=',
+      url: `https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${DYNAMIC_LINK_API_KEY}`,
       method: 'POST',
       // "Content-Type": 'application/json',
       data: {
-        longDynamicLink: `https://dqv3s.app.goo.gl?link=${this.DOMAIN.concat(url)}`
+        dynamicLinkInfo: Object.assign({
+          domainUriPrefix: "https://kyoo.page.link",
+          link: this.HOST.concat(url),
+          androidInfo: {
+            androidPackageName: "com.leisue.kyoo_customer"
+          }
+        }, 
+          metaTags ? {
+            socialMetaTagInfo: {
+              socialTitle: metaTags.title,
+              socialDescription: metaTags.desc,
+              socialImageLink: metaTags.imageURL
+            }
+          } : {}
+        )
       }
     })
     .then((response: any) => {
