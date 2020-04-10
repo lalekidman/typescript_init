@@ -1,6 +1,7 @@
 import {default as http, AxiosResponse, AxiosRequestConfig } from 'axios'
 import AppError from './app-error'
 import {SYSTEM_ERROR, SERVER_FAILED, URL_NOT_FOUND, UNAUTHORIZED_REQUEST} from './response-codes'
+import {REQUEST_LOCATION_TYPES} from './constants'
 export default (data: AxiosRequestConfig) => {
   return http(data)
   // .then((response: AxiosResponse) => {
@@ -10,16 +11,41 @@ export default (data: AxiosRequestConfig) => {
     .catch((err: any) => {
       if (err.code === 'ECONNREFUSED') {
         // can't reach the ip,
-        throw new AppError(SERVER_FAILED, err.message)
+        throw new AppError({
+          location: REQUEST_LOCATION_TYPES.SYSTEM,
+          value: '',
+          param: 'SYSTEM',
+          msg: SERVER_FAILED
+        }, err.message)
       } else if (err.response.status === 500) {
         //server problem
-        throw new AppError(SYSTEM_ERROR, err.message)
+        throw new AppError({
+          location: REQUEST_LOCATION_TYPES.SYSTEM,
+          value: '',
+          param: 'SYSTEM',
+          msg: SYSTEM_ERROR
+        }, err.message)
       } else if (err.response.status === 400) {
-        throw new AppError(err.response.data)
+        throw new AppError({
+          location: REQUEST_LOCATION_TYPES.SYSTEM,
+          value: '',
+          param: 'SYSTEM',
+          msg: err.response.data
+        }, err.message)
       } else if (err.response.status === 404) {
-        throw new AppError(URL_NOT_FOUND, 'Request failed with status code 404')
+        throw new AppError({
+          location: REQUEST_LOCATION_TYPES.SYSTEM,
+          value: '',
+          param: 'SYSTEM',
+          msg: URL_NOT_FOUND
+        }, err.message)
       } else if (err.response.status === 401) {
-        throw new AppError(UNAUTHORIZED_REQUEST, err.response.data.error)
+        throw new AppError({
+          location: REQUEST_LOCATION_TYPES.SYSTEM,
+          value: '',
+          param: 'SYSTEM',
+          msg: UNAUTHORIZED_REQUEST
+        }, err.response.data.error)
       } else {
         const {message = '', response = {}} = err || {}
         console.log('message: ', message)

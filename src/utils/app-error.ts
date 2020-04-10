@@ -25,8 +25,8 @@ export default class AppError implements IErrorData {
   public location: string
   public param: string
   public value: any
-  constructor (data: IErrorData) {
-    this.msg = new _AppError(data.msg)
+  constructor (data: IErrorData, errorMessage?: string) {
+    this.msg = new _AppError(data.msg, errorMessage)
     this.location = data.location
     this.param = data.param
     this.value = data.value
