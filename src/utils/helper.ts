@@ -3,7 +3,7 @@ import { IRequest} from './interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
 import * as HttpStatus from 'http-status-codes'
-import {ValidateImage} from './regex-validator'
+import {ImagePattern, MobileNumberPattern} from './regex-validator'
 import * as RegexValidator from './regex-validator'
 import AppError from './app-error';
 import { REQUEST_LOCATION_TYPES } from './constants';
@@ -24,7 +24,7 @@ interface IRequestImageParamValidation {
 }
 export const ValidateMobileNo = (contactNo: string|number): string|null => {
   const newN = contactNo.toString().trim().replace(/ /g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '')
-  const txt = newN.toString().match(RegexValidator.ValidateMobileNo)
+  const txt = newN.toString().match(MobileNumberPattern)
   return txt ? txt[0].substr(txt[0].length - 10, 10): null
 }
 /**
@@ -68,24 +68,24 @@ export const requestParamsValidatorMiddleware = (pipeline: any[], imageFileName?
       const _paramName = (typeof(uploadedImage) === 'string') ? uploadedImage : uploadedImage.fileName
       var image = req.files[_paramName]
       const imageURL = req.body[_paramName]
-      if (imageURL && (typeof imageURL === 'string' && ValidateImage.test(imageURL))) {
+      if (imageURL && (typeof imageURL === 'string' && ImagePattern.test(imageURL))) {
         // if imageURL is not empty and image format, skip the validation
         return true
       }
       if (!(typeof(uploadedImage) === 'string') && (uploadedImage.isRequired && image?.size <= 0)) {
         result.errors.push({
           value: image,
-          msg: `this field is required. ${_paramName}: ${(ValidateImage).toString()} `,
+          msg: `this field is required. ${_paramName}: ${(ImagePattern).toString()} `,
           param: _paramName,
           location: 'file'
         })
         return false
       }
       if (image && image.size > 0) {
-        if (!(image.type.match(ValidateImage))) {
+        if (!(image.type.match(ImagePattern))) {
           result.errors.push({
             value: image,
-            msg: `allow file type to upload. ${(ValidateImage).toString()}`,
+            msg: `allow file type to upload. ${(ImagePattern).toString()}`,
             param: _paramName,
             location: 'file'
           })
