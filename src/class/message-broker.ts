@@ -1,5 +1,5 @@
 import * as kafka from 'kafka-node'
-import {CreateTopicRequest} from 'kafka-node'
+import {CreateTopicRequest, ConsumerOptions, ConsumerGroupOptions} from 'kafka-node'
 import { Schema, model } from 'mongoose'
 import { KAFKA_HOST } from '../utils/constants';
 import * as uuid from 'uuid/v4'
@@ -17,6 +17,10 @@ interface IEventLogsModel extends IEventLogs, Document {}
 interface IKafka {
   topics?: Array<string | CreateTopicRequest>
   host: string
+}
+interface IConsumerOptions extends ConsumerOptions{
+  offset?: number
+  topic: string
 }
 export const EventLogsObject = {
   _id: {
@@ -60,6 +64,7 @@ interface ISend {
 export default class MessageBroker {
 private isReady: boolean = false
 private topicOptions: Array<CreateTopicRequest> =[]
+private subscriptionOptions: Array<ConsumerOptions | ConsumerGroupOptions> =[]
 private subscriber :any
 private kafkaClient: kafka.KafkaClient
 private kafkaProducer: kafka.Producer
@@ -69,7 +74,6 @@ private static isTopicsInitialized: boolean = false
     const {host, topics} = data
     this.kafkaClient = new kafka.KafkaClient({kafkaHost: host}),
     this.kafkaProducer = new Producer(this.kafkaClient),
-    this.initializeTopics(topics)
     this.kafkaProducer.on('ready', () => {
       console.log(' >> Producer is ready.')
       this.isReady = true
@@ -79,58 +83,64 @@ private static isTopicsInitialized: boolean = false
   /**
    * initialize/create topics
    */
-  private initializeTopics (topics?: Array<string | CreateTopicRequest>) {
-    this.mapTopics(topics)
+  public initializeTopics (topics?: Array<string | CreateTopicRequest>) {
+    MessageBroker.isTopicsInitialized = false
+    this.mapPublisherOptions(topics)
     this.createTopics(this.topicOptions)
   }
-  /**
-   * set new list of topics
-   * @param topics 
-   */
-  public reInitializeTopics (topics?: Array<string | CreateTopicRequest>) {
-    MessageBroker.isTopicsInitialized = false
-    this.initializeTopics(topics)
-  }
 
-  private mapTopics (topics?: Array<string | CreateTopicRequest>) {
-    this.topicOptions = topics ? topics.map((topic) => (typeof topic === 'string' ? {
+  private mapPublisherOptions (topics?: Array<string | CreateTopicRequest>) {
+    return this.topicOptions = topics ? topics.map((topic) => (typeof topic === 'string' ? {
       partitions: 1,
       replicationFactor: 1,
       topic: topic.toString().trim()
     } : topic)) : []
   }
   /**
-   * load consumers/topics
+   * map the subscription options
+   * @param options 
    */
-  public async initializeSubscriber (callback?: any) {
-    try {
-      if (!(MessageBroker.isSubscribeInitialized)) {
-        const options = await Promise.all(this.topicOptions.map(async (topic) => {
-          let offset = -1
+  private async mapSubscriptionOptions (options: Array<string|IConsumerOptions>) {
+    return this.subscriptionOptions = await Promise.all(options.map(async (option) => {
+      if (typeof option === 'string') {
+        option = {
+          topic: option,
+          offset: 0,
+          fromOffset: false,
+          encoding: 'utf8',
+          keyEncoding: 'utf8'
+        }
+      } else {
+        option.offset = option.offset ?? 0
+        if (!(option.offset && option.offset >= 0)) {
           try {
             const broken = await EventLogs.findOne({
-              event: topic.topic
+              event: option.topic
             })
             .sort({
               offset: -1
             })
-            offset = broken ? broken.offset- 2 : -1
+            option.offset = broken ? broken.offset : 0
           } catch (err) {
             console.log('failed to get last event')
           }
-          return {
-            ...topic,
-            offset: offset,
-            fromOffset: true,
-            encoding: 'utf8',
-            keyEncoding: 'utf8'
-          }
-        }))
+        }
+      }
+      return option
+    }))
+  }
+  /**
+   * load consumers/topics
+   */
+  public async initializeSubscriber (options: Array<string | IConsumerOptions>, callback?: any) {
+    try {
+      if (!(MessageBroker.isSubscribeInitialized)) {
+        const _options = await this.mapSubscriptionOptions(options)
         MessageBroker.isSubscribeInitialized = true
         console.log(' >> set new consumer options.')
         this.subscriber = new Consumer(
           this.kafkaClient,
-          options,
+          _options,
           {
               autoCommit: false
           }
@@ -224,6 +234,12 @@ private static isTopicsInitialized: boolean = false
             updatedAt: Date.now()
           })
           .save()
+          this.subscriber.commit((err, data) => {
+            if (!err) {
+              console.log(' >> successfully commited data.')
+              console.log(data)
+            }
+          })
           console.log(' >> successfully save new event.')
         } catch (err) {
           console.log(' >> failed to save new event.')
