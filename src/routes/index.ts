@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Request, Response, NextFunction, Router} from 'express'
 import * as HttpStatus from 'http-status-codes'
-export class _Router {
+export default class _Router {
   /**
    * @class initiate router class
    */
