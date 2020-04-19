@@ -18,10 +18,12 @@ interface IKafka {
   topics?: Array<string | CreateTopicRequest>
   host: string
 }
-export interface ISubscriptionOptions extends ConsumerOptions{
+export interface ISubscriptionOptions {
   offset?: number
   topic: string
+  partition: number
 }
+// type ISubscriptionConfig & Omit<ConsumerOptions, "autoCommit"> 
 export const EventLogsObject = {
   _id: {
     type: String,
@@ -64,7 +66,8 @@ interface ISend {
 export default class MessageBroker {
 private isReady: boolean = false
 private topicOptions: Array<CreateTopicRequest> =[]
-private subscriptionOptions: Array<ConsumerOptions | ConsumerGroupOptions> =[]
+private subscriptionOptions: Array<ISubscriptionOptions> =[]
+private subscriptionConfig: ConsumerOptions = {fromOffset: false, autoCommit: false}
 private subscriber: kafka.Consumer = <any>{}
 private kafkaClient: kafka.KafkaClient
 private kafkaProducer: kafka.Producer
@@ -92,19 +95,22 @@ private isTopicsInitialized: boolean = false
   /**
    * load consumers/topics
    */
-  public async initializeSubscribeOptions (options: Array<string | ISubscriptionOptions>, callback?: any) {
+  public async initializeSubscribeOptions (payloads: Array<string|ISubscriptionOptions>, config: ConsumerOptions, callback?: any) {
     try {
       if (!(this.isSubscribeInitialized)) {
-        const _options = await this.mapSubscriptionOptions(options)
-        this.isSubscribeInitialized = true
+        const _options = await this.mapSubscriptionOptions(payloads, config)
+        this.subscriptionConfig = config
+        // remove autoCommit config
+        const {autoCommit, ..._config} = config
+        console.log('_options: ', _options)
+        console.log('_options: ', this.subscriptionConfig)
         console.log(' >> set new consumer options.')
         this.subscriber = new Consumer(
           this.kafkaClient,
           _options,
-          {
-              autoCommit: false
-          }
+          _config
         )
+        this.isSubscribeInitialized = true
       }
       if (callback) {
         callback(true) 
@@ -141,29 +147,31 @@ private isTopicsInitialized: boolean = false
    * map the subscription options
    * @param options 
    */
-  private async mapSubscriptionOptions (options: Array<string|ISubscriptionOptions>) {
+  private async mapSubscriptionOptions (options: Array<string|ISubscriptionOptions>, config: ConsumerOptions) {
     return this.subscriptionOptions = await Promise.all(options.map(async (option) => {
       if (typeof option === 'string') {
         option = {
           topic: option,
           offset: 0,
-          fromOffset: false,
-          encoding: 'utf8',
-          keyEncoding: 'utf8'
+          partition: 0
         }
       } else {
         option.offset = option.offset ?? 0
-        if (!(option.offset && option.offset >= 0)) {
-          try {
-            const broken = await EventLogs.findOne({
-              event: option.topic
-            })
-            .sort({
-              offset: -1
-            })
-            option.offset = broken ? broken.offset : 0
-          } catch (err) {
-            console.log('failed to get last event')
+        if (config.fromOffset) {
+          if (!(option.offset && option.offset >= 0)) {
+            try {
+              const eventLog = await EventLogs.findOne({
+                event: option.topic
+              })
+              .sort({
+                offset: -1
+              })
+              if (eventLog) {
+                option.offset = (eventLog.offset + 1)
+              }
+            } catch (err) {
+              console.log('failed to get last event')
+            }
           }
         }
       }
@@ -251,15 +259,16 @@ private isTopicsInitialized: boolean = false
             updatedAt: Date.now()
           })
           .save()
-          this.subscriber.commit(async (err, data) => {
-            if (!err) {
-              console.log(' >> successfully commited data.')
-              console.log(data)
-            } else {
-              // remove event log if commit is failed.
-              (await newEvent).remove()
-            }
-          })
+          if (this.subscriptionConfig.autoCommit) {
+            this.subscriber.commit(async (err, data) => {
+              if (!err) {
+                console.log(' >> successfully commited data.')
+              } else {
+                // remove event log if commit is failed.
+                (await newEvent).remove()
+              }
+            })
+          }
           console.log(' >> successfully save new event.')
         } catch (err) {
           console.log(' >> failed to save new event.')
