@@ -172,11 +172,10 @@ private isTopicsInitialized: boolean = false
   }
   /**
    * 
-   * @param data 
-   *  - topic, where to publish id where the customer will listen/subscribe
-   *  - message string or object of data
+   * @param payloads 
+   * @param callback 
    */
-  public async publish (payloads: ISend[], callback?: any) {
+  private async send (payloads: ISend[], callback?: any) {
     var delay = <any>0
     if (!this.isReady) {
       console.log(' >> Waiting to connect...')
@@ -206,6 +205,24 @@ private isTopicsInitialized: boolean = false
         callback(err, data)
       }
     });
+  }
+  /**
+   * 
+   * @param data 
+   *  - topic, where to publish id where the customer will listen/subscribe
+   *  - message string or object of data
+   */
+  public async publish (payload: ISend, callback?: any) {
+    return this.send([payload], callback)
+  }
+  /**
+   * 
+   * @param data 
+   *  - topic, where to publish id where the customer will listen/subscribe
+   *  - message string or object of data
+   */
+  public async batchPublish (payloads: ISend[], callback?: any) {
+    return this.send(payloads, callback)
   }
   /**
    * 
