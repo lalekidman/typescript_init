@@ -70,8 +70,8 @@ private kafkaClient: kafka.KafkaClient
 private kafkaProducer: kafka.Producer
 private isSubscribeInitialized: boolean = false
 private isTopicsInitialized: boolean = false
-  constructor (data: IKafka) {
-    const {host, topics} = data
+  constructor (host: string) {
+    // const {host, topics} = data
     this.kafkaClient = new kafka.KafkaClient({kafkaHost: host}),
     this.kafkaProducer = new Producer(this.kafkaClient),
     this.kafkaProducer.on('ready', () => {
