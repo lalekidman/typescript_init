@@ -65,11 +65,11 @@ export default class MessageBroker {
 private isReady: boolean = false
 private topicOptions: Array<CreateTopicRequest> =[]
 private subscriptionOptions: Array<ConsumerOptions | ConsumerGroupOptions> =[]
-private subscriber :any
+private subscriber: kafka.Consumer = <any>{}
 private kafkaClient: kafka.KafkaClient
 private kafkaProducer: kafka.Producer
-private static isSubscribeInitialized: boolean = false
-private static isTopicsInitialized: boolean = false
+private isSubscribeInitialized: boolean = false
+private isTopicsInitialized: boolean = false
   constructor (data: IKafka) {
     const {host, topics} = data
     this.kafkaClient = new kafka.KafkaClient({kafkaHost: host}),
@@ -83,12 +83,53 @@ private static isTopicsInitialized: boolean = false
   /**
    * initialize/create topics
    */
-  public initializeTopics (topics?: Array<string | CreateTopicRequest>) {
-    MessageBroker.isTopicsInitialized = false
+  public initializeTopicOptions (topics?: Array<string | CreateTopicRequest>) {
+    this.isTopicsInitialized = false
     this.mapPublisherOptions(topics)
     this.createTopics(this.topicOptions)
   }
-
+  
+  /**
+   * load consumers/topics
+   */
+  public async initializeSubscribeOptions (options: Array<string | IConsumerOptions>, callback?: any) {
+    try {
+      if (!(this.isSubscribeInitialized)) {
+        const _options = await this.mapSubscriptionOptions(options)
+        this.isSubscribeInitialized = true
+        console.log(' >> set new consumer options.')
+        this.subscriber = new Consumer(
+          this.kafkaClient,
+          _options,
+          {
+              autoCommit: false
+          }
+        )
+      }
+      if (callback) {
+        callback(true) 
+      }
+      return true
+    } catch (err) {
+      console.log('ERROR ON subscribing : ', err)
+    }
+  }
+  private createTopics (topics: CreateTopicRequest[]) {
+    if (this.isTopicsInitialized) {
+      // to stop recreating the topic every call/instances
+      console.log(' >> no creating of data.')
+      return true
+    }
+    this.kafkaClient.createTopics(topics, (err, result) => {
+      const createdTopicsString = topics.map((topic) => topic.topic).join(",")
+      if (err) {
+        console.log(` >> Unable to create topics ${createdTopicsString}.`)
+        return
+      }
+      this.isTopicsInitialized = true
+      console.log(` >> created topic: ${createdTopicsString}.`)
+    })
+  }
   private mapPublisherOptions (topics?: Array<string | CreateTopicRequest>) {
     return this.topicOptions = topics ? topics.map((topic) => (typeof topic === 'string' ? {
       partitions: 1,
@@ -130,53 +171,12 @@ private static isTopicsInitialized: boolean = false
     }))
   }
   /**
-   * load consumers/topics
-   */
-  public async initializeSubscriber (options: Array<string | IConsumerOptions>, callback?: any) {
-    try {
-      if (!(MessageBroker.isSubscribeInitialized)) {
-        const _options = await this.mapSubscriptionOptions(options)
-        MessageBroker.isSubscribeInitialized = true
-        console.log(' >> set new consumer options.')
-        this.subscriber = new Consumer(
-          this.kafkaClient,
-          _options,
-          {
-              autoCommit: false
-          }
-        )
-      }
-      if (callback) {
-        callback(true) 
-      }
-      return true
-    } catch (err) {
-      console.log('ERROR ON subscribing : ', err)
-    }
-  }
-  private createTopics (topics: CreateTopicRequest[]) {
-    if (MessageBroker.isTopicsInitialized) {
-      // to stop recreating the topic every call/instances
-      console.log(' >> no creating of data.')
-      return true
-    }
-    this.kafkaClient.createTopics(topics, (err, result) => {
-      const createdTopicsString = topics.map((topic) => topic.topic).join(",")
-      if (err) {
-        console.log(` >> Unable to create topics ${createdTopicsString}.`)
-        return
-      }
-      MessageBroker.isTopicsInitialized = true
-      console.log(` >> created topic: ${createdTopicsString}.`)
-    })
-  }
-  /**
    * 
    * @param data 
    *  - topic, where to publish id where the customer will listen/subscribe
    *  - message string or object of data
    */
-  public async send (payloads: ISend[], callback?: any) {
+  public async publish (payloads: ISend[], callback?: any) {
     var delay = <any>0
     if (!this.isReady) {
       console.log(' >> Waiting to connect...')
@@ -214,7 +214,7 @@ private static isTopicsInitialized: boolean = false
    *  - message string or object of data
    */
   public subscribe (event: string, callback: any) {
-    this.initializeSubscriber(() => {
+    if (this.isSubscribeInitialized) {
       this.subscriber.on("message", async (message: any) => {
         try {
           message.value = message.value ? JSON.parse(message.value) : {}
@@ -234,10 +234,13 @@ private static isTopicsInitialized: boolean = false
             updatedAt: Date.now()
           })
           .save()
-          this.subscriber.commit((err, data) => {
+          this.subscriber.commit(async (err, data) => {
             if (!err) {
               console.log(' >> successfully commited data.')
               console.log(data)
+            } else {
+              // remove event log if commit is failed.
+              (await newEvent).remove()
             }
           })
           console.log(' >> successfully save new event.')
@@ -246,10 +249,12 @@ private static isTopicsInitialized: boolean = false
           console.log('ERR: ', err.message)
         }
         if (event === message.topic) {
-          callback(message)
+          callback(null, message)
         }
         return true
       })
-    })
+    } else {
+      callback('subscriber options not yet initialized.', null)
+    }
   }
 }
