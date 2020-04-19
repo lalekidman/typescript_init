@@ -18,7 +18,7 @@ interface IKafka {
   topics?: Array<string | CreateTopicRequest>
   host: string
 }
-interface IConsumerOptions extends ConsumerOptions{
+export interface ISubscriptionOptions extends ConsumerOptions{
   offset?: number
   topic: string
 }
@@ -92,7 +92,7 @@ private isTopicsInitialized: boolean = false
   /**
    * load consumers/topics
    */
-  public async initializeSubscribeOptions (options: Array<string | IConsumerOptions>, callback?: any) {
+  public async initializeSubscribeOptions (options: Array<string | ISubscriptionOptions>, callback?: any) {
     try {
       if (!(this.isSubscribeInitialized)) {
         const _options = await this.mapSubscriptionOptions(options)
@@ -141,7 +141,7 @@ private isTopicsInitialized: boolean = false
    * map the subscription options
    * @param options 
    */
-  private async mapSubscriptionOptions (options: Array<string|IConsumerOptions>) {
+  private async mapSubscriptionOptions (options: Array<string|ISubscriptionOptions>) {
     return this.subscriptionOptions = await Promise.all(options.map(async (option) => {
       if (typeof option === 'string') {
         option = {
