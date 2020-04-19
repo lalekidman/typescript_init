@@ -22,7 +22,7 @@ export default class DB {
   public setDbUrl (url: string) {
     return this.DBURI = url
   }
-  public _init () {
+  public connect () {
     this.DBURI = `mongodb://${this.host}/${this.name}`
     if (process.env.NODE_ENV === 'test') {
 
