@@ -181,7 +181,7 @@ private isTopicsInitialized: boolean = false
     if (!this.isReady) {
       console.log(' >> Waiting to connect...')
       clearTimeout(delay)
-      delay = setTimeout(() => (this.send(payloads, callback)), 250)
+      delay = setTimeout(() => (this.publish(payloads, callback)), 250)
     }
     payloads = await Promise.all(payloads.map(async (payload) => {
       try {
