@@ -51,8 +51,8 @@ class App {
       })
     })
   }
-  private async initMongodb () {
-    await new DB(DB_HOST, DB_NAME)
+  private async connectDatabase () {
+    await new DB(DB_HOST, DB_NAME).connect()
   }
   public listen (port?: number):void {
     this.server = this.app.listen(port || this.Port, () => {
@@ -89,7 +89,7 @@ class App {
       next()
     })
     this.mountRoutes()
-    this.initMongodb()
+    this.connectDatabase()
   }
 }
 const app = new App()

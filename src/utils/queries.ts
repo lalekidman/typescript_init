@@ -1,5 +1,5 @@
 import * as uuid from 'uuid/v4'
-import {Document, Schema, Model, model, ModelPopulateOptions} from 'mongoose'
+import {Document, Schema, Model, model, ModelPopulateOptions, Collection} from 'mongoose'
 import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
@@ -30,36 +30,72 @@ interface IAppError {
   error: string
   source: string
 }
-class Queries<T> {
-  public ModelSchema: any
-  public ModelInterface: any
-  private errorMsg: string | IAppError = ''
-  constructor (mod: T) {
-    if (!mod) throw new Error('model is required.')
-    this.ModelSchema = mod
-  }
-  public save (data: object) {
-    const collection = this.initilize(data)
-    return <T>collection.save()
-  }
-  public initilize (data: any) {
-    const id = uuid()
-    //override the _id id createdAt and updatedAt when the data object already have it.
-    return new this.ModelSchema(Object.assign({id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}, data))
-  }
+interface IStateChangeData {
+  newData: any
+  previousData?: any
+  state?: string|number
+}
+interface IStateDidChangedListener {
+  (event: string|number, data: IStateChangeData) : void 
+}
+interface IStateWillChangeListener {
+  (event: string|number, data: IStateChangeData) : void 
+}
+/**
+ * T - for the Collection model type
+ * EM - is for the Event Model logs
+ */
+class Queries <T> {
+  private ModelSchema: T
+
+  private static stateDidChangedCallback: IStateDidChangedListener|null = null
+  private static stateWillChangeCallback: IStateWillChangeListener|null = null
   /**
    * 
-   * @param id id or document of the collection
-   * check if the id is string or collection, if string will perform a query else, return the document.
+   * @param collectionModel
+   * @param eventLogsModel
    */
-  public findById <T> (id: string | (T | Document)): Promise<T> {
-    return Promise.resolve(<any> (typeof(id) === 'string' ? this.ModelSchema.findOne({_id: id}) : id))
+  constructor(collectionModel: any,) {
+    if (!collectionModel) throw new Error('collectionModel is required.')
+    this.ModelSchema = collectionModel
   }
-  public upload (filepath: string, file: any): Promise<UploadedImage> {
+  /**
+   * save model with default properties {
+   * - id: uuid/v4
+   * - createdAt: currentDate(milis)
+   * - updatedAt: currentDate(milis)
+   * }
+   * @param data 
+   */
+  protected save(data: object) {
+    const collection = this.initilize(data)
+    //@ts-ignore
+    return collection.save()
+  }
+  /**
+   * initialize model schema with default properties {
+   * - id: uuid/v4
+   * - createdAt: currentDate(milis)
+   * - updatedAt: currentDate(milis)
+   * }
+   * @param data 
+   */
+  protected initilize(data: any) {
+    const id = uuid()
+    //override the _id id createdAt and updatedAt when the data object already have it.
+    //@ts-ignore
+    return <T> new this.ModelSchema(Object.assign({id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}, data))
+  }
+  /**
+   * upload file with aws s3
+   * @param filepath 
+   * @param file 
+   */
+  protected upload (filepath: string, file: any): Promise<UploadedImage> {
     //@ts-ignore
     return Promise.resolve(file && file.size >= 1 ? s3.upload(filepath, file) : {imageUrl: ''})
   }
-  public uploadMany (filepath: string, files: Array<any>) {
+  protected uploadMany (filepath: string, files: Array<any>) {
     return Promise.all(files.map((file: any) => this.upload(filepath, file)))
   }
   /**
@@ -139,6 +175,7 @@ class Queries<T> {
           counts: '$totalPages.counts'
         }
     }])
+    //@ts-ignore
     return this.ModelSchema.aggregate(paginationQuery).then((response: any) => {
       return <IAggregateWithPagination> (response.length >= 1 ? {
         data: response[0].data,
@@ -146,6 +183,41 @@ class Queries<T> {
         totalCounts: response[0].counts
       }: {data: [], totalPages: 0, totalCounts: 0})
     })
+  }
+  
+  /**
+   * use this to call the state callback
+   * @param state state/event
+   * @param data 
+   */
+  protected stateDidChanged (state: string|number, data: IStateChangeData) {
+    if (Queries.stateDidChangedCallback) {
+      Queries.stateDidChangedCallback(state, data)
+    }
+  }
+  /**
+   * use this to call the state callback
+   * @param state state/event
+   * @param data 
+   */
+  protected stateWillChange (state: string|number, data: IStateChangeData) {
+    if (Queries.stateWillChangeCallback) {
+      Queries.stateWillChangeCallback(state, data)
+    }
+  }
+  /**
+   * set a callback for post action of state
+   * @param callback 
+   */
+  public static stateDidChangedListener (callback: IStateDidChangedListener) {
+    Queries.stateDidChangedCallback = callback
+  }
+  /**
+   * set a callback for pre action of state
+   * @param callback
+   */
+  public static stateWillChangeListener (callback: IStateDidChangedListener) {
+    Queries.stateWillChangeCallback = callback
   }
   public get query () {
     return this.ModelSchema

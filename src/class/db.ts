@@ -11,7 +11,6 @@ export default class DB {
   constructor (host: string, name: string) {
     this.setHost(host)
     this.setName(name)
-    this._init()
   }
   public setName (name: string) {
     return this.name = name
