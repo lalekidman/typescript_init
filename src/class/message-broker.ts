@@ -36,7 +36,11 @@ interface IPublishData {
   key?: string,
   messages: IPublishMessage
 }
-export default class MessageBroker {
+interface IMessageBroker {
+  subscribe(event: string, callback: ICallback) : void
+  subscribe(callback: ICallback) : void
+}
+export default class MessageBroker implements IMessageBroker {
 private isReady: boolean = false
 private topicOptions: Array<CreateTopicRequest> =[]
 private subscriptionOptions: Array<ISubscriptionOptions> =[]
@@ -61,6 +65,15 @@ private isTopicsInitialized: boolean = false
     this.kafkaClient = new kafka.KafkaClient({kafkaHost: this.KafkaHost}),
     this.kafkaProducer = new Producer(this.kafkaClient),
     this.offset = new kafka.Offset(this.kafkaClient)
+    // const admin = new kafka.Admin(this.kafkaClient)
+    // admin.listGroups((err, res) => {
+    //   console.log('consumerGroups', res);
+    // });
+    // admin.describeGroups(['ORDER_MESSAGE_BROKER-LISTENER-1'], (err, res) => {
+    //   // console.log(JSON.stringify(res,null,1))
+    //   // console.log('consumerGroups', res);
+    //   // console.log('consumerGroups', res['ORDER_MESSAGE_BROKER-LISTENER-1'].members);
+    // });
     this.kafkaProducer.on('ready', () => {
       console.log(' >> Producer is ready.')
       this.isReady = true
@@ -121,22 +134,41 @@ private isTopicsInitialized: boolean = false
         // if (config.fromOffset) {
         //   offset = <number>await this.getTheLastOffset(option.topic)
         // }
-        this.subscriber = new kafka.ConsumerGroup({
-          ...config,
+        // const allTopics = _options.reduce((topics: string[], option: any) => topicsoption.topic)
+        const allTopics = _options.map((option: any) => option.topic)
+        const ConsumerGroupConfig = <ConsumerGroupOptions>{
+          ..._config,
           autoCommit: false,
           fromOffset: 'latest',
           kafkaHost: this.KafkaHost,
           encoding: 'utf8',
           keyEncoding: 'utf8',
-          //@ts-ignore
-          onRebalance: (isAlreadyMember, callback) => {
-            callback()
-          }
-        }, _options.map((option) => option.topic))
-        this.isSubscribeInitialized = true
-        this.listenToEvents()
+          sessionTimeout: 15000,
+
+
+        }
+        this.subscriber = new kafka.ConsumerGroup(ConsumerGroupConfig, allTopics)
+        this.subscriber.on("connect", () => {
+          this.isSubscribeInitialized = true
+          this.listenToEvents()
+        })
+        this.subscriber.on("error", (err) => {
+          this._callback(callback, err, null)
+        })
+        this.subscriber.on("rebalancing", () => {
+          console.log(' rebalancing...')
+          // this._callback(callback, err, null)
+        })
+        this.subscriber.on("rebalanced", () => {
+          console.log(' rebalancing done!')
+          // this._callback(callback, err, null)
+        })
+        this.subscriber.on("offsetOutOfRange", (err) => {
+          console.log(' invalid offset!')
+          this._callback(callback, err, null)
+        })
+        this._callback(callback, null, allTopics)
       }
-      this._callback(callback, null, true)
       return true
     } catch (err) {
       this._callback(callback, err, null)
@@ -188,16 +220,16 @@ private isTopicsInitialized: boolean = false
   //   return this.
   // }
   /**
-   * dispatch match evvents
-   * @param event event or topic needed to be dispatch
+   * dispatch match events
+   * @param topic event or topic needed to be dispatch
    * @param err 
    * @param data 
    */
-  private dispatchCallbacks (event: string, err: any, data: any) {
+  private dispatchCallbacks (topic: string|null = null, err: any, data: any) {
     for (let index in this.ArrayOfCallbacks) {
       const _callback = this.ArrayOfCallbacks[index]
-      if (_callback.topic === event) {
-        this._callback(_callback.callback, err, data)
+      if (_callback.topic === null || _callback.topic === topic) {
+        this._callback(_callback.callback, err, {topic, data})
       }
     }
   }
@@ -241,15 +273,6 @@ private isTopicsInitialized: boolean = false
         }
       } else {
         option.offset = option.offset ?? 0
-        // if (config.fromOffset) {
-        //   if (!(option.offset && option.offset > 0)) {
-        //     try {
-        //       option.offset = <number>await this.getTheLastOffset(option.topic)
-        //     } catch (err) {
-        //       console.log('failed to get last event')
-        //     }
-        //   }
-        // }
       }
       return option
     }))
@@ -328,24 +351,33 @@ private isTopicsInitialized: boolean = false
    *  - topic, where to publish id where the customer will listen/subscribe
    *  - message string or object of data
    */
-  public subscribe (event: string, callback: ICallback) {
+  public subscribe (event: string | ICallback, callback?: ICallback) {
+    var _event = <any> event
+    var _callback = <any> callback
+    if (typeof event === 'string') {
+      _event = event.toString()
+      _callback = callback
+    } else {
+      _event = null
+      _callback = event
+    }
     if (this.isSubscribeInitialized) {
       console.log(' >> Connected.')
       this.ArrayOfCallbacks.push({
-        topic: event,
-        callback: callback
+        topic: _event,
+        callback: _callback
       })
     } else {
       // still reconnect if the allowed tries is not reached.
-      if (this.subscriptionRetriesAllowed >= this.subscriptionRetryTimes) {
-        console.log(` >> reconnecting retries ${this.subscriptionRetryTimes}`)
-        console.log(' >> reconnecting...')
-        this.subscriptionRetryTimes +=1
-        setTimeout(() => this.subscribe(event, callback), 100)
-        return
-      } else {
-        this._callback(callback, new Error('subscriber options not yet initialized.'), null)
-      }
+      // if (this.subscriptionRetriesAllowed >= this.subscriptionRetryTimes) {
+        // this.subscriptionRetryTimes += 1
+        console.log(' >>>> reconnecting...')
+        setTimeout(() => {
+          this.subscribe(event, callback)
+        }, 500)
+      // } else {
+      //   this._callback(_callback, new Error('subscriber options not yet initialized.'), null)
+      // }
     }
   }
   /**
