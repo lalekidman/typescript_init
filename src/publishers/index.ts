@@ -1,6 +1,6 @@
 import MessageBroker from '../class/message-broker'
 import { KAFKA_HOST } from '../utils/constants'
-class EventStreamer {
+class EventPublisher {
   /**
    * @class
    */
@@ -8,8 +8,8 @@ class EventStreamer {
   constructor() {
     this.messageBroker = new MessageBroker(KAFKA_HOST)
   }
-  public stream () {
-    // stream per service
+  public publish () {
+    // publish per service
   }
 }
-export default EventStreamer
+export default EventPublisher

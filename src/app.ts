@@ -17,7 +17,12 @@ import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
 import DB from './class/db'
 import { DB_HOST, DB_NAME, SERVER_PORT } from './utils/constants'
-const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH'
+
+// publishers and streamers
+import MainPublisher from './publishers/index'
+import MainStreamer from './streamers/index'
+
+const SECRET = ''
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'
 // import { Db } from 'mongodb';
@@ -53,6 +58,10 @@ class App {
   }
   private async connectDatabase () {
     await new DB(DB_HOST, DB_NAME).connect()
+      ?.then(() => {
+        new MainPublisher().publish()
+        new MainStreamer().stream()
+      })
   }
   public listen (port?: number):void {
     this.server = this.app.listen(port || this.Port, () => {
@@ -63,8 +72,8 @@ class App {
   private _init () { 
     
     this.app.use(morgan('dev'))
-    this.app.use(express.static(path.join(__dirname, '../views')))
-    this.app.set('views', path.join(__dirname, '../views'))
+    // this.app.use(express.static(path.join(__dirname, '../views')))
+    // this.app.set('views', path.join(__dirname, '../views'))
     this.app.set('view engine', 'hbs')
     this.app.use(cookieParser())
     this.app.use(bodyParser.json())
