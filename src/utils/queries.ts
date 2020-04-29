@@ -48,8 +48,8 @@ interface IStateWillChangeListener {
 class Queries <T> {
   private ModelSchema: T
 
-  private static stateDidChangedCallback: IStateDidChangedListener|null = null
-  private static stateWillChangeCallback: IStateWillChangeListener|null = null
+  private static stateDidChangedCallback: IStateDidChangedListener[] = []
+  private static stateWillChangeCallback: IStateWillChangeListener[] = []
   /**
    * 
    * @param collectionModel
@@ -190,9 +190,9 @@ class Queries <T> {
    * @param state state/event
    * @param data 
    */
-  protected stateDidChanged (state: string|number, data: IStateChangeData) {
-    if (Queries.stateDidChangedCallback) {
-      Queries.stateDidChangedCallback(state, data)
+  protected stateDidChanged (state: string|number, data: any) {
+    for (let index in Queries.stateDidChangedCallback) {
+      Queries.stateDidChangedCallback[index](state, data)
     }
   }
   /**
@@ -200,9 +200,9 @@ class Queries <T> {
    * @param state state/event
    * @param data 
    */
-  protected stateWillChange (state: string|number, data: IStateChangeData) {
-    if (Queries.stateWillChangeCallback) {
-      Queries.stateWillChangeCallback(state, data)
+  protected stateWillChange (state: string|number, data: any) {
+    for (let index in Queries.stateWillChangeCallback) {
+      Queries.stateWillChangeCallback[index](state, data)
     }
   }
   /**
@@ -210,14 +210,14 @@ class Queries <T> {
    * @param callback 
    */
   public static stateDidChangedListener (callback: IStateDidChangedListener) {
-    Queries.stateDidChangedCallback = callback
+    Queries.stateDidChangedCallback.push(callback)
   }
   /**
    * set a callback for pre action of state
    * @param callback
    */
   public static stateWillChangeListener (callback: IStateDidChangedListener) {
-    Queries.stateWillChangeCallback = callback
+    Queries.stateDidChangedCallback.push(callback)
   }
   public get query () {
     return this.ModelSchema
