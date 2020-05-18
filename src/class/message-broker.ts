@@ -1,9 +1,8 @@
 import * as kafka from 'kafka-node'
-import {CreateTopicRequest, ConsumerOptions, ConsumerGroupOptions} from 'kafka-node'
+import {CreateTopicRequest, ConsumerOptions, ConsumerGroupOptions, ConsumerGroupStreamOptions} from 'kafka-node'
 import { Schema, model } from 'mongoose'
 import { KAFKA_HOST } from '../utils/constants';
 import * as uuid from 'uuid/v4'
-import EventLogs from './event-logs';
 interface IKafka {
   topics?: Array<string | CreateTopicRequest>
   host: string
@@ -36,6 +35,10 @@ interface IPublishData {
   key?: string,
   messages: IPublishMessage
 }
+interface IUncommitedTopic {
+  topic: string
+  commitTimeout: any
+}
 interface IMessageBroker {
   subscribe(event: string, callback: ICallback) : void
   subscribe(callback: ICallback) : void
@@ -45,11 +48,13 @@ private isReady: boolean = false
 private topicOptions: Array<CreateTopicRequest> =[]
 private subscriptionOptions: Array<ISubscriptionOptions> =[]
 private subscriptionConfig: ConsumerOptions|ConsumerGroupOptions = {fromOffset: false, autoCommit: false}
-private subscriber: kafka.Consumer|kafka.ConsumerGroup = <any>{}
+private subscriptionTopics: string[] = []
+private subscriber: kafka.ConsumerGroupStream = <any>{}
+// private subscriber: kafka.Consumer|kafka.ConsumerGroupStream = <any>{}
 private offset: kafka.Offset = <any>{}
 private kafkaClient: kafka.KafkaClient
 private kafkaProducer: kafka.Producer
-private UncommitedMessage = <any[]>[]
+private UncommitedTopics = <IUncommitedTopic[]>[]
 private _UncommitedMessage = <any[]>[]
 private isCommiting: boolean = false
 private kafkaConsumerGroup: kafka.ConsumerGroup = <any>{}
@@ -57,6 +62,9 @@ private isSubscribeInitialized: boolean = false
 private subscriptionRetriesAllowed: number = 5
 private subscriptionRetryTimes: number = 0
 private ArrayOfCallbacks = <IArrayOfCallbacks[]>[]
+private commitTimeout: any
+// default 1 second
+private commitDelayMilis: number = 1000
 
 private readonly KafkaHost: string
 private isTopicsInitialized: boolean = false
@@ -75,7 +83,6 @@ private isTopicsInitialized: boolean = false
     //   // console.log('consumerGroups', res['ORDER_MESSAGE_BROKER-LISTENER-1'].members);
     // });
     this.kafkaProducer.on('ready', () => {
-      console.log(' >> Producer is ready.')
       this.isReady = true
     });
   }
@@ -88,40 +95,10 @@ private isTopicsInitialized: boolean = false
     this.mapPublisherOptions(topics)
     this.createTopics(this.topicOptions)
   }
-  
   /**
    * load consumers/topics
    */
-  public async initializeSubscriberOptions (payloads: Array<string|ISubscriptionOptions>, config: ConsumerOptions, callback?: ICallback) {
-    try {
-      if (!(this.isSubscribeInitialized)) {
-        const _options = await this.mapSubscriptionOptions(payloads, config)
-        this.subscriptionConfig = config
-        // remove autoCommit config
-        const {autoCommit, ..._config} = config
-        console.log(' >> set new consumer options.')
-        this.subscriber = new Consumer(
-          this.kafkaClient,
-          _options,
-          {
-            ..._config,
-            autoCommit: false,
-          }
-        )
-        this.isSubscribeInitialized = true
-        this.listenToEvents()
-      }
-      this._callback(callback, null, true)
-      return true
-    } catch (err) {
-      this._callback(callback, err, null)
-      console.log('ERROR ON subscribing : ', err)
-    }
-  }
-  /**
-   * load consumers/topics
-   */
-  public async initiateSubscriberGroupOptions (topics: string | ISubscriptionOptions | Array<string|ISubscriptionOptions>, config: ConsumerGroupOptions, callback?: ICallback) {
+  public async initiateSubscriberGroupOptions (topics: string | ISubscriptionOptions | Array<string|ISubscriptionOptions>, config: ConsumerGroupStreamOptions, callback?: ICallback) {
     try {
       if (!(this.isSubscribeInitialized)) {
         //@ts-ignore
@@ -130,44 +107,46 @@ private isTopicsInitialized: boolean = false
         this.subscriptionConfig = config
         // remove autoCommit config
         const {autoCommit, ..._config} = config
-        var offset = 0
-        // if (config.fromOffset) {
-        //   offset = <number>await this.getTheLastOffset(option.topic)
-        // }
-        // const allTopics = _options.reduce((topics: string[], option: any) => topicsoption.topic)
-        const allTopics = _options.map((option: any) => option.topic)
-        const ConsumerGroupConfig = <ConsumerGroupOptions>{
-          ..._config,
+        this.subscriptionTopics = _options.map((option: any) => option.topic)
+        const ConsumerGroupConfig = <ConsumerGroupStreamOptions>{
           autoCommit: false,
-          fromOffset: 'latest',
           kafkaHost: this.KafkaHost,
           encoding: 'utf8',
           keyEncoding: 'utf8',
           sessionTimeout: 15000,
-
-
+          ..._config,
+          onRebalance: (status: boolean, rebalance: any) => {
+            console.log('Rebalancing....', status)
+            if (status) {
+              console.log('Rebalanced!')
+            }
+            rebalance()
+          }
         }
-        this.subscriber = new kafka.ConsumerGroup(ConsumerGroupConfig, allTopics)
+        this.subscriber = new kafka.ConsumerGroupStream(ConsumerGroupConfig, this.subscriptionTopics)
+        if (ConsumerGroupConfig.fromOffset !== 'latest') {
+          for (let x in _options) {
+            const option = _options[x]
+            this.subscriber.consumerGroup.setOffset(option.topic, option.partition, option.offset || 0)
+          }
+        }
+        this.listenToEvents()
         this.subscriber.on("connect", () => {
-          this.isSubscribeInitialized = true
-          this.listenToEvents()
+          console.log(' >>>> connected.')
+          // this.isSubscribeInitialized = true
+          // // setTimeout(() => {
+          // console.log(' >>> connected to broker! listening to all uncommited message.')
+          // this.listenToEvents()
+          // }, 1000)
         })
         this.subscriber.on("error", (err) => {
           this._callback(callback, err, null)
         })
-        this.subscriber.on("rebalancing", () => {
-          console.log(' rebalancing...')
+        this.subscriber.on("close", () => {
+          console.log(' CONNECTION CLOSEEEEE')
           // this._callback(callback, err, null)
         })
-        this.subscriber.on("rebalanced", () => {
-          console.log(' rebalancing done!')
-          // this._callback(callback, err, null)
-        })
-        this.subscriber.on("offsetOutOfRange", (err) => {
-          console.log(' invalid offset!')
-          this._callback(callback, err, null)
-        })
-        this._callback(callback, null, allTopics)
+        this._callback(callback, null, this.subscriptionTopics)
       }
       return true
     } catch (err) {
@@ -178,47 +157,65 @@ private isTopicsInitialized: boolean = false
   /**
    * listen to all incoming events
    */
-  private listenToEvents () {
-    this.subscriber.on("message", async (message: any) => {
+  private async listenToEvents () {
+    var x = 0
+    console.log('>>>> listen txo events...')
+    this.subscriber.on("data", async (message) => {
       try {
         message.value = message.value ? JSON.parse(message.value) : {}
       } catch (err) {
         //ignore
         message.value = message.value.toString()
       }
-      if (this.isCommiting) {
-        // if commiting then some message is come, add to sub variable
-        this._UncommitedMessage.push(message)
-      } else {
-        this.UncommitedMessage.push(message)
+      this.dispatchCallbacks(message.topic, null, message)
+    })
+  }
+  public async removeStreamerTopics (topics: string|string[], callback: any) {
+    this.subscriber.consumerGroup.removeTopics(topics, (err, removed) => {
+      callback(removed) 
+    })
+  }
+  public async addStreamerTopics (topics: any[]) {
+    this.subscriber.consumerGroup.addTopics(topics, (err, added) => {
+      if (err) {
+        throw new Error(err)
       }
-      // dispatch callbacks
-      this.dispatchCallbacks(message.topic, null, message.value)
-      return true
+    })
+    this.subscriber.consumerGroup.removeTopics(topics, (err, removed) => {
+      if (err) {
+        console.log(' >>> err: ', err)
+      }
     })
   }
   /**
    * save all events on event logs then commit the messages.
    * @param callback 
    */
-  public async commit (callback: ICallback) {
-    this.subscriber.commit(async (err, data) => {
-      this._callback(callback, err, data)
-      if (!err) {
-        console.log(' >> succesxsfully commited data.')
-        this.isCommiting = false
-        this.UncommitedMessage = []
-      } else {
-        // remove all event logs if atleast one commit is failed.
-        // (await Promise.all(eventLogs.map((event) => event.remove())))
-        throw err
-      }
-    })
+  public async commit (message: kafka.Message, callback: ICallback) {
+    //this will just allow to commit the last call on this method/function
+    // clear or remove the recent call because the delay/timeout call
+    var index = this.UncommitedTopics.findIndex((c) => c.topic === message.topic)
+    if (index >= 0) {
+      clearTimeout(this.UncommitedTopics[index].commitTimeout)
+    } else {
+      this.UncommitedTopics.push({
+        commitTimeout: 0,
+        topic: message.topic
+      })
+      index = this.UncommitedTopics.length - 1
+    }
+    this.UncommitedTopics[index].commitTimeout = setTimeout(() => {
+      console.log(' >>> will commit key -> ', message.key)
+      this.subscriber.commit(message, false, (err: Error, data: any) => {
+        if (err) {
+          console.log('failed to commit: ', err)
+        } else {
+          console.log(' >>> did commit key -> ', message.key)
+          this._callback(callback, err, message.key)
+        }
+      })
+    }, this.commitDelayMilis)
   }
-
-  // private getUncommitedMessages (topic: string|string[]) {
-  //   return this.
-  // }
   /**
    * dispatch match events
    * @param topic event or topic needed to be dispatch
@@ -229,7 +226,7 @@ private isTopicsInitialized: boolean = false
     for (let index in this.ArrayOfCallbacks) {
       const _callback = this.ArrayOfCallbacks[index]
       if (_callback.topic === null || _callback.topic === topic) {
-        this._callback(_callback.callback, err, {topic, data})
+        this._callback(_callback.callback, err, data)
       }
     }
   }
@@ -291,31 +288,16 @@ private isTopicsInitialized: boolean = false
     }
     for (let index in payloads) {
       const payload = payloads[index]
-      let newEvent = null
       try {
-        newEvent = await new EventLogs()
-          .addLogs({
-            event: payload.topic,
-            newData: payload.messages.newData,
-            previousData: payload.messages.previousData
-          })
-        try {
-          payload.messages = <any>JSON.stringify(newEvent.newData)
-        } catch (err) {
-          payload.messages.toString()
-          // continue
-        }
-        if (!payload.key) {
-          payload.key = newEvent._id
-        }
-        payloads[index] = payload
+        payload.messages = <any>JSON.stringify(payload.messages)
       } catch (err) {
-        if (newEvent) {
-          newEvent.remove()
-        }
-        this._callback(callback, err, payload)
-        throw err
+        payload.messages.toString()
+        // continue
       }
+      if (!payload.key) {
+        payload.key = uuid()
+      }
+      payloads[index] = payload
     }
     this.kafkaProducer.send(payloads, (err, data) => {
       if (err) {
@@ -361,24 +343,10 @@ private isTopicsInitialized: boolean = false
       _event = null
       _callback = event
     }
-    if (this.isSubscribeInitialized) {
-      console.log(' >> Connected.')
-      this.ArrayOfCallbacks.push({
-        topic: _event,
-        callback: _callback
-      })
-    } else {
-      // still reconnect if the allowed tries is not reached.
-      // if (this.subscriptionRetriesAllowed >= this.subscriptionRetryTimes) {
-        // this.subscriptionRetryTimes += 1
-        console.log(' >>>> reconnecting...')
-        setTimeout(() => {
-          this.subscribe(event, callback)
-        }, 500)
-      // } else {
-      //   this._callback(_callback, new Error('subscriber options not yet initialized.'), null)
-      // }
-    }
+    this.ArrayOfCallbacks.push({
+      topic: _event,
+      callback: _callback
+    })
   }
   /**
    * just a general callback
@@ -391,5 +359,15 @@ private isTopicsInitialized: boolean = false
       callback(err, data)
     }
     return false
+  }
+  /**
+   * set the delay or timeout value before commit is proceed
+   * @param delay // milis
+   */
+  public setCommitTimeout (delay: number) {
+    if (delay < 0) {
+      throw new Error(`commitDelayMilis must be greater than 0 miliseconds.`)
+    }
+    return this.commitDelayMilis = delay
   }
 }

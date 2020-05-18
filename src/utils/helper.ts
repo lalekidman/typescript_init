@@ -189,3 +189,56 @@ export const ErrorResponse = (res: Response, AppErrorMessage: any, httpStatusCod
     }
   }
 }
+/**
+ * get the changedProperty of newObject to previousObject
+ * @param newObject new data 
+ * @param previousObject old/previous data
+ * @param withValues set true if want the return with values, default false
+ */
+export const getChangedProperties = (newObject: any, previousObject: any, withValues: boolean = false) => {
+  const changedProps = {
+    removed: <any[]>[],
+    updated: <any[]>[],
+    added: <any[]>[]
+  }
+  const addToChanges = (arr: any[], prop: string, value?: any) => {
+    arr.push(withValues ? {
+      fieldName: prop,
+      value: value
+    } : prop)
+    return arr
+  }
+  const getRemoveOrAddedProperty = (newObject: any, previousObject: any, arr: any[] = [], parentField: any = '') => {
+    for (let prop in newObject) {
+      if (['array', 'object'].indexOf(typeof newObject[prop]) >= 0) {
+        getRemoveOrAddedProperty(newObject[prop], previousObject ? previousObject[prop] : undefined, arr, `${parentField}${prop}->`)
+      } else {
+        if (previousObject === undefined || previousObject[prop] === undefined) {
+          arr = addToChanges(arr, `${parentField}${prop}`, newObject[prop])
+        }
+      }
+    }
+    return arr
+  }
+  const getUpdatedProp = (newObject: any, previousObject: any, arr: any[] = [], parentField: any = '') => {
+    for (let prop in newObject) {
+      if (['array', 'object'].indexOf(typeof newObject[prop]) >= 0) {
+        getUpdatedProp(newObject[prop], previousObject ? previousObject[prop] : undefined, arr, `${parentField}${prop}->`)
+      } else {
+        if (newObject && previousObject) {
+          if ((newObject[prop] && previousObject[prop]) && newObject[prop] !== previousObject[prop]) {
+            arr = addToChanges(arr, `${parentField}${prop}`, newObject[prop])
+          }
+        }
+      }
+    }
+    return arr
+  }
+  // get added property
+  changedProps.added = getRemoveOrAddedProperty(newObject, previousObject)
+  // get remove
+  changedProps.removed = getRemoveOrAddedProperty(previousObject, newObject)
+  // get updated
+  changedProps.updated = getUpdatedProp(newObject, previousObject)
+  return changedProps
+}

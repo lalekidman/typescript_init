@@ -38,12 +38,12 @@ class App {
     this.app = express()
     this.HttpServer = createServer(this.app)
     this.Port = SERVER_PORT
-    this._init()
+    this.loadMiddleWares()
   }
   private mountRoutes (): void {
     // Where the router import
   }
-  private initSocket (server: any):void {
+  private connectWebSocket (server: any):void {
     this.io = socketio(server)
     this.io.on('connect' , (socket: socketio.Socket) => {
       console.log('someone is connected, ', socket.handshake.headers.authorization)
@@ -67,9 +67,9 @@ class App {
     this.server = this.app.listen(port || this.Port, () => {
       console.log(`Listening to port ${this.Port}`)
     })
-    this.initSocket(this.server)
+    this.connectWebSocket(this.server)
   }
-  private _init () { 
+  private loadMiddleWares () { 
     
     this.app.use(morgan('dev'))
     // this.app.use(express.static(path.join(__dirname, '../views')))

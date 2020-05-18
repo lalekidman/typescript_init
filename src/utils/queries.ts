@@ -1,5 +1,5 @@
 import * as uuid from 'uuid/v4'
-import {Document, Schema, Model, model, ModelPopulateOptions, Collection} from 'mongoose'
+import {Document, Schema, Model, model, ModelPopulateOptions, Collection, Query} from 'mongoose'
 import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
@@ -25,31 +25,61 @@ interface IAggregateWithPagination {
   totalPages: number
   totalCounts: number
 }
-interface IAppError {
-  statusCode: number
-  error: string
-  source: string
-}
 interface IStateChangeData {
   newData: any
   previousData?: any
-  state?: string|number
+  localStreamId?: string
 }
 interface IStateDidChangedListener {
-  (event: string|number, data: IStateChangeData) : void 
+  (event: string|number, data: IStateChangeData, key?: string) : void 
 }
-interface IStateWillChangeListener {
-  (event: string|number, data: IStateChangeData) : void 
+interface IStateDidChangedLocalStreamerCallback {
+  (data: IStateChangeData) : void 
 }
+interface IStateDidChangedLocalStreamer {
+  streamId: string
+  data: ILocalStreamData[]
+  [key: number]: any
+}
+interface ILocalStreamData {
+  state: string|number
+  callback: IStateDidChangedLocalStreamerCallback
+}
+interface ILocalStreams {
+  // events: string[]|number[]
+  streamId: string
+  metadata?: any
+  message: any
+  failedEvents: string[]|number[]
+  successEvents: string[]|number[]
+}
+interface IEventStreams {
+  event: string
+  isChecked: boolean
+}
+interface ILSD {
+  // events: string[]|number[]
+  streamId: string
+  metadata?: any
+  failedEvents: any[]
+  messages: any[]
+  successEvents: IEventStreams[]
+}
+interface IStateWillChangeListener extends IStateDidChangedListener {}
 /**
  * T - for the Collection model type
- * EM - is for the Event Model logs
  */
 class Queries <T> {
   private ModelSchema: T
-
+  // global
   private static stateDidChangedCallback: IStateDidChangedListener[] = []
+  // local callback
+  private static stateStreamerCallback: IStateDidChangedLocalStreamer[] = []
   private static stateWillChangeCallback: IStateWillChangeListener[] = []
+  private static localStreams = <ILSD[]>[]
+  private localStreamId: string = <any>null
+
+  private resultData: any = null
   /**
    * 
    * @param collectionModel
@@ -189,10 +219,26 @@ class Queries <T> {
    * use this to call the state callback
    * @param state state/event
    * @param data 
+   * @param key optional 
    */
-  protected stateDidChanged (state: string|number, data: any) {
+  protected stateDidChanged <T>(state: string|number, data: T & IStateChangeData) {
     for (let index in Queries.stateDidChangedCallback) {
-      Queries.stateDidChangedCallback[index](state, data)
+      Queries.stateDidChangedCallback[index](state, <any>data)
+      this.resultData = data
+      
+    }
+    for (let index in Queries.stateStreamerCallback) {
+      const {data: streamData, streamId = ''} = Queries.stateStreamerCallback[index]
+      if (data?.localStreamId === streamId) {
+        for (let streamIndex in streamData) {
+          const {state: _state, callback} = streamData[streamIndex]
+          if (_state === state) {
+            callback(<any>data)
+          }
+        }
+        // just add an delay to make sure that all callbacks are performed.
+        this.removeFromTheStateStearmerCallback(parseInt(index))
+      }
     }
   }
   /**
@@ -217,7 +263,145 @@ class Queries <T> {
    * @param callback
    */
   public static stateWillChangeListener (callback: IStateDidChangedListener) {
-    Queries.stateDidChangedCallback.push(callback)
+    Queries.stateWillChangeCallback.push(callback)
+  }
+
+  public stateStreamer (data: {state: string|number, streamId: string, callback: IStateDidChangedLocalStreamerCallback}) {
+    const {callback, state, streamId} = data
+    if (typeof callback === 'function') {
+      const index = Queries.stateStreamerCallback.findIndex((s) => s.streamId === streamId)
+      if (index === -1) {
+        Queries.stateStreamerCallback.push({
+          data: [{
+            callback,
+            state
+          }],
+          streamId
+        })
+      } else {
+        
+        Queries.stateStreamerCallback[index].data.push({
+          callback,
+          state
+        })
+      }
+    }
+  }
+  /**
+   * generate localStreamId for the new event/state 
+   */
+  protected generateLocalStreamId () {
+    return this.localStreamId = uuid()
+  }
+  /**
+   * to get the localStreamId
+   */
+  public getLocalStreamId () {
+    return this.localStreamId
+  }
+  /**
+   * get the last result data.
+   */
+  public getResultData () {
+    return this.resultData
+  }
+  /**
+   * 
+   * @param index index on the array.
+   * @param delay 
+   */
+  private removeFromTheStateStearmerCallback (index: number, delay: number = 100) {
+    if (index <= -1 || Queries.stateStreamerCallback.length < index) {
+      throw new Error('Invalid local streamer callback index.')
+    }
+    setTimeout(() => {
+      Queries.stateStreamerCallback.splice(parseInt(<any>index), 1)
+    }, 100)
+  }
+  /**
+   * 
+   * @param data 
+   * @param states 
+   * @param responseDelay milis -> set value if you want to increase or decrease the delay of response. Default: 1000 milis
+   */
+  protected tryToWaitEvents (data: any, states: string[]|number[], responseDelay: number = 1000) {
+    return new Promise((resolve) => {
+      for (let index in states) {
+        this.stateStreamer({
+          state: states[index],
+          streamId: this.getLocalStreamId(),
+          callback: resolve
+        })
+      }
+      setTimeout(() => {
+        // for (let index in Queries.stateStreamerCallback) {
+        //   if (Queries.stateStreamerCallback[index].streamId === this.getLocalStreamId()) {
+        //     this.removeFromTheStateStearmerCallback(parseInt(index))
+        //   }
+        // }
+        resolve({newData: data})
+      }, responseDelay)
+    })
+    .then(({newData}: any) => newData)
+  }
+  /**
+   * check if the localStreamId is still exist
+   * @param localStreamId 
+   */
+  public isStreamerIdStillExists (localStreamId: string) {
+    return Queries.stateStreamerCallback.findIndex((s) => s.streamId === localStreamId)
+  }
+
+  public addToLocalStreams (data: ILocalStreams) {
+    const {failedEvents = [], metadata, streamId, successEvents = [], message} = data
+    const generateWatchEvents = (arr: Array<string|number>) => {
+      return <IEventStreams[]>arr.map((a) => ({event: a, isChecked: false}))
+    }
+    if (Queries.localStreams.findIndex((s) => s.streamId === streamId) === -1) {
+      Queries.localStreams.push({
+        streamId,
+        messages: [message],
+        failedEvents: failedEvents,
+        successEvents: generateWatchEvents(successEvents),
+      })
+    }
+  }
+  /**
+   * update the event stream
+   * @param streamId 
+   * @param event 
+   */
+  public updateLocalStreamEvents (streamId: string, message: any) {
+    return Promise.resolve()
+      .then(() => {
+        const ind = Queries.localStreams.findIndex((l) => l.streamId === streamId)
+        if (ind >= 0) {
+          Queries.localStreams[ind].messages.push(message)
+          const streamData = Queries.localStreams[ind]
+          if (streamData.failedEvents.findIndex((e) => (e.event === message.topic)) >= 0) {
+            return {
+              isSuccess: false,
+              messages: streamData.messages,
+              isFinished: true
+            }
+          } else {
+            streamData.successEvents = streamData.successEvents.map((e) => {
+              if (e.event === message.topic) {
+                e.isChecked = true
+              }
+              return e
+            })
+            const allSuccessEventsDone = (streamData.successEvents.findIndex((e) => e.isChecked === false) === -1)
+            // if still false, it means there's a event or event that needed to be wait.
+            return {
+              isSuccess: false,
+              messages: streamData.messages,
+              isFinished: allSuccessEventsDone
+            }
+          }
+        }
+        return false 
+      })
   }
   public get query () {
     return this.ModelSchema
