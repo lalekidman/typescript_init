@@ -1,9 +1,7 @@
 require('dotenv').config({path: `${__dirname}/../.env`})
 import * as express from 'express'
 import {Request, Response, NextFunction} from 'express'
-import * as path from 'path'
 import * as bodyParser from 'body-parser'
-import * as mongoose from 'mongoose'
 import * as passport from 'passport'
 import * as HttpStatus from 'http-status-codes'
 import * as morgan from 'morgan'
@@ -22,6 +20,12 @@ import { DB_HOST, DB_NAME, SERVER_PORT } from './utils/constants'
 import MainPublisher from './publishers/index'
 import MainStreamer from './streamers/index'
 
+
+import "reflect-metadata"
+import {ApolloServer} from 'apollo-server-express'
+import {buildSchema} from 'type-graphql'
+// resolvers
+import {HelloWorldResolver} from './resolvers/hello-world'
 const SECRET = ''
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'
@@ -59,8 +63,8 @@ class App {
   private async connectDatabase () {
     await new DB(DB_HOST, DB_NAME).connect()
       ?.then(() => {
-        new MainPublisher().publish()
-        new MainStreamer().stream()
+        // new MainPublisher().publish()
+        // new MainStreamer().stream()
       })
   }
   public listen (port?: number):void {
@@ -69,37 +73,46 @@ class App {
     })
     this.connectWebSocket(this.server)
   }
-  private loadMiddleWares () { 
+  private async loadMiddleWares () { 
     
     this.app.use(morgan('dev'))
     // this.app.use(express.static(path.join(__dirname, '../views')))
     // this.app.set('views', path.join(__dirname, '../views'))
-    this.app.set('view engine', 'hbs')
+    // this.app.set('view engine', 'hbs')
     this.app.use(cookieParser())
     this.app.use(bodyParser.json())
     this.app.use(bodyParser.urlencoded({ extended: false }))
-    this.app.use(session({
-      secret: SECRET,
-      saveUninitialized: true,
-      resave: true
-    }))
+    // this.app.use(session({
+    //   secret: SECRET,
+    //   saveUninitialized: true,
+    //   resave: true
+    // }))
     this.app.use(flash())
-    this.app.use(passport.initialize())
-    this.app.use(passport.session())
-    this.app.use((req: Request, res: Response, next: NextFunction) => {
-      res.header('Access-Control-Allow-Origin', '*')
-      // res.header('Access-Control-Allow-Origin', 'http://localhost:3000')
-      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Authorization, Content-Type, Accept')
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE')
-        return res.sendStatus(HttpStatus.OK)
-      }
-      next()
+    // this.app.use(passport.initialize())
+    // this.app.use(passport.session())
+    // this.app.use((req: Request, res: Response, next: NextFunction) => {
+    //   res.header('Access-Control-Allow-Origin', '*')
+    //   // res.header('Access-Control-Allow-Origin', 'http://localhost:3000')
+    //   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Authorization, Content-Type, Accept')
+    //   res.setHeader('Access-Control-Allow-Credentials', 'true');
+    //   if (req.method === 'OPTIONS') {
+    //     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE')
+    //     return res.sendStatus(HttpStatus.OK)
+    //   }
+    //   next()
+    // })
+
+    const apolloServer = new ApolloServer({
+      schema: await buildSchema({
+        resolvers: [HelloWorldResolver],
+        emitSchemaFile: true,
+        validate: false,
+      }),
+      context: ({req, res}) => ({req, res}),
     })
+    apolloServer.applyMiddleware({app: this.app, cors: false})
     this.mountRoutes()
-    this.connectDatabase()
+    // this.connectDatabase()
   }
 }
-const app = new App()
-app.listen()
+new App().listen()
