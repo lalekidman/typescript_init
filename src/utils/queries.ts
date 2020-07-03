@@ -1,5 +1,5 @@
 import * as uuid from 'uuid/v4'
-import {Document, Schema, Model, model, ModelPopulateOptions, Collection, Query} from 'mongoose'
+import {Document, Schema, Model, model, ModelPopulateOptions, Collection, Query, } from 'mongoose'
 import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
@@ -67,10 +67,10 @@ interface ILSD {
 }
 interface IStateWillChangeListener extends IStateDidChangedListener {}
 /**
- * T - for the Collection model type
+ *  Collection model interface
  */
 class Queries <T> {
-  private ModelSchema: T
+  private colelctionModel: any
   // global
   private static stateDidChangedCallback: IStateDidChangedListener[] = []
   // local callback
@@ -81,13 +81,13 @@ class Queries <T> {
 
   private resultData: any = null
   /**
-   * 
+   * collection model that needed to be extends
    * @param collectionModel
-   * @param eventLogsModel
    */
-  constructor(collectionModel: any,) {
+  
+  constructor(collectionModel: Model<Document & T>) {
     if (!collectionModel) throw new Error('collectionModel is required.')
-    this.ModelSchema = collectionModel
+    this.colelctionModel = collectionModel
   }
   /**
    * save model with default properties {
@@ -95,7 +95,7 @@ class Queries <T> {
    * - createdAt: currentDate(milis)
    * - updatedAt: currentDate(milis)
    * }
-   * @param data 
+   * @param data
    */
   protected save(data: object) {
     const collection = this.initilize(data)
@@ -113,9 +113,9 @@ class Queries <T> {
   protected initilize(data: any) {
     const id = uuid()
     //override the _id id createdAt and updatedAt when the data object already have it.
-    //@ts-ignore
-    return <T> new this.ModelSchema(Object.assign({id, _id: id, createdAt: Date.now(), updatedAt: Date.now()}, data))
+    return <T> new this.colelctionModel(Object.assign({_id: id, createdAt: Date.now(), updatedAt: Date.now()}, data))
   }
+
   /**
    * upload file with aws s3
    * @param filepath 
@@ -206,7 +206,7 @@ class Queries <T> {
         }
     }])
     //@ts-ignore
-    return this.ModelSchema.aggregate(paginationQuery).then((response: any) => {
+    return this.colelctionModel.aggregate(paginationQuery).then((response: any) => {
       return <IAggregateWithPagination> (response.length >= 1 ? {
         data: response[0].data,
         totalPages: endPage >= 1 ? Math.ceil((response[0].counts / endPage)) : 1,
@@ -225,7 +225,6 @@ class Queries <T> {
     for (let index in Queries.stateDidChangedCallback) {
       Queries.stateDidChangedCallback[index](state, <any>data)
       this.resultData = data
-      
     }
     for (let index in Queries.stateStreamerCallback) {
       const {data: streamData, streamId = ''} = Queries.stateStreamerCallback[index]
@@ -246,7 +245,7 @@ class Queries <T> {
    * @param state state/event
    * @param data 
    */
-  protected stateWillChange (state: string|number, data: any) {
+  protected stateWillChange <T>(state: string|number, data: T & IStateChangeData) {
     for (let index in Queries.stateWillChangeCallback) {
       Queries.stateWillChangeCallback[index](state, data)
     }
@@ -266,7 +265,7 @@ class Queries <T> {
     Queries.stateWillChangeCallback.push(callback)
   }
 
-  public stateStreamer (data: {state: string|number, streamId: string, callback: IStateDidChangedLocalStreamerCallback}) {
+  public transactionStreamer (data: {state: string|number, streamId: string, callback: IStateDidChangedLocalStreamerCallback}) {
     const {callback, state, streamId} = data
     if (typeof callback === 'function') {
       const index = Queries.stateStreamerCallback.findIndex((s) => s.streamId === streamId)
@@ -322,25 +321,20 @@ class Queries <T> {
    * 
    * @param data 
    * @param states 
-   * @param responseDelay milis -> set value if you want to increase or decrease the delay of response. Default: 1000 milis
+   * @param waitUntil milis -> set value if you want to increase or decrease the delay of response. Default: 1000 milis
    */
-  protected tryToWaitEvents (data: any, states: string[]|number[], responseDelay: number = 1000) {
+  protected waitTransactionResponse (data: any, states: string[]|number[], waitUntil: number = 1000) {
     return new Promise((resolve) => {
       for (let index in states) {
-        this.stateStreamer({
+        this.transactionStreamer({
           state: states[index],
           streamId: this.getLocalStreamId(),
           callback: resolve
         })
       }
       setTimeout(() => {
-        // for (let index in Queries.stateStreamerCallback) {
-        //   if (Queries.stateStreamerCallback[index].streamId === this.getLocalStreamId()) {
-        //     this.removeFromTheStateStearmerCallback(parseInt(index))
-        //   }
-        // }
         resolve({newData: data})
-      }, responseDelay)
+      }, waitUntil)
     })
     .then(({newData}: any) => newData)
   }
@@ -352,7 +346,7 @@ class Queries <T> {
     return Queries.stateStreamerCallback.findIndex((s) => s.streamId === localStreamId)
   }
 
-  public addToLocalStreams (data: ILocalStreams) {
+  public connectTransactionStream (data: ILocalStreams) {
     const {failedEvents = [], metadata, streamId, successEvents = [], message} = data
     const generateWatchEvents = (arr: Array<string|number>) => {
       return <IEventStreams[]>arr.map((a) => ({event: a, isChecked: false}))
@@ -371,14 +365,14 @@ class Queries <T> {
    * @param streamId 
    * @param event 
    */
-  public updateLocalStreamEvents (streamId: string, message: any) {
+  public watchTransactionStream (streamId: string, message: any) {
     return Promise.resolve()
       .then(() => {
         const ind = Queries.localStreams.findIndex((l) => l.streamId === streamId)
         if (ind >= 0) {
           Queries.localStreams[ind].messages.push(message)
           const streamData = Queries.localStreams[ind]
-          if (streamData.failedEvents.findIndex((e) => (e.event === message.topic)) >= 0) {
+          if (streamData.failedEvents.indexOf(message.topic) >= 0) {
             return {
               isSuccess: false,
               messages: streamData.messages,
@@ -394,7 +388,7 @@ class Queries <T> {
             const allSuccessEventsDone = (streamData.successEvents.findIndex((e) => e.isChecked === false) === -1)
             // if still false, it means there's a event or event that needed to be wait.
             return {
-              isSuccess: false,
+              isSuccess: true,
               messages: streamData.messages,
               isFinished: allSuccessEventsDone
             }
@@ -402,9 +396,6 @@ class Queries <T> {
         }
         return false 
       })
-  }
-  public get query () {
-    return this.ModelSchema
   }
 }
 export default Queries
