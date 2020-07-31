@@ -374,9 +374,9 @@ class Queries <T> {
           const streamData = Queries.localStreams[ind]
           if (streamData.failedEvents.indexOf(message.topic) >= 0) {
             return {
-              isSuccess: false,
+              status: false,
               messages: streamData.messages,
-              isFinished: true
+              completed: true
             }
           } else {
             streamData.successEvents = streamData.successEvents.map((e) => {
@@ -388,9 +388,9 @@ class Queries <T> {
             const allSuccessEventsDone = (streamData.successEvents.findIndex((e) => e.isChecked === false) === -1)
             // if still false, it means there's a event or event that needed to be wait.
             return {
-              isSuccess: true,
+              status: true,
               messages: streamData.messages,
-              isFinished: allSuccessEventsDone
+              completed: allSuccessEventsDone
             }
           }
         }
