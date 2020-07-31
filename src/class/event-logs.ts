@@ -53,7 +53,7 @@ class EventLogs extends Queries<IEventLogsModel> {
   public async addLogs (logsData: IEventLogs) {
     try {
       const {event, previousData, newData } = logsData
-      const newLogs = this.initilize({event, previousData, newData})
+      const newLogs = this.initialize({event, previousData, newData})
       await newLogs.save()
       return newLogs
     } catch (err) {
