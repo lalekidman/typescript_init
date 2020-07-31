@@ -321,9 +321,9 @@ class Queries <T> {
    * 
    * @param data 
    * @param states 
-   * @param waitUntil milis -> set value if you want to increase or decrease the delay of response. Default: 1000 milis
+   * @param timeoutMilis milis -> set value if you want to increase or decrease the delay of response. Default: 1000 milis
    */
-  protected waitTransactionResponse (data: any, states: string[]|number[], waitUntil: number = 1000) {
+  protected waitTransactionResponse (data: any, states: string[]|number[], timeoutMilis: number = 1000) {
     return new Promise((resolve) => {
       for (let index in states) {
         this.transactionStreamer({
@@ -334,7 +334,7 @@ class Queries <T> {
       }
       setTimeout(() => {
         resolve({newData: data})
-      }, waitUntil)
+      }, timeoutMilis)
     })
     .then(({newData}: any) => newData)
   }
