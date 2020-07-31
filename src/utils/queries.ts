@@ -69,7 +69,7 @@ interface IStateWillChangeListener extends IStateDidChangedListener {}
 /**
  *  Collection model interface
  */
-class Queries <T> {
+class Queries <T, K> {
   private colelctionModel: any
   // global
   private static stateDidChangedCallback: IStateDidChangedListener[] = []
@@ -97,7 +97,7 @@ class Queries <T> {
    * }
    * @param data
    */
-  protected save(data: object) {
+  protected save(data: K) {
     const collection = this.initialize(data)
     //@ts-ignore
     return collection.save()
@@ -110,7 +110,7 @@ class Queries <T> {
    * }
    * @param data 
    */
-  protected initialize(data: any) {
+  protected initialize(data: K) {
     const id = uuid()
     //override the _id id createdAt and updatedAt when the data object already have it.
     return <T> new this.colelctionModel(Object.assign({_id: id, createdAt: Date.now(), updatedAt: Date.now()}, data))
