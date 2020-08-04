@@ -4,6 +4,11 @@ import Aws from './aws'
 import {UploadedImage} from './interfaces'
 import AppError from './app-error';
 const s3 = new Aws('kyoo-bucket')
+export interface IPaginationParameters {
+  limitTo?: number
+  startAt?: number
+  searchText?: number
+}
 export interface IPaginationData {
   limitTo: number
   startAt: number
@@ -135,7 +140,7 @@ class Queries <T, K> {
    * @param searchFields2 array of fields that needed to be search or to filter,
    * a function that return a pagination data.
    */
-  public aggregateWithPagination (pipeline: any[], data?: IPaginationData, searchFields2: string[]= []): Promise<IAggregateWithPagination> {
+  public aggregateWithPagination<Y extends keyof K> (pipeline: any[], data?: IPaginationData, searchFields2: Y[] = []): Promise<IAggregateWithPagination> {
     let {limitTo = 0, startAt = 0, sortBy = null, searchFields = [], searchText = ''} = <any> data || {}
     //@ts-ignore
     const endPage = parseInt(limitTo) >= 0 ? parseInt(limitTo) : 20
@@ -345,7 +350,10 @@ class Queries <T, K> {
   public isStreamerIdStillExists (localStreamId: string) {
     return Queries.stateStreamerCallback.findIndex((s) => s.streamId === localStreamId)
   }
-
+  /**
+   * listen or connect thru the transaction/event stream
+   * @param data 
+   */
   public connectTransactionStream (data: ILocalStreams) {
     const {failedEvents = [], metadata, streamId, successEvents = [], message} = data
     const generateWatchEvents = (arr: Array<string|number>) => {
