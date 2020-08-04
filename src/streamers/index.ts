@@ -10,6 +10,7 @@ class EventStreamer {
   }
   public stream () {
     // streamm per service
+    
   }
 }
 export default EventStreamer
