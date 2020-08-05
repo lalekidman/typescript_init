@@ -42,7 +42,7 @@ EventLogsModel.ensureIndexes({
   createdAt: -1
 })
 // export default EventLogs
-class EventLogs extends Queries<IEventLogsModel> {
+class EventLogs extends Queries<IEventLogsModel, IEventLogs> {
   /**
    * @class
    */
