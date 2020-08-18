@@ -3,7 +3,6 @@ import * as express from 'express'
 import {Request, Response, NextFunction} from 'express'
 import * as path from 'path'
 import * as bodyParser from 'body-parser'
-import * as mongoose from 'mongoose'
 import * as passport from 'passport'
 import * as HttpStatus from 'http-status-codes'
 import * as morgan from 'morgan'
@@ -15,14 +14,15 @@ import flash = require('connect-flash')
 import {Server as SocketServer} from 'socket.io'
 import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
-import DB from './class/db'
-import { DB_HOST, DB_NAME, SERVER_PORT } from './utils/constants'
+import DB from './app-plugins/persistence/db'
+import { DB_HOST, DB_NAME, SERVER_PORT } from './delivery/utils/constants'
 
 // publishers and streamers
-import MainPublisher from './publishers/index'
-import MainStreamer from './streamers/index'
+// import MainPublisher from './publishers/index'
+// import MainStreamer from './streamers/index'
 
-const SECRET = ''
+import MainRoute from './delivery/controllers/routes'
+const SECRET = 'A_SAMPLE_SECRET_FOR_SESSION_EXPRESS'
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'
 // import { Db } from 'mongodb';
@@ -42,6 +42,7 @@ class App {
   }
   private mountRoutes (): void {
     // Where the router import
+    this.app.use(new MainRoute().expose())
   }
   private connectWebSocket (server: any):void {
     this.io = socketio(server)
@@ -59,8 +60,8 @@ class App {
   private async connectDatabase () {
     await new DB(DB_HOST, DB_NAME).connect()
       ?.then(() => {
-        new MainPublisher().publish()
-        new MainStreamer().stream()
+        // new MainPublisher().publish()
+        // new MainStreamer().stream()
       })
   }
   public listen (port?: number):void {
