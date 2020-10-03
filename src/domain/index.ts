@@ -1,12 +1,13 @@
 import * as uuid from 'uuid/v4'
 import MainEntity, {IMainEntityData} from './entity/main'
 import {IMainGateway} from './interface-gateways/IMain'
-import {IPaginationQueryParams, IAggregatePagination} from './interface-gateways/IGeneral'
+import {IPaginationQueryParams, IAggregatePagination, IGeneralGateway} from './interface-gateways/IGeneral'
 import { validateHumanName } from '../delivery/helpers'
 export {
   IMainEntityData,
   IMainGateway,
-
+  IGeneralGateway,
+  
   //general interfaces
   IPaginationQueryParams,
   IAggregatePagination

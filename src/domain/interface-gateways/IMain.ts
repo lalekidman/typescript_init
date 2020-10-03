@@ -1,4 +1,3 @@
-import {IGeneralGateway} from './IGeneral'
-import {IMainEntityData} from '../../domain/index'
+import {IGeneralGateway, IMainEntityData} from './../index'
 // interfaces for 
 export interface IMainGateway extends IGeneralGateway<IMainEntityData> {}
