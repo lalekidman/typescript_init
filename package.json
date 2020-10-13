@@ -4,6 +4,8 @@
   "description": "for start up project.",
   "main": "index.js",
   "scripts": {
+    "start": "pm2-dev dist/app.js",
+    "dev": "nodemon -L dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Darryl Fabian",
@@ -23,6 +25,7 @@
     "express-session": "^1.15.6",
     "express-validator": "^6.3.0",
     "http-status-codes": "^1.3.2",
+    "kafka-node": "^5.0.0",
     "moment": "^2.24.0",
     "mongoose": "^5.2.5",
     "morgan": "^1.9.1",

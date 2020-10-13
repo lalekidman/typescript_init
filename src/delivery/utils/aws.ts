@@ -1,24 +1,26 @@
 import * as S3 from 'aws-sdk/clients/s3'
 import * as fs from 'fs'
 import {uploadFiles, UploadedImage} from './interfaces'
+interface IInitializeData {
+  accessKeyId: string
+  secretAccessKey: string
+}
 class Uploader {
   private BucketName: string
   private s3Uploader: any
   constructor (bucketName:string = 'kyoo-test2') {
     this.BucketName = bucketName
-    this._init()
   }
-  _init () {
+  public _init (data: IInitializeData) {
     const awsConfig = {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_KEY_ID || '',
+      accessKeyId: data.accessKeyId,
+      secretAccessKey: data.secretAccessKey,
       Bucket: this.BucketName
     }
     this.s3Uploader = new S3(awsConfig)
   }
-  setBucketName (bucketName: string) {
+  public setBucketName (bucketName: string) {
     this.BucketName = bucketName
-    this._init()
     return this.BucketName 
   }
   upload (filepath: string, avatar: uploadFiles, ACL: string = 'public-read') {

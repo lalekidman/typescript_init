@@ -1,0 +1,19 @@
+|-- src
+  |-- app-plugins
+    |-- api #external api
+    |-- persistence
+      |-- db
+        |--gateways # db commands/query per use case
+        |--interfaces # interfaces of db/gateways
+        |--models # collection model/orm of mongodb.
+  |-- delivery
+    |--controller #routes will be here
+  |--domain
+    |--entity # business rules will be here
+    |-- interface-gateways # allowed gateways/db command for use cases
+  |-- usecase
+    |--boundaries
+    |--interactors # business logic
+    |--services # combination of business logic to archive new business logic will be here.
+    
+      

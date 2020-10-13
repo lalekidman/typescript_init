@@ -11,18 +11,32 @@ export default class DB {
   constructor (host: string, name: string) {
     this.setHost(host)
     this.setName(name)
-    this._init()
   }
+  /**
+   * set the db name of the db uri
+   * @param name string
+   */
   public setName (name: string) {
     return this.name = name
   }
+  /**
+   * set the host of the db uri
+   * @param host 
+   */
   public setHost (host: string) {
     return this.host = host
   }
-  public setDbUrl (url: string) {
-    return this.DBURI = url
+  /**
+   * set the uri of the db
+   * @param uri 
+   */
+  public setDbUrl (uri: string) {
+    return this.DBURI = uri
   }
-  public _init () {
+  /**
+   * connect the db.
+   */
+  public connect () {
     this.DBURI = `mongodb://${this.host}/${this.name}`
     if (process.env.NODE_ENV === 'test') {
 

@@ -3,7 +3,6 @@ import * as express from 'express'
 import {Request, Response, NextFunction} from 'express'
 import * as path from 'path'
 import * as bodyParser from 'body-parser'
-import * as mongoose from 'mongoose'
 import * as passport from 'passport'
 import * as HttpStatus from 'http-status-codes'
 import * as morgan from 'morgan'
@@ -15,9 +14,15 @@ import flash = require('connect-flash')
 import {Server as SocketServer} from 'socket.io'
 import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
-import DB from './class/db'
-import { DB_HOST, DB_NAME, SERVER_PORT } from './utils/constants'
-const SECRET = 'TOTAL_SECRET_POWERED_BY_KYOO_PH'
+import DB from './app-plugins/persistence/db'
+import { DB_HOST, DB_NAME, SERVER_PORT } from './delivery/utils/constants'
+
+// publishers and streamers
+// import MainPublisher from './publishers/index'
+// import MainStreamer from './streamers/index'
+
+import MainRoute from './delivery/controllers/routes'
+const SECRET = 'A_SAMPLE_SECRET_FOR_SESSION_EXPRESS'
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'
 // import { Db } from 'mongodb';
@@ -33,12 +38,13 @@ class App {
     this.app = express()
     this.HttpServer = createServer(this.app)
     this.Port = SERVER_PORT
-    this._init()
+    this.loadMiddleWares()
   }
   private mountRoutes (): void {
     // Where the router import
+    this.app.use(new MainRoute().expose())
   }
-  private initSocket (server: any):void {
+  private connectWebSocket (server: any):void {
     this.io = socketio(server)
     this.io.on('connect' , (socket: socketio.Socket) => {
       console.log('someone is connected, ', socket.handshake.headers.authorization)
@@ -51,20 +57,24 @@ class App {
       })
     })
   }
-  private async initMongodb () {
-    await new DB(DB_HOST, DB_NAME)
+  private async connectDatabase () {
+    await new DB(DB_HOST, DB_NAME).connect()
+      ?.then(() => {
+        // new MainPublisher().publish()
+        // new MainStreamer().stream()
+      })
   }
   public listen (port?: number):void {
     this.server = this.app.listen(port || this.Port, () => {
       console.log(`Listening to port ${this.Port}`)
     })
-    this.initSocket(this.server)
+    this.connectWebSocket(this.server)
   }
-  private _init () { 
+  private loadMiddleWares () { 
     
     this.app.use(morgan('dev'))
-    this.app.use(express.static(path.join(__dirname, '../views')))
-    this.app.set('views', path.join(__dirname, '../views'))
+    // this.app.use(express.static(path.join(__dirname, '../views')))
+    // this.app.set('views', path.join(__dirname, '../views'))
     this.app.set('view engine', 'hbs')
     this.app.use(cookieParser())
     this.app.use(bodyParser.json())
@@ -89,7 +99,7 @@ class App {
       next()
     })
     this.mountRoutes()
-    this.initMongodb()
+    this.connectDatabase()
   }
 }
 const app = new App()

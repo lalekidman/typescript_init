@@ -1,25 +1,25 @@
 export const SYSTEM_ERROR = {
   statusCode: 10400,
-  error: 'SYSTEM_ERROR',
-  source: ''
+  errorCode: 'SYSTEM_ERROR',
+  errorMessage: ''
 }
 export const SERVER_FAILED = {
   statusCode: 10500,
-  error: 'SERVER_FAILED',
-  source: ''
+  errorCode: 'SERVER_FAILED',
+  errorMessage: ''
 }
 export const URL_NOT_FOUND = {
   statusCode: 10404,
-  error: 'URL_NOT_FOUND',
-  source: ''
+  errorCode: 'URL_NOT_FOUND',
+  errorMessage: ''
 }
 export const UNAUTHORIZED_REQUEST = {
   statusCode: 10401,
-  error: 'UNAUTHORIZED_REQUEST',
-  source: ''
+  errorCode: 'UNAUTHORIZED_REQUEST',
+  errorMessage: ''
 }
 export const INVALID_FILE_TYPE = {
   statusCode: 10701,
-  error: 'INVALID_FILE_TYPE',
-  source: ''
+  errorCode: 'INVALID_FILE_TYPE',
+  errorMessage: ''
 }
