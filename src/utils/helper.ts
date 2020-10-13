@@ -134,8 +134,8 @@ export const constructActionBy = (accountData: any) => {
  */
 export const generateQueryString = (queryString: string, queryData: any, fieldName?: string) => {
   var x = 0
-  const andSign = queryString ? '&' : ''
-  for (var query in queryData) {
+  for (let query in queryData) {
+    const andSign = queryString ? '&' : '?'
     // check if fieldName is not empty, if not, add query inside of the '[]' eg: filterBy[value] = testValue
     const queryField = fieldName ? `${fieldName}[${query}]` : query
     try {
