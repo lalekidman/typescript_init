@@ -1,12 +1,11 @@
-import * as uuid from 'uuid/v4'
+import * as uuid from '../app-plugins/persistence/repositories/gateways/node_modules/uuid/v4'
 import MainEntity, {IMainEntityData} from './entity/main'
-import {IMainGateway} from './interface-gateways/IMain'
-import {IPaginationQueryParams, IAggregatePagination, IGeneralGateway} from './interface-gateways/IGeneral'
+import {IMainGateway} from './interfaces/IMain'
+import {IPaginationQueryParams, IAggregatePagination}  from './interfaces/general-repository-gateway'
 import { validateHumanName } from '../delivery/helpers'
 export {
   IMainEntityData,
   IMainGateway,
-  IGeneralGateway,
   
   //general interfaces
   IPaginationQueryParams,

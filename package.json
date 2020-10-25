@@ -4,19 +4,16 @@
   "description": "for start up project.",
   "main": "index.js",
   "scripts": {
-    "start": "pm2-dev dist/app.js",
-    "dev": "nodemon -L dist/app.js",
+    "start": "pm2-dev dist/server.js",
+    "dev": "nodemon -L dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Darryl Fabian",
   "license": "ISC",
   "dependencies": {
-    "async": "^2.6.1",
     "aws-sdk": "^2.428.0",
     "axios": "^0.18.0",
-    "bcrypt": "^3.0.0",
     "body-parser": "^1.18.3",
-    "bower": "^1.8.4",
     "connect-flash": "^0.1.1",
     "connect-multiparty": "^2.1.1",
     "cookie-parser": "^1.4.3",
@@ -29,13 +26,13 @@
     "moment": "^2.24.0",
     "mongoose": "^5.2.5",
     "morgan": "^1.9.1",
-    "nodemon": "^1.18.10",
     "passport": "^0.4.0",
     "socket.io": "^2.2.0",
-    "typescript": "^3.3.4000",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "nodemon": "^1.18.10",
+    "typescript": "^3.9.5",
     "@types/aws-sdk": "^2.7.0",
     "@types/bcrypt": "^3.0.0",
     "@types/connect-flash": "0.0.34",

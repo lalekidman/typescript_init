@@ -14,7 +14,7 @@ import flash = require('connect-flash')
 import {Server as SocketServer} from 'socket.io'
 import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
-import DB from './app-plugins/persistence/db'
+import DB from './app-plugins/persistence/repositories'
 import { DB_HOST, DB_NAME, SERVER_PORT } from './delivery/utils/constants'
 
 // publishers and streamers
@@ -102,5 +102,4 @@ class App {
     this.connectDatabase()
   }
 }
-const app = new App()
-app.listen()
+export default App

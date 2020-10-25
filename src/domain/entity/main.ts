@@ -16,11 +16,12 @@ export default ({generateId, validateHumanName}: IMainDependencies) => {
    */
   return class MainEntity {
     // private variables
+
     private _id: string
-    private name: string
-    private isSuspended: boolean = false
-    private updatedAt: number = Date.now()
-    private createdAt: number = Date.now()
+    private _name: string
+    private _isSuspended: boolean = false
+    private _updatedAt: number = Date.now()
+    private _createdAt: number = Date.now()
     /**
      * 
      * @param data 
