@@ -1,22 +1,25 @@
-import MainEntity, {IMainEntityData, IMainGateway} from '../../domain'
+import {MainEntity, IGeneralInteractorEntityDenpendencies, IMainEntityData, IMainRepositoryGateway} from '../../domain'
 import {IRequestMain} from '../boundaries/request/IMain'
 import { IResponseMain } from '../boundaries/response/IMain'
 import {IPaginationQueryParams} from '../../domain'
-export default class MainUseCase {
-  private entityGateway: IMainGateway
+export interface IMainEntityInteractorDependencies extends IGeneralInteractorEntityDenpendencies<IMainRepositoryGateway> {
+  
+}
+export default class MainEntityInteractor {
+  private entityGateway: IMainRepositoryGateway
   // private responseBoundary: IResponseMain
-  constructor (mainEntityGateway: IMainGateway) {
+  constructor (mainEntityGateway: IMainRepositoryGateway) {
     this.entityGateway = mainEntityGateway
     // this.responseBoundary = responseBoundary
   }
   public mapEntityObject (data: IMainEntityData) {
     const mainEntityData = new MainEntity(data)
     return <IMainEntityData>{
-      _id: mainEntityData.getId(),
-      name: mainEntityData.getName(),
-      isSuspended: mainEntityData.getIsSuspended(),
-      createdAt: mainEntityData.getCreatedAt(),
-      updatedAt: mainEntityData.getUpdatedAt(),
+      _id: mainEntityData.id,
+      name: mainEntityData.name,
+      isSuspended: mainEntityData.isSuspended,
+      createdAt: mainEntityData.createdAt,
+      updatedAt: mainEntityData.updatedAt,
     }
   }
   public async saveMain (data: IMainEntityData) {
@@ -28,15 +31,15 @@ export default class MainUseCase {
    * get main list
    * @param queryParams 
    */
-  public async findAllMain (queryParams: Omit<IPaginationQueryParams<IMainEntityData>, 'searchFields'>) {
+  public async findAllMain (queryParams: Omit<IPaginationQueryParams, 'searchFields'>) {
     const {limitTo, searchText, startAt} = queryParams
-    return this.entityGateway.aggregateWithPagination([], {
-      ...queryParams,
-      searchFields: ['name']
-    })
+    // return this.entityGateway.aggregateWithPagination([], {
+    //   ...queryParams,
+    //   searchFields: ['name']
+    // })
   }
   public async updateMainById (id: string, data: IMainEntityData) {
-    const {name} = this.entityGateway.insertOne(this.mapEntityObject(data))
+    const {name} = await this.entityGateway.insertOne(this.mapEntityObject(data))
     return this.entityGateway.updateById(id, {name})
   }
 }

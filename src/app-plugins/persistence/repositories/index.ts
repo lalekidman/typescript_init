@@ -1,19 +1,39 @@
-import MainDBP from './gateways/main'
-import GeneralCommand from './gateways/general'
-import MainEntityCollection from './models/main'
-import IMainCollection  from './interfaces/main'
+/**
+ * @libraries
+ */
+import {Document, Model, Schema, SchemaTypeOpts, model} from 'mongoose'
+/**
+ * @models
+ */
+/**
+ * @repositories
+ */
+import MainRepository from './main'
+/**
+ * @interfaces
+ */
 import {ICollectionDefaultProperty} from './interfaces/general'
-import {Document, Model} from 'mongoose'
+/**
+ * @db
+ */
 import DB from './db'
+
 export {
-// interfaces
-  ICollectionDefaultProperty,
+  /**
+   * @library_interfaces
+   */
   Document,
   Model,
-  IMainCollection,
-// classes
-  GeneralCommand
-// methods
+  model,
+  Schema,
+  SchemaTypeOpts,
+/**
+ * @interfaces
+ */
+  ICollectionDefaultProperty,
+  /**
+   * @repository
+   */
+  MainRepository
 }
-export const MainDB = MainDBP(MainEntityCollection)
 export default DB

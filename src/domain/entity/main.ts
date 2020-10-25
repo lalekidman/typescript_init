@@ -17,8 +17,8 @@ export default ({generateId, validateHumanName}: IMainDependencies) => {
   return class MainEntity {
     // private variables
 
-    private _id: string
-    private _name: string
+    private _id: string = ''
+    private _name: string = ''
     private _isSuspended: boolean = false
     private _updatedAt: number = Date.now()
     private _createdAt: number = Date.now()
@@ -48,33 +48,86 @@ export default ({generateId, validateHumanName}: IMainDependencies) => {
       if (typeof(isSuspended) !== 'boolean') {
         throw new Error('isSuspended must be a boolean.')
       }
-      this._id = _id
-      this.name = name
-      this.isSuspended = isSuspended
-      this.updatedAt = updatedAt
-      this.createdAt = createdAt
     }
-    public getId () {
-      return this._id
+
+      /**
+       * Getter id
+       * @return {string }
+       */
+    public get id(): string  {
+      return this._id;
     }
-    public getName () {
-      return this.name
+
+      /**
+       * Getter name
+       * @return {string }
+       */
+    public get name(): string  {
+      return this._name;
     }
-    public getIsSuspended () {
-      return this.isSuspended
+
+      /**
+       * Getter isSuspended
+       * @return {boolean }
+       */
+    public get isSuspended(): boolean  {
+      return this._isSuspended;
     }
-    public getUpdatedAt () {
-      return this.updatedAt
+
+      /**
+       * Getter updatedAt
+       * @return {number }
+       */
+    public get updatedAt(): number  {
+      return this._updatedAt;
     }
-    public getCreatedAt () {
-      return this.createdAt
+
+      /**
+       * Getter createdAt
+       * @return {number }
+       */
+    public get createdAt(): number  {
+      return this._createdAt;
     }
-    /**
-     * set the suspend status of main entity
-     * @param status 
-     */
-    public setSuspendStatus (status: boolean) {
-      return this.isSuspended = status
+
+      /**
+       * Setter id
+       * @param {string } value
+       */
+    public set id(value: string ) {
+      this._id = value;
+    }
+
+      /**
+       * Setter name
+       * @param {string } value
+       */
+    public set name(value: string ) {
+      this._name = value;
+    }
+
+      /**
+       * Setter isSuspended
+       * @param {boolean } value
+       */
+    public set isSuspended(value: boolean ) {
+      this._isSuspended = value;
+    }
+
+      /**
+       * Setter updatedAt
+       * @param {number } value
+       */
+    public set updatedAt(value: number ) {
+      this._updatedAt = value;
+    }
+
+      /**
+       * Setter createdAt
+       * @param {number } value
+       */
+    public set createdAt(value: number ) {
+      this._createdAt = value;
     }
   }
 }

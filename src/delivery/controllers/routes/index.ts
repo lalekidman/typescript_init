@@ -3,7 +3,7 @@ import * as HttpStatus from 'http-status-codes'
 import { requestParamsValidatorMiddleware } from '../../helpers'
 import { IndexPostValidationPipeline } from '../../validator'
 import {MainUseCase} from '../../../use-cases/index'
-import {MainDB} from '../../../app-plugins/persistence/db'
+import {MainRepository} from '../../../app-plugins/persistence/repositories'
 export default class _Router {
   /**
    * @class initiate router class
@@ -13,19 +13,10 @@ export default class _Router {
     this.router = Router({mergeParams: true})
   }
   private listRoute = (req: Request, res: Response, next: NextFunction) => {
-    new MainUseCase(new MainDB())
-      .findAllMain(req.query)
-      .then((response) => {
-        res.status(HttpStatus.OK).send({result: true, data: response})
-      })
-      .catch(err => {
-        console.log(' > err', err)
-        res.status(HttpStatus.BAD_REQUEST).send({result: false, error: err.message})
-      })
   }
   private addRoute = (req: Request, res: Response, next: NextFunction) => {
     // const data = req.body
-    new MainUseCase(new MainDB())
+    new MainUseCase(new MainRepository())
       .saveMain(req.body)
       .then((response) => {
         res.status(HttpStatus.CREATED).send({result: true, data: response})

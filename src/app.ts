@@ -58,11 +58,11 @@ class App {
     })
   }
   private async connectDatabase () {
-    await new DB(DB_HOST, DB_NAME).connect()
-      ?.then(() => {
-        // new MainPublisher().publish()
-        // new MainStreamer().stream()
-      })
+    // await new DB(DB_HOST, DB_NAME).connect()
+    //   ?.then(() => {
+    //     // new MainPublisher().publish()
+    //     // new MainStreamer().stream()
+    //   })
   }
   public listen (port?: number):void {
     this.server = this.app.listen(port || this.Port, () => {

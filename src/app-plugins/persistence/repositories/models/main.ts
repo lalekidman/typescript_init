@@ -1,10 +1,7 @@
-import {SchemaTypeOpts, Schema, model} from 'mongoose'
-import {IMainEntityData} from '../../../../domain/index'
-import IMainEntity from '../interfaces/main'
-type IM = {
-  [K in keyof IMainEntityData]: any
-}
-const MainEntityObject = <IM>{
+import {SchemaTypeOpts, Schema, Document, model} from '../index'
+import {IMainEntity} from '../interfaces/main'
+export interface IMainEntityCollectionModel extends IMainEntity, Document {}
+const MainEntityObject:Record<keyof IMainEntity, SchemaTypeOpts<any>> ={
   _id: {
     type: String,
     default: ''
@@ -34,5 +31,5 @@ ModelSchema.index({
   createdAt: -1
 })
 // sample
-const MainEntityModel = model<IMainEntity>("mains", ModelSchema)
+const MainEntityModel = model<IMainEntityCollectionModel>("mains", ModelSchema)
 export default MainEntityModel

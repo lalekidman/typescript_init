@@ -1,8 +1,10 @@
-import GeneralDBCommand from './general'
-import {IMainEntityData, IMainGateway} from '../../../../domain'
-import {Model, IMainCollection} from '../index'
-export default (db: Model<IMainCollection>) => (class MainEntityDb extends GeneralDBCommand<IMainCollection, IMainEntityData> implements IMainGateway {
+import GeneralRepository from './general'
+import {IMainEntityData, IMainRepositoryGateway} from '../../../domain/index'
+import MainRepository, {IMainEntityCollectionModel} from './models/main'
+import {Model} from './index'
+
+export default class MainEntityRepository extends GeneralRepository<IMainEntityCollectionModel, IMainEntityData> implements IMainRepositoryGateway {
   constructor () {
-    super(db)
+    super(MainRepository)
   }
-})
+}

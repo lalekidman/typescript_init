@@ -1,10 +1,10 @@
 import * as moment from 'moment'
-import { IRequest} from './interfaces';
+import { IRequest} from '../delivery/utils/interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
 import * as HttpStatus from 'http-status-codes'
-import * as RegexValidator from './regex-validator'
-import AppError from './app-error';
+import * as RegexValidator from '../delivery/utils/regex-pattern'
+import AppError from '../delivery/utils/app-error';
 export interface IGeoInfo {
   range: number[]
   counter: string
@@ -23,7 +23,7 @@ interface IRequest2 extends IRequest{
 export const TrimMobileNo = (contactNo: string|number): string => contactNo.toString().replace(/[^+\d]+/g, "")
 export const ValidateMobileNo = (contactNo: string|number): string|null => {
   const newN = contactNo.toString().trim().replace(/ /g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '')
-  const txt = newN.toString().match(RegexValidator.ValidateMobileNo)
+  const txt = newN.toString().match(RegexValidator.MobileNumberPattern)
   return txt ? txt[0].substr(txt[0].length - 10, 10): null
 }
 export const ValidateEmail = (email: string): boolean => {
@@ -76,10 +76,10 @@ export const formValidatorMiddleWareWithFiles = (fileName: string | string[]) =>
     }
     const validateUploadedImage = (fileName: string) => {
       if (req.files[fileName]) {
-        if (!(req.files[fileName].type.match(RegexValidator.ValidateImage))) {
+        if (!(req.files[fileName].type.match(RegexValidator.ImagePattern))) {
           result.errors.push({
             value: req.files[fileName],
-            msg: `allow file type to upload. ${(RegexValidator.ValidateImage).toString()}`,
+            msg: `allow file type to upload. ${(RegexValidator.ImagePattern).toString()}`,
             params: fileName,
             location: 'file'
           })
