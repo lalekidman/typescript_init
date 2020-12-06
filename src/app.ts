@@ -14,14 +14,13 @@ import flash = require('connect-flash')
 import {Server as SocketServer} from 'socket.io'
 import * as socketio from 'socket.io'
 import {createServer, Server} from 'http'
-import DB from './app-plugins/persistence/repositories'
+// import DB from './app-plugins/persistence/repositories'
 import { DB_HOST, DB_NAME, SERVER_PORT } from './delivery/utils/constants'
-
 // publishers and streamers
 // import MainPublisher from './publishers/index'
 // import MainStreamer from './streamers/index'
 
-import MainRoute from './delivery/controllers/routes'
+import MainRoute from './delivery/controllers/rest-api/routes'
 const SECRET = 'A_SAMPLE_SECRET_FOR_SESSION_EXPRESS'
 // import * as MongoOplog from 'mongo-oplog'
 // import {} from 'mongo-oplog'

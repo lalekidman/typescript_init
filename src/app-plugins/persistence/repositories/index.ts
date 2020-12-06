@@ -8,15 +8,11 @@ import {Document, Model, Schema, SchemaTypeOpts, model} from 'mongoose'
 /**
  * @repositories
  */
-import MainRepository from './main'
-/**
- * @interfaces
- */
-import {ICollectionDefaultProperty} from './interfaces/general'
+// export {default as MainRepository} from './main'
 /**
  * @db
  */
-import DB from './db'
+export {default as DB} from './db'
 
 export {
   /**
@@ -27,13 +23,4 @@ export {
   model,
   Schema,
   SchemaTypeOpts,
-/**
- * @interfaces
- */
-  ICollectionDefaultProperty,
-  /**
-   * @repository
-   */
-  MainRepository
 }
-export default DB

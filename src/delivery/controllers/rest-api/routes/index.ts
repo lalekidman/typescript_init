@@ -1,9 +1,7 @@
 import {Request, Response, NextFunction, Router} from 'express'
 import * as HttpStatus from 'http-status-codes'
-import { requestParamsValidatorMiddleware } from '../../helpers'
-import { IndexPostValidationPipeline } from '../../validator'
-import {MainUseCase} from '../../../use-cases/index'
-import {MainRepository} from '../../../app-plugins/persistence/repositories'
+// import { requestParamsValidatorMiddleware } from '../../helpers'
+// import { IndexPostValidationPipeline } from '../../validator'
 export default class _Router {
   /**
    * @class initiate router class
@@ -16,14 +14,14 @@ export default class _Router {
   }
   private addRoute = (req: Request, res: Response, next: NextFunction) => {
     // const data = req.body
-    new MainUseCase(new MainRepository())
-      .saveMain(req.body)
-      .then((response) => {
-        res.status(HttpStatus.CREATED).send({result: true, data: response})
-      })
-      .catch(err => {
-        res.status(HttpStatus.BAD_REQUEST).send({result: false, error: err.message})
-      })
+    // new MainUseCase(new MainRepository())
+    //   .saveMain(req.body)
+    //   .then((response) => {
+    //     res.status(HttpStatus.CREATED).send({result: true, data: response})
+    //   })
+    //   .catch(err => {
+    //     res.status(HttpStatus.BAD_REQUEST).send({result: false, error: err.message})
+    //   })
   }
   private getByIdRoute = (req: Request, res: Response, next: NextFunction) => {
     res.status(HttpStatus.OK).send({result: true})
