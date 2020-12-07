@@ -91,20 +91,20 @@ export default class Database {
    * connect the db.
    */
   public connect () {
+    if (process.env.NODE_ENV === 'test') {
+      // not implemented yet.
+      this.name = this.name.concat('_test')
+    }
     this._databaseURI = `mongodb://${this.host}/${this.name}`
     if (this.authDBName) {
       this._databaseURI = `${this._databaseURI}?authSource=${this.authDBName}`
     }
-    if (process.env.NODE_ENV === 'test') {
-
-    } else {
-      return mongoose.connect(this.databaseURI, {useNewUrlParser: true}).then((res) => {
-        console.log('Successfully connected to database.')
-        return res
-      }).catch((err) => {
-        console.log('Failed to connect to the database. Error: ', err)
-        throw err
-      })
-    }
+    return mongoose.connect(this.databaseURI, {useNewUrlParser: true}).then((res) => {
+      console.log('Successfully connected to database.')
+      return res
+    }).catch((err) => {
+      console.log('Failed to connect to the database. Error: ', err)
+      throw err
+    })
   }
 }
