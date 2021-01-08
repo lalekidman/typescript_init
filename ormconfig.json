@@ -1,0 +1,14 @@
+{
+  "type": "sqlite",
+  "database": "database.sqlite",
+  "synchronize": true,
+  "logging": true,
+  "entities": ["dist/app-plugins/persistence/graphql/schema/**/*.js"],
+  "migrations": ["src/migration/**/*.js"],
+  "subscribers": ["src/subscriber/**/*.js"],
+  "cli": {
+    "entitiesDir": "src/app-plugins/persistence/graphql/schema",
+    "migrationsDir": "src/migration",
+    "subscribersDir": "src/subscriber"
+  }
+}

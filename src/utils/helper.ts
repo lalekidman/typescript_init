@@ -1,8 +1,8 @@
-import * as moment from 'moment'
+import moment from 'moment'
 import { IRequest} from '../delivery/utils/interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
-import * as HttpStatus from 'http-status-codes'
+import HttpStatus from 'http-status-codes'
 import * as RegexValidator from '../delivery/utils/regex-pattern'
 import AppError from '../delivery/utils/app-error';
 export interface IGeoInfo {

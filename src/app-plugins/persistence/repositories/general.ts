@@ -1,7 +1,7 @@
 import {
   Document, Model
 } from './index'
-import * as uuid from 'uuid/v4'
+import uuid from 'uuid/v4'
 import {IAggregatePagination, IPaginationQueryParams, IPaginationParameters} from '../../../domain/index'
 export default abstract class GeneralDBCommands<T, K> {
   // db instance

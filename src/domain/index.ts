@@ -1,4 +1,4 @@
-import * as uuid from 'uuid/v4'
+import uuid from 'uuid/v4'
 import Main, {IMainEntityData} from './entity/main'
 import {IMainRepositoryGateway} from './entity/gateway.interfaces'
 import {IGeneralInteractorEntityDenpendencies} from './interfaces/index'

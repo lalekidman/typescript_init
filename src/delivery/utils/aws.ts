@@ -1,5 +1,5 @@
-import * as S3 from 'aws-sdk/clients/s3'
-import * as fs from 'fs'
+import S3 from 'aws-sdk/clients/s3'
+import fs from 'fs'
 import {uploadFiles, UploadedImage} from './interfaces'
 interface IInitializeData {
   accessKeyId: string

@@ -1,18 +1,20 @@
 require('dotenv').config({path: `${__dirname}/../.env`})
-import * as express from 'express'
+import express from 'express'
+import 'reflect-metadata'
+import {ApolloServer, gql} from 'apollo-server-express'
 import {Request, Response, NextFunction} from 'express'
-import * as path from 'path'
-import * as bodyParser from 'body-parser'
-import * as passport from 'passport'
-import * as HttpStatus from 'http-status-codes'
-import * as morgan from 'morgan'
-import * as session from 'express-session';
-import * as cookieParser from 'cookie-parser'
+import path from 'path'
+import bodyParser from 'body-parser'
+import passport from 'passport'
+import HttpStatus from 'http-status-codes'
+import morgan from 'morgan'
+import session from 'express-session';
+import cookieParser from 'cookie-parser'
 
 import flash = require('connect-flash')
 
 import {Server as SocketServer} from 'socket.io'
-import * as socketio from 'socket.io'
+import socketio from 'socket.io'
 import {createServer, Server} from 'http'
 // import DB from './app-plugins/persistence/repositories'
 import { DB_HOST, DB_NAME, SERVER_PORT } from './delivery/utils/constants'
@@ -26,6 +28,13 @@ const SECRET = 'A_SAMPLE_SECRET_FOR_SESSION_EXPRESS'
 // import {} from 'mongo-oplog'
 // import { Db } from 'mongodb';
 
+import {buildSchema} from 'type-graphql'
+
+import {createConnection} from 'typeorm'
+/**
+ * @graphurl entities
+ */
+import {TodoResolver} from './app-plugins/persistence/graphql/resolvers/todo'
 class App {
   public app: any
   public io: any
@@ -42,6 +51,9 @@ class App {
   private mountRoutes (): void {
     // Where the router import
     this.app.use(new MainRoute().expose())
+    // this.app.use('/graphql', expressGraphQL({
+    //   graphiql: true
+    // }))
   }
   private connectWebSocket (server: any):void {
     this.io = socketio(server)
@@ -64,13 +76,14 @@ class App {
     //   })
   }
   public listen (port?: number):void {
+    console.log('port :>> ', port);
     this.server = this.app.listen(port || this.Port, () => {
       console.log(`Listening to port ${this.Port}`)
     })
     this.connectWebSocket(this.server)
   }
-  private loadMiddleWares () { 
-    
+  private async loadMiddleWares () { 
+    await createConnection()
     this.app.use(morgan('dev'))
     // this.app.use(express.static(path.join(__dirname, '../views')))
     // this.app.set('views', path.join(__dirname, '../views'))
@@ -97,8 +110,21 @@ class App {
       }
       next()
     })
+    const server = new ApolloServer({
+      schema: await buildSchema({
+        resolvers: [TodoResolver]
+      }),
+      context: ({req, res}: any) => ({req, res})
+    })
+    server.applyMiddleware({
+      app: this.app,
+      // cors: {
+      //   credentials: true,
+      //   origin: 'http://localhost:3000'
+      // }
+    })
     this.mountRoutes()
-    this.connectDatabase()
+    // this.connectDatabase()
   }
 }
 export default App

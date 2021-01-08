@@ -1,4 +1,4 @@
-import * as moment from 'moment'
+import moment from 'moment'
 import { IRequest} from '../utils/interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'

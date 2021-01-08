@@ -2,12 +2,15 @@
   "compilerOptions": {
     /* Basic Options */
     "module": "commonjs",
-    "resolveJsonModule": true,
     "target": "ES2017",                        /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
     "allowJs": true,
     "outDir": "dist",
     "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "moduleResolution": "Node",
     "lib": [
       "es2017",

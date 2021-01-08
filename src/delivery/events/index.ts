@@ -1,8 +1,8 @@
-import * as kafka from 'kafka-node'
+import kafka from 'kafka-node'
 import {CreateTopicRequest, ConsumerOptions, ConsumerGroupOptions, ConsumerGroupStreamOptions} from 'kafka-node'
 import { Schema, model } from 'mongoose'
 import { KAFKA_HOST } from '../utils/constants';
-import * as uuid from 'uuid/v4'
+import uuid from 'uuid/v4'
 interface IKafka {
   topics?: Array<string | CreateTopicRequest>
   host: string
