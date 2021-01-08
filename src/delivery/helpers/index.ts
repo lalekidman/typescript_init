@@ -2,7 +2,7 @@ import moment from 'moment'
 import { IRequest} from '../utils/interfaces';
 import {Request, Response, NextFunction} from 'express'
 import {validationResult} from 'express-validator'
-import * as HttpStatus from 'http-status-codes'
+import HttpStatus from 'http-status-codes'
 import {ImagePattern, MobileNumberPattern} from '../utils/regex-pattern'
 import * as RegexValidator from '../utils/regex-pattern'
 import { REQUEST_LOCATION_TYPES } from '../utils/constants';

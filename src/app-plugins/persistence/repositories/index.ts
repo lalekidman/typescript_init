@@ -12,7 +12,7 @@ import {Document, Model, Schema, SchemaTypeOpts, model} from 'mongoose'
 /**
  * @db
  */
-export {default as DB} from './db'
+export {default  as DB} from './db'
 
 export {
   /**
