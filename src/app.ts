@@ -1,18 +1,18 @@
 require('dotenv').config({path: `${__dirname}/../.env`})
-import * as express from 'express'
+import express from 'express'
 import {Request, Response, NextFunction} from 'express'
-import * as path from 'path'
-import * as bodyParser from 'body-parser'
-import * as passport from 'passport'
-import * as HttpStatus from 'http-status-codes'
-import * as morgan from 'morgan'
-import * as session from 'express-session';
-import * as cookieParser from 'cookie-parser'
+import path from 'path'
+import bodyParser from 'body-parser'
+import passport from 'passport'
+import HttpStatus from 'http-status-codes'
+import morgan from 'morgan'
+import session from 'express-session';
+import cookieParser from 'cookie-parser'
 
 import flash = require('connect-flash')
 
 import {Server as SocketServer} from 'socket.io'
-import * as socketio from 'socket.io'
+import socketio from 'socket.io'
 import {createServer, Server} from 'http'
 import {DB} from './app-plugins/persistence/repositories'
 import { DB_HOST, DB_NAME, SERVER_PORT } from './delivery/utils/constants'

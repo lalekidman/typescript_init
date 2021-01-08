@@ -1,4 +1,4 @@
-import * as uuid from 'uuid/v4'
+import uuid from 'uuid/v4'
 import {Document, Schema, Model, model, ModelPopulateOptions, Collection, Query, } from 'mongoose'
 import Aws from '../utils/aws'
 const s3 = new Aws('kyoo-bucket')

@@ -1,8 +1,8 @@
 import {
   Document, Model
 } from './index'
-import * as uuid from 'uuid/v4'
-import {IAggregatePagination, IPaginationQueryParams, IPaginationParameters} from '../../../domain/index'
+import uuid from 'uuid/v4'
+import {IAggregatePagination, IPaginationQueryParams, IPaginationParameters} from '../../../domain/interfaces/general-repository-gateway'
 export default abstract class GeneralDBCommands<T, K> {
   // db instance
   protected collectionModel: Model<Document & T>
@@ -17,14 +17,21 @@ export default abstract class GeneralDBCommands<T, K> {
    * find all data
    * @param queryParams 
    */
-  public findAll (query?: Record<keyof K, any>, queryParams: IPaginationParameters = {}) {
-    const {limitTo = 10, startAt = 0} = queryParams
-    return this.collectionModel.find(query)
-      .skip(startAt)
-      .limit(limitTo)
-      .then((data) => {
-        return data
-      })
+  public async findAll (query?: Record<keyof K, any>, queryParams: IPaginationParameters = <any>{}) {
+    try {
+      const {limitTo = 10, startAt = 0} = queryParams
+      const coll = this.collectionModel.find(query)
+      if (startAt >= 0) {
+        coll.skip(startAt)
+      }
+      if (limitTo >= 1) {
+        coll.limit(startAt)
+      }
+      const documents = await coll
+      return documents
+    } catch (error) {
+      throw error
+    }
   }
   /**
    * by data by id
@@ -45,14 +52,21 @@ export default abstract class GeneralDBCommands<T, K> {
    * by data by id
    * @param id 
    */
-  public findOne (query: K, projection?: Partial<Record<keyof K, 0|1>>, toObject: boolean = true) {
-    return this.collectionModel.findOne(query, projection)
-      .then((data) => {
-        if (!data) {
-          throw new Error('No data found.')
-        }
-        return toObject ? <T>data.toObject() : <Document & T>data
-      })
+  public findOne = async (query: K, options?: any, toObject: boolean = true) => {
+    try {
+      const {projection, sort} = options || {}
+      const documentQuery = this.collectionModel.findOne(query, projection)
+      if (sort) {
+        documentQuery.sort(sort)
+      }
+      const data = await documentQuery.exec()
+      if (!data) {
+        throw new Error('No data found.')
+      }
+      return toObject ? <T>data.toObject() : <Document & T>data
+    } catch (error) {
+      throw error
+    }
   }
   /**
    * insert data 
@@ -142,6 +156,16 @@ export default abstract class GeneralDBCommands<T, K> {
         return document.toObject()
       })
   }
+  public removeOne (query: Record<keyof K, any>) {
+    return this.collectionModel.findOne(query)
+      .then((document) => {
+        if (document) {
+          document.remove()
+          return document.toObject()
+        }
+        return null
+      })
+  }
   /**
    * 
    * @param pipeline a pipeline query for aggregation on mongodb
@@ -149,10 +173,10 @@ export default abstract class GeneralDBCommands<T, K> {
    * @param searchFields2 array of fields that needed to be search or to filter,
    * a function that return a pagination data.
    */
-  public aggregateWithPagination <SF extends keyof K>(pipeline: any[], queryParams: IPaginationQueryParams & {searchFields?: SF[]}): Promise<IAggregatePagination<K>> {
-    let {limitTo = 0, startAt = 0, sortBy = null, searchFields = [], searchText = ''} = <any> queryParams || {}
+  public aggregateWithPagination (pipeline: any[], queryParams: IPaginationQueryParams): Promise<IAggregatePagination<K>> {
+    let {limitTo, startAt = 0, sortBy = null, searchFields = [], searchText = ''} = <any> queryParams || {}
     //@ts-ignore
-    const endPage = parseInt(limitTo) >= 0 ? parseInt(limitTo) : 20
+    const endPage = parseInt(limitTo) >= 0 ? parseInt(limitTo) : 15
     //@ts-ignore
     const startPage = parseInt(startAt) > 0 ? parseInt(startAt) : 0
     //@ts-ignore
@@ -174,16 +198,19 @@ export default abstract class GeneralDBCommands<T, K> {
         $limit: endPage
       }
     ]
+    console.log('firstPipeline :>> ', endPage);
+    console.log('firstPipeline :>> ', firstPipeline);
     // if limitTO is equal to = 0, will remove the $limit on the pipeline
     if (endPage === 0) {
       const ind = firstPipeline.findIndex((stage) => Object.keys(stage)[0] === '$limit')
       if (ind >= 0) {
         // remove ethe $limit on the pipeline.
-        firstPipeline.splice(ind ,1)
+        firstPipeline.splice(ind, 1)
       }
     }
+    console.log('firstPipeline :>> ', firstPipeline);
     const q = (searchFields.length >= 1 ? searchFields : []).map((field: string) => ({[field]: {
-      $regex: new RegExp(searchText, 'gi')
+      $regex: new RegExp(searchText.replace(/^(\+639|639|09)/, '9'), 'gi')
     }}))
     const paginationQuery = pipeline.concat([
       {
