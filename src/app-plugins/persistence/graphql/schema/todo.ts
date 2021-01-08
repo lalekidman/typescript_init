@@ -13,7 +13,7 @@ import {
 
 @ObjectType()
 @Entity()
-export abstract class Todo extends BaseEntity {
+export abstract class TodoSchema extends BaseEntity {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   public _id!: number;

@@ -1,5 +1,5 @@
 export interface IGeneralEntityProperties {
-  _id: string
+  _id: number
   // id?: any
   createdAt: number
   updatedAt: number

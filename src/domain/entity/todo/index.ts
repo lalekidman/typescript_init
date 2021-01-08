@@ -11,7 +11,7 @@ export * from './repository-gateway-interfaces'
 
 export default ({generateId}: IGeneralEntityDependencies) => {
   return class TodoEntity implements ITodoEntity {
-    public readonly _id: string = ''
+    public readonly _id: number = 0
     private _content: string = ''
     public readonly createdAt: number = Date.now()
     public readonly updatedAt: number = Date.now()
@@ -21,9 +21,9 @@ export default ({generateId}: IGeneralEntityDependencies) => {
         content = '',
       } = todoData
       if (!_id) {
-        _id = generateId()
+        // _id = generateId()
       }
-      this._id = _id
+      this._id = 1
       this._content = content
     }
       /**
@@ -45,6 +45,5 @@ export default ({generateId}: IGeneralEntityDependencies) => {
       }
       this._content = value;
     }
-    
   }
 }

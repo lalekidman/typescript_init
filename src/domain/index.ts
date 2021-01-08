@@ -1,10 +1,15 @@
 import uuid from 'uuid/v4'
 import Main, {IMainEntityData} from './entity/main'
+import Todo from './entity/todo'
 import {IMainRepositoryGateway} from './entity/gateway.interfaces'
 import { validateHumanName } from '../delivery/helpers'
-const MainEntity = Main({
+
+export const MainEntity = Main({
   generateId: uuid,
   validateHumanName: validateHumanName
+})
+export const TodoEntity = Todo({
+  generateId: uuid
 })
 export {
   /**
@@ -18,5 +23,4 @@ export {
   /**
    * @domain_entity
    */
-  MainEntity,
 }

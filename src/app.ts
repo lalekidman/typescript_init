@@ -30,7 +30,7 @@ import {createConnection} from 'typeorm'
 /**
  * @graphurl entities
  */
-import {TodoResolver} from './app-plugins/persistence/graphql/resolvers/todo'
+import {TodoResolver} from './delivery/controllers/graphql/resolvers/todo'
 class App {
   public app: any
   public io: any
